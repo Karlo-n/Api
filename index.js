@@ -9,6 +9,7 @@ const boostCardRouter = require("./api/utility/boostcard/index");
 // Usar rutas
 app.use("/api/utility/qr", qrRouter);
 app.use("/api/utility/boostcard", boostCardRouter);
+app.use('/api/utility/traductor', require('./api/utility/traductor'));
 
 // Ruta principal para listar endpoints
 app.get("/", (req, res) => {
