@@ -26,9 +26,8 @@ router.get('/', async (req, res) => {
         const translatedText = response.data[0].map(item => item[0]).join('');
 
         res.json({
-            original: text,
             translated: translatedText,
-            to
+            
         });
 
     } catch (error) {
