@@ -1,49 +1,41 @@
-const { createCanvas, loadImage, registerFont } = require('canvas');
 const express = require('express');
+const { createCanvas, loadImage, registerFont } = require('canvas');
 const path = require('path');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const router = express.Router();
 
-// Registrar la nueva fuente
+// Carga la fuente desde la carpeta correcta
 registerFont(path.join(__dirname, 'Oswald-VariableFont_wght.ttf'), { family: 'Oswald' });
 
-app.get('/api/utility/boostcard', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const { avatar, username, background, usernameposicion, avatarposicion } = req.query;
-
+        
+        // Verifica si todos los parámetros están presentes
         if (!avatar || !username || !background || !usernameposicion || !avatarposicion) {
-            return res.status(400).json({ error: 'Faltan parámetros obligatorios' });
+            return res.status(400).json({ error: 'Faltan parámetros en la URL' });
         }
-
-        const [xUser, yUser] = usernameposicion.split(',').map(Number);
-        const [xAvatar, yAvatar] = avatarposicion.split(',').map(Number);
 
         const canvas = createCanvas(800, 400);
         const ctx = canvas.getContext('2d');
 
-        // Cargar la imagen de fondo
-        const bg = await loadImage(background);
-        ctx.drawImage(bg, 0, 0, 800, 400);
+        // Cargar imágenes
+        const bgImage = await loadImage(background);
+        const avatarImage = await loadImage(avatar);
 
-        // Cargar el avatar
-        const avatarImg = await loadImage(avatar);
-        ctx.drawImage(avatarImg, xAvatar, yAvatar, 100, 100); // Ajusta tamaño según necesites
-
-        // Estilo del texto
+        ctx.drawImage(bgImage, 0, 0, 800, 400);
+        ctx.drawImage(avatarImage, parseInt(avatarposicion.split(',')[0]), parseInt(avatarposicion.split(',')[1]), 100, 100);
+        
+        // Configurar fuente
         ctx.font = '30px Oswald';
-        ctx.fillStyle = '#fff';
-        ctx.fillText(username, xUser, yUser);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(username, parseInt(usernameposicion.split(',')[0]), parseInt(usernameposicion.split(',')[1]));
 
-        // Enviar la imagen como respuesta
         res.setHeader('Content-Type', 'image/png');
-        res.send(canvas.toBuffer());
+        res.end(canvas.toBuffer());
     } catch (error) {
-        console.error('Error al generar la boostcard:', error);
-        res.status(500).json({ error: 'Error interno al generar la boostcard' });
+        res.status(500).json({ error: 'Error al generar la imagen', details: error.message });
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+module.exports = router; // 🚀 Exporta el router correctamente
