@@ -87,7 +87,7 @@ router.get("/", async (req, res) => {
         ctx.drawImage(heartImg, 350, 150, 100, 100);
 
         // Agregar texto con el porcentaje de amor
-        ctx.font = "bold 40px Arial";
+        ctx.font = "bold 30px Arial";
         ctx.fillStyle = "white";
         ctx.textAlign = "center";
         ctx.fillText(`${lovePercentage}%`, 403, 210);
