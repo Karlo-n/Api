@@ -1,19 +1,30 @@
 const express = require('express');
-const cors = require('cors');
-const shipRoute = require('./api/utility/ship/index');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
-
-app.use('/api/utility/ship', shipRoute);
-
+// Ruta principal que muestra los endpoints disponibles
 app.get('/', (req, res) => {
-    res.send('🚀 API Karl está funcionando!');
+    res.json({
+        message: '🚀 Bienvenido a API Karl - Lista de Endpoints Disponibles',
+        endpoints: [
+            "/api/fun/kiss",
+            "/api/fun/slap",
+            "/api/fun/ship",
+            "/api/fun/jail",
+            "/api/fun/lyric",
+            "/api/utility/boostcard",
+            "/api/utility/traductor",
+            "/api/utility/bienvenida",
+            "/api/utility/qr",
+            "/api/utility/carta_ranked",
+            "/api/utility/carta_nivel",
+            "/api/utility/instragam",
+            "/api/utility/twitter"
+        ]
+    });
 });
 
+// Iniciar servidor
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
