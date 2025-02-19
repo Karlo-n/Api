@@ -2,6 +2,9 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Importar rutas
+const qrRouter = require('./api/utility/qr/index');
+
 // Ruta principal con formato bonito
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
@@ -24,6 +27,9 @@ app.get('/', (req, res) => {
         ]
     }, null, 4)); // <-- Esto lo indenta bonito
 });
+
+// Registrar rutas de utilidad
+app.use('/api/utility/qr', qrRouter);
 
 // Iniciar servidor
 app.listen(PORT, () => {
