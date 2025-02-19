@@ -81,7 +81,7 @@ router.get("/", async (req, res) => {
         ctx.font = "bold 30px Arial";
         ctx.fillStyle = "white";
         ctx.textAlign = "center";
-        ctx.fillText(`${lovePercentage}%`, 410, 210);
+        ctx.fillText(`${lovePercentage}%`, 403, 210);
 
         // Enviar imagen como respuesta
         res.setHeader("Content-Type", "image/png");
