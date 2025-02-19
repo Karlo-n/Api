@@ -2,7 +2,6 @@ const express = require("express");
 const Canvas = require("canvas");
 const axios = require("axios");
 const path = require("path");
-
 const router = express.Router();
 
 // Lista de fondos de anime aleatorios
@@ -17,10 +16,23 @@ const heartPath = path.join(__dirname, "corazon.png");
 
 router.get("/", async (req, res) => {
     try {
-        const { avatar1, avatar2 } = req.query;
+        const { avatar1, avatar2, json } = req.query;
 
         if (!avatar1 || !avatar2) {
             return res.status(400).json({ error: "Faltan parámetros. Debes enviar avatar1 y avatar2" });
+        }
+
+        // Generar porcentaje de amor aleatorio
+        const lovePercentage = Math.floor(Math.random() * 101);
+
+        // Si el usuario pasa el parámetro ?json=true, devuelve solo JSON
+        if (json === "true") {
+            return res.json({
+                message: "❤️ Compatibilidad de pareja ❤️",
+                avatar1: avatar1,
+                avatar2: avatar2,
+                love_percentage: `${lovePercentage}%`
+            });
         }
 
         // Seleccionar un fondo aleatorio
@@ -74,18 +86,20 @@ router.get("/", async (req, res) => {
         // Dibujar el corazón en el centro
         ctx.drawImage(heartImg, 350, 150, 100, 100);
 
-        // Generar porcentaje de amor aleatorio
-        const lovePercentage = Math.floor(Math.random() * 101);
-
         // Agregar texto con el porcentaje de amor
-        ctx.font = "bold 30px Arial";
+        ctx.font = "bold 40px Arial";
         ctx.fillStyle = "white";
         ctx.textAlign = "center";
         ctx.fillText(`${lovePercentage}%`, 403, 210);
 
+        // Establecer el encabezado para respuesta JSON en el URL
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Love-Percentage", `${lovePercentage}%`);
+
         // Enviar imagen como respuesta
         res.setHeader("Content-Type", "image/png");
         canvas.createPNGStream().pipe(res);
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Error al generar la imagen de ship" });
