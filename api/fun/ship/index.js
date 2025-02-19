@@ -78,10 +78,10 @@ router.get("/", async (req, res) => {
         const lovePercentage = Math.floor(Math.random() * 101);
 
         // Agregar texto con el porcentaje de amor
-        ctx.font = "bold 40px Arial";
+        ctx.font = "bold 30px Arial";
         ctx.fillStyle = "white";
         ctx.textAlign = "center";
-        ctx.fillText(`${lovePercentage}%`, 400, 220);
+        ctx.fillText(`${lovePercentage}%`, 400, 210);
 
         // Enviar imagen como respuesta
         res.setHeader("Content-Type", "image/png");
