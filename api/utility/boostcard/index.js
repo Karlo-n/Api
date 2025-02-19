@@ -1,60 +1,49 @@
-const express = require("express");
-const { createCanvas, loadImage, registerFont } = require("canvas");
+const { createCanvas, loadImage, registerFont } = require('canvas');
+const express = require('express');
+const path = require('path');
 
-const router = express.Router();
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Registrar una fuente para mejorar la compatibilidad con los nombres de usuario
-registerFont("arial.ttf", { family: "Arial" });
+// Registrar la nueva fuente
+registerFont(path.join(__dirname, 'Oswald-VariableFont_wght.ttf'), { family: 'Oswald' });
 
-router.get("/", async (req, res) => {
+app.get('/api/utility/boostcard', async (req, res) => {
     try {
-        const { avatar, username, background, usernameposicion, avatarposicion, avatartamano } = req.query;
+        const { avatar, username, background, usernameposicion, avatarposicion } = req.query;
 
         if (!avatar || !username || !background || !usernameposicion || !avatarposicion) {
-            return res.status(400).json({ error: "Faltan parámetros requeridos" });
+            return res.status(400).json({ error: 'Faltan parámetros obligatorios' });
         }
 
-        // Dimensiones de la tarjeta
+        const [xUser, yUser] = usernameposicion.split(',').map(Number);
+        const [xAvatar, yAvatar] = avatarposicion.split(',').map(Number);
+
         const canvas = createCanvas(800, 400);
-        const ctx = canvas.getContext("2d");
+        const ctx = canvas.getContext('2d');
 
-        // Cargar imágenes
-        const bgImage = await loadImage(background);
-        const avatarImage = await loadImage(avatar);
+        // Cargar la imagen de fondo
+        const bg = await loadImage(background);
+        ctx.drawImage(bg, 0, 0, 800, 400);
 
-        // Dibujar el fondo
-        ctx.drawImage(bgImage, 0, 0, 800, 400);
+        // Cargar el avatar
+        const avatarImg = await loadImage(avatar);
+        ctx.drawImage(avatarImg, xAvatar, yAvatar, 100, 100); // Ajusta tamaño según necesites
 
-        // Definir tamaño del avatar (por defecto 100x100)
-        const avatarSize = avatartamano ? parseInt(avatartamano) : 100;
+        // Estilo del texto
+        ctx.font = '30px Oswald';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(username, xUser, yUser);
 
-        // Dibujar avatar con recorte redondeado
-        const [avatarX, avatarY] = avatarposicion.split(",").map(Number);
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(avatarImage, avatarX, avatarY, avatarSize, avatarSize);
-        ctx.restore();
-
-        // Dibujar el nombre de usuario con sombra
-        const [usernameX, usernameY] = usernameposicion.split(",").map(Number);
-        ctx.font = "30px Arial";
-        ctx.fillStyle = "white";
-        ctx.shadowColor = "black";
-        ctx.shadowBlur = 5;
-        ctx.fillText(username, usernameX, usernameY);
-
-        // Enviar imagen como respuesta
-        res.setHeader("Content-Type", "image/png");
-        canvas.createPNGStream().pipe(res);
-
+        // Enviar la imagen como respuesta
+        res.setHeader('Content-Type', 'image/png');
+        res.send(canvas.toBuffer());
     } catch (error) {
-        console.error("Error generando la BoostCard:", error);
-        res.status(500).json({ error: "Error interno del servidor" });
+        console.error('Error al generar la boostcard:', error);
+        res.status(500).json({ error: 'Error interno al generar la boostcard' });
     }
 });
 
-module.exports = router;
-
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});
