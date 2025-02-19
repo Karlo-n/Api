@@ -5,15 +5,17 @@ const PORT = process.env.PORT || 3000;
 // Importar rutas
 const qrRouter = require("./api/utility/qr/index");
 const boostCardRouter = require("./api/utility/boostcard/index");
+const traductorRouter = require("./api/utility/traductor/index");
 
 // Usar rutas
 app.use("/api/utility/qr", qrRouter);
 app.use("/api/utility/boostcard", boostCardRouter);
-app.use('/api/utility/traductor', require('./api/utility/traductor'));
+app.use("/api/utility/traductor", traductorRouter);
 
-// Ruta principal para listar endpoints
+// Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
-    res.json({
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify({
         message: "🚀 Bienvenido a API Karl - Lista de Endpoints Disponibles",
         endpoints: [
             "/api/fun/kiss",
@@ -30,7 +32,7 @@ app.get("/", (req, res) => {
             "/api/utility/instragam",
             "/api/utility/twitter"
         ]
-    });null, 4));
+    }, null, 4)); // <--- Aquí está bien formateado
 });
 
 // Iniciar servidor
