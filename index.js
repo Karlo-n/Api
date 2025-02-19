@@ -2,9 +2,10 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Ruta principal que muestra los endpoints disponibles
+// Ruta principal con formato bonito
 app.get('/', (req, res) => {
-    res.json({
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify({
         message: '🚀 Bienvenido a API Karl - Lista de Endpoints Disponibles',
         endpoints: [
             "/api/fun/kiss",
@@ -21,7 +22,7 @@ app.get('/', (req, res) => {
             "/api/utility/instragam",
             "/api/utility/twitter"
         ]
-    });
+    }, null, 4)); // <-- Esto lo indenta bonito
 });
 
 // Iniciar servidor
