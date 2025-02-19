@@ -12,7 +12,7 @@ const backgrounds = [
     "https://th.bing.com/th/id/OIP.RI5mDg5pyJBQjtotMJ4YIgHaEK?rs=1&pid=ImgDetMain"
 ];
 
-// Cargar la imagen del corazón en la memoria
+// Ruta del corazón en la carpeta /api/fun/ship
 const heartPath = path.join(__dirname, "corazon.png");
 
 router.get("/", async (req, res) => {
@@ -30,30 +30,46 @@ router.get("/", async (req, res) => {
         const canvas = Canvas.createCanvas(800, 400);
         const ctx = canvas.getContext("2d");
 
-        // Cargar imágenes
-        const background = await Canvas.loadImage(backgroundUrl);
-        const avatarImg1 = await Canvas.loadImage(avatar1);
-        const avatarImg2 = await Canvas.loadImage(avatar2);
+        // Cargar imágenes (método seguro con axios)
+        const loadImage = async (url) => {
+            try {
+                const response = await axios.get(url, { responseType: "arraybuffer" });
+                return await Canvas.loadImage(Buffer.from(response.data));
+            } catch (error) {
+                console.error(`Error cargando la imagen: ${url}`, error);
+                return null;
+            }
+        };
+
+        // Cargar imágenes correctamente
+        const background = await loadImage(backgroundUrl);
+        const avatarImg1 = await loadImage(avatar1);
+        const avatarImg2 = await loadImage(avatar2);
         const heartImg = await Canvas.loadImage(heartPath);
+
+        if (!background || !avatarImg1 || !avatarImg2 || !heartImg) {
+            return res.status(500).json({ error: "Error al cargar las imágenes." });
+        }
 
         // Dibujar el fondo
         ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
         // Dibujar los avatares con bordes circulares
+        ctx.save();
         ctx.beginPath();
         ctx.arc(200, 200, 75, 0, Math.PI * 2);
         ctx.closePath();
         ctx.clip();
         ctx.drawImage(avatarImg1, 125, 125, 150, 150);
+        ctx.restore(); // Restaurar para evitar que el clip afecte a otros elementos
 
+        ctx.save();
         ctx.beginPath();
         ctx.arc(600, 200, 75, 0, Math.PI * 2);
         ctx.closePath();
         ctx.clip();
         ctx.drawImage(avatarImg2, 525, 125, 150, 150);
-
-        // Restaurar el contexto para seguir dibujando
-        ctx.restore();
+        ctx.restore(); // Restaurar contexto
 
         // Dibujar el corazón en el centro
         ctx.drawImage(heartImg, 350, 150, 100, 100);
