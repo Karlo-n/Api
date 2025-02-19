@@ -30,7 +30,7 @@ app.get("/", (req, res) => {
             "/api/utility/instragam",
             "/api/utility/twitter"
         ]
-    });
+    });null, 4));
 });
 
 // Iniciar servidor
