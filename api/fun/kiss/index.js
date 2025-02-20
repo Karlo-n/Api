@@ -51,7 +51,6 @@ router.get("/", async (req, res) => {
 
         // Responder con JSON
         return res.json({
-            message: "💋 Beso Anime 💋",
             anime: randomData.anime,
             gif: randomData.url
         });
