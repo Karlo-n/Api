@@ -1,6 +1,6 @@
 const express = require("express");
 const axios = require("axios");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -8,10 +8,10 @@ router.get("/", async (req, res) => {
         const { usuario, grupo, item, foto } = req.query;
 
         if (!usuario && !grupo && !item) {
-            return res.status(400).json({ error: "Debes proporcionar al menos un parámetro (usuario, grupo o item) con un ID válido." });
+            return res.status(400).json({ error: "Debes proporcionar un ID válido para usuario, grupo o item." });
         }
 
-        // 📸 Captura de pantalla de la página
+        // 📸 Captura de pantalla con Puppeteer-Core
         if (foto === "true") {
             let url = "";
             if (usuario) {
@@ -21,10 +21,15 @@ router.get("/", async (req, res) => {
             } else if (item) {
                 url = `https://www.roblox.com/catalog/${item}`;
             } else {
-                return res.status(400).json({ error: "No se puede tomar captura sin un ID válido de usuario, grupo o ítem." });
+                return res.status(400).json({ error: "No se puede tomar captura sin un ID válido." });
             }
 
-            const browser = await puppeteer.launch({ headless: "new" });
+            const browser = await puppeteer.launch({
+                args: ["--no-sandbox", "--disable-setuid-sandbox"],
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium-browser", // Para Railway
+                headless: "new"
+            });
+
             const page = await browser.newPage();
             await page.goto(url, { waitUntil: "networkidle2" });
             const screenshot = await page.screenshot({ fullPage: true });
