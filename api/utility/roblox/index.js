@@ -1,81 +1,61 @@
 const express = require("express");
 const axios = require("axios");
-const puppeteer = require("puppeteer-core");
+const puppeteer = require("puppeteer");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
     try {
-        const { usuario, inventario, grupo, musica, item, foto } = req.query;
+        const { usuario, grupo, item, foto } = req.query;
 
-        if (!usuario && !inventario && !grupo && !musica && !item) {
-            return res.status(400).json({ error: "Debes proporcionar al menos un parámetro (usuario, inventario, grupo, música o ítem)" });
+        if (!usuario && !grupo && !item) {
+            return res.status(400).json({ error: "Debes proporcionar al menos un parámetro (usuario, grupo o item) con un ID válido." });
         }
 
-        // 📸 Captura de pantalla opcional
+        // 📸 Captura de pantalla de la página
         if (foto === "true") {
             let url = "";
             if (usuario) {
-                const userData = await axios.get(`https://users.roblox.com/v1/users/search?keyword=${usuario}&limit=1`);
-                if (userData.data.data.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
-                url = `https://www.roblox.com/users/${userData.data.data[0].id}/profile`;
+                url = `https://www.roblox.com/users/${usuario}/profile`;
             } else if (grupo) {
                 url = `https://www.roblox.com/groups/${grupo}`;
             } else if (item) {
                 url = `https://www.roblox.com/catalog/${item}`;
-            } else if (inventario) {
-                url = `https://www.roblox.com/users/${inventario}/inventory`;
-            } else if (musica) {
-                url = `https://www.roblox.com/users/${musica}/inventory#!/audio`;
             } else {
-                return res.status(400).json({ error: "No se puede tomar captura sin un usuario, grupo, ítem o inventario" });
+                return res.status(400).json({ error: "No se puede tomar captura sin un ID válido de usuario, grupo o ítem." });
             }
 
-            // **Optimización para Railway**
-            const browser = await puppeteer.launch({
-                executablePath: "/usr/bin/google-chrome", // Usa Chrome del sistema
-                args: ["--no-sandbox", "--disable-setuid-sandbox"]
-            });
-
+            const browser = await puppeteer.launch({ headless: "new" });
             const page = await browser.newPage();
             await page.goto(url, { waitUntil: "networkidle2" });
-
             const screenshot = await page.screenshot({ fullPage: true });
-            await browser.close();
 
+            await browser.close();
             res.setHeader("Content-Type", "image/png");
             return res.send(screenshot);
         }
 
-        // 📝 Obtener datos según la consulta
+        // 📝 Obtener datos según el ID proporcionado
         let responseData = {};
-
+        
         if (usuario) {
-            const userData = await axios.get(`https://users.roblox.com/v1/users/search?keyword=${usuario}&limit=1`);
-            if (userData.data.data.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
-            const user = userData.data.data[0];
-
+            const userData = await axios.get(`https://users.roblox.com/v1/users/${usuario}`);
             responseData = {
-                username: user.name,
-                displayName: user.displayName,
-                id: user.id,
-                avatarUrl: `https://www.roblox.com/headshot-thumbnail/image?userId=${user.id}&width=420&height=420&format=png`,
-                profileUrl: `https://www.roblox.com/users/${user.id}/profile`
+                username: userData.data.name,
+                displayName: userData.data.displayName,
+                id: userData.data.id,
+                avatarUrl: `https://www.roblox.com/headshot-thumbnail/image?userId=${userData.data.id}&width=420&height=420&format=png`,
+                profileUrl: `https://www.roblox.com/users/${userData.data.id}/profile`
             };
         }
 
-        if (inventario) {
-            const inventoryData = await axios.get(`https://www.roblox.com/users/inventory/json?userId=${inventario}&assetTypeId=2`);
-            responseData.items = inventoryData.data.Data.Items.slice(0, 5);
-        }
-
         if (grupo) {
-            const groupData = await axios.get(`https://groups.roblox.com/v2/users/${grupo}/groups/roles`);
-            responseData.groups = groupData.data.data.map(g => ({ name: g.group.name, role: g.role.name }));
-        }
-
-        if (musica) {
-            const audioData = await axios.get(`https://www.roblox.com/users/inventory/json?userId=${musica}&assetTypeId=3`);
-            responseData.audios = audioData.data.Data.Items.slice(0, 5);
+            const groupData = await axios.get(`https://groups.roblox.com/v1/groups/${grupo}`);
+            responseData = {
+                name: groupData.data.name,
+                owner: groupData.data.owner ? groupData.data.owner.username : "No tiene dueño",
+                memberCount: groupData.data.memberCount,
+                description: groupData.data.description
+            };
         }
 
         if (item) {
@@ -83,7 +63,7 @@ router.get("/", async (req, res) => {
             responseData = {
                 itemName: itemData.data.Name,
                 creator: itemData.data.Creator.Name,
-                price: itemData.data.PriceInRobux,
+                price: itemData.data.PriceInRobux || "Gratis",
                 assetId: itemData.data.AssetId,
                 imageUrl: `https://www.roblox.com/asset-thumbnail/image?assetId=${itemData.data.AssetId}&width=420&height=420&format=png`
             };
@@ -91,8 +71,8 @@ router.get("/", async (req, res) => {
 
         res.json(responseData);
     } catch (error) {
-        console.error("❌ Error en la API de Roblox:", error);
-        res.status(500).json({ error: "Error al obtener datos de Roblox" });
+        console.error(error);
+        res.status(500).json({ error: "Error al obtener datos de Roblox. Verifica que el ID ingresado sea válido." });
     }
 });
 
