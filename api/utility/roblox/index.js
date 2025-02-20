@@ -5,10 +5,10 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
     try {
-        const { usuario, grupo, item, foto } = req.query;
+        const { usuario, grupo, item, decal, audio, foto } = req.query;
 
-        if (!usuario && !grupo && !item) {
-            return res.status(400).json({ error: "Debes proporcionar un ID válido para usuario, grupo o item." });
+        if (!usuario && !grupo && !item && !decal && !audio) {
+            return res.status(400).json({ error: "Debes proporcionar un ID válido para usuario, grupo, item, decal o audio." });
         }
 
         // 📸 Captura de pantalla con Puppeteer-Core
@@ -26,7 +26,7 @@ router.get("/", async (req, res) => {
 
             const browser = await puppeteer.launch({
                 args: ["--no-sandbox", "--disable-setuid-sandbox"],
-                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium-browser", // Para Railway
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium-browser",
                 headless: "new"
             });
 
@@ -41,7 +41,7 @@ router.get("/", async (req, res) => {
 
         // 📝 Obtener datos según el ID proporcionado
         let responseData = {};
-        
+
         if (usuario) {
             const userData = await axios.get(`https://users.roblox.com/v1/users/${usuario}`);
             responseData = {
@@ -71,6 +71,27 @@ router.get("/", async (req, res) => {
                 price: itemData.data.PriceInRobux || "Gratis",
                 assetId: itemData.data.AssetId,
                 imageUrl: `https://www.roblox.com/asset-thumbnail/image?assetId=${itemData.data.AssetId}&width=420&height=420&format=png`
+            };
+        }
+
+        if (decal) {
+            const decalData = await axios.get(`https://economy.roblox.com/v1/assets/${decal}/details`);
+            responseData = {
+                decalName: decalData.data.Name,
+                creator: decalData.data.Creator.Name,
+                assetId: decalData.data.AssetId,
+                imageUrl: `https://www.roblox.com/asset-thumbnail/image?assetId=${decalData.data.AssetId}&width=420&height=420&format=png`
+            };
+        }
+
+        if (audio) {
+            const audioData = await axios.get(`https://economy.roblox.com/v1/assets/${audio}/details`);
+            responseData = {
+                audioName: audioData.data.Name,
+                creator: audioData.data.Creator.Name,
+                price: audioData.data.PriceInRobux || "Gratis",
+                assetId: audioData.data.AssetId,
+                audioUrl: `https://www.roblox.com/library/${audioData.data.AssetId}`
             };
         }
 
