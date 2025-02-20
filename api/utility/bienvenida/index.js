@@ -5,8 +5,9 @@ const path = require("path");
 const router = express.Router();
 
 // Registrar la fuente desde la raíz
-const fontPath = path.join(__dirname, "Nexa-Heavy.ttf");
+const fontPath = path.join(process.cwd(), "Nexa-Heavy.ttf");
 Canvas.registerFont(fontPath, { family: "Nexa" });
+
 
 router.get("/", async (req, res) => {
     try {
