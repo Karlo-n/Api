@@ -1,11 +1,13 @@
 const express = require("express");
 const axios = require("axios");
 const puppeteer = require("puppeteer-core");
+const fs = require("fs");
+const path = require("path");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
     try {
-        const { usuario, grupo, item, decal, audio, foto } = req.query;
+        const { usuario, grupo, item, decal, audio, foto, descargar } = req.query;
 
         if (!usuario && !grupo && !item && !decal && !audio) {
             return res.status(400).json({ error: "Debes proporcionar un ID válido para usuario, grupo, item, decal o audio." });
@@ -86,16 +88,36 @@ router.get("/", async (req, res) => {
 
         if (audio) {
             const audioData = await axios.get(`https://economy.roblox.com/v1/assets/${audio}/details`);
-            responseData = {
-                audioName: audioData.data.Name,
-                creator: audioData.data.Creator.Name,
-                price: audioData.data.PriceInRobux || "Gratis",
-                assetId: audioData.data.AssetId,
-                audioUrl: `https://www.roblox.com/library/${audioData.data.AssetId}`
-            };
+            const audioUrl = `https://api.roblox.com/asset/?id=${audioData.data.AssetId}`;
+
+            if (descargar === "true") {
+                // 📥 **Descargar y enviar el archivo de audio**
+                const audioResponse = await axios.get(audioUrl, { responseType: "stream" });
+                const filePath = path.join(__dirname, `${audioData.data.Name.replace(/[^a-zA-Z0-9]/g, "_")}.mp3`);
+
+                // Guardar archivo temporalmente
+                const writer = fs.createWriteStream(filePath);
+                audioResponse.data.pipe(writer);
+
+                writer.on("finish", () => {
+                    res.download(filePath, `${audioData.data.Name}.mp3`, () => {
+                        fs.unlinkSync(filePath); // Borrar archivo después de la descarga
+                    });
+                });
+            } else {
+                responseData = {
+                    audioName: audioData.data.Name,
+                    creator: audioData.data.Creator.Name,
+                    price: audioData.data.PriceInRobux || "Gratis",
+                    assetId: audioData.data.AssetId,
+                    audioUrl
+                };
+            }
         }
 
-        res.json(responseData);
+        if (!descargar) {
+            res.json(responseData);
+        }
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Error al obtener datos de Roblox. Verifica que el ID ingresado sea válido." });
