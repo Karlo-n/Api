@@ -1,6 +1,6 @@
 const express = require("express");
 const axios = require("axios");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -8,10 +8,10 @@ router.get("/", async (req, res) => {
         const { usuario, inventario, grupo, musica, item, foto } = req.query;
 
         if (!usuario && !inventario && !grupo && !musica && !item) {
-            return res.status(400).json({ error: "Debes proporcionar al menos un parámetro (usuario, inventario, grupo, musica o item)" });
+            return res.status(400).json({ error: "Debes proporcionar al menos un parámetro (usuario, inventario, grupo, música o ítem)" });
         }
 
-        // 📸 Si el usuario quiere captura de pantalla
+        // 📸 Captura de pantalla opcional
         if (foto === "true") {
             let url = "";
             if (usuario) {
@@ -30,18 +30,25 @@ router.get("/", async (req, res) => {
                 return res.status(400).json({ error: "No se puede tomar captura sin un usuario, grupo, ítem o inventario" });
             }
 
-            const browser = await puppeteer.launch({ headless: "new" });
+            // **Optimización para Railway**
+            const browser = await puppeteer.launch({
+                executablePath: "/usr/bin/google-chrome", // Usa Chrome del sistema
+                args: ["--no-sandbox", "--disable-setuid-sandbox"]
+            });
+
             const page = await browser.newPage();
             await page.goto(url, { waitUntil: "networkidle2" });
-            const screenshot = await page.screenshot({ fullPage: true });
 
+            const screenshot = await page.screenshot({ fullPage: true });
             await browser.close();
+
             res.setHeader("Content-Type", "image/png");
             return res.send(screenshot);
         }
 
         // 📝 Obtener datos según la consulta
         let responseData = {};
+
         if (usuario) {
             const userData = await axios.get(`https://users.roblox.com/v1/users/search?keyword=${usuario}&limit=1`);
             if (userData.data.data.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
@@ -84,7 +91,7 @@ router.get("/", async (req, res) => {
 
         res.json(responseData);
     } catch (error) {
-        console.error(error);
+        console.error("❌ Error en la API de Roblox:", error);
         res.status(500).json({ error: "Error al obtener datos de Roblox" });
     }
 });
