@@ -1,6 +1,4 @@
 const express = require("express");
-const Canvas = require("canvas");
-const axios = require("axios");
 const router = express.Router();
 
 // Lista de GIFs con nombres de animes
@@ -34,16 +32,6 @@ const kissGifs = [
     { url: "https://media.tenor.com/WN1SVoPkdRIAAAAM/anime-kiss.gif", anime: "Shigatsu wa Kimi no Uso" },
     { url: "https://media.tenor.com/kkBRxFGXbxYAAAAM/kiss.gif", anime: "Kaichou wa Maid-sama!" },
     { url: "https://media.tenor.com/r9ZU-Edb_NgAAAAM/kiss-anime-couple-kiss-neck-anime.gif", anime: "Kuzu no Honkai" },
-    { url: "https://pa1.narvii.com/5939/70a3e6f51aae6a89e29dce8eed68b34cd497907e_hq.gif", anime: "Kaichou wa Maid-sama!" },
-    { url: "https://media.tenor.com/3E9wNPpnltUAAAAM/zerotwo-anime.gif", anime: "Darling in the FranXX" },
-    { url: "https://media.tenor.com/rm3WYOj5pR0AAAAM/engage-kiss-anime-kiss.gif", anime: "Engage Kiss" },
-    { url: "https://media.tenor.com/H7ElWf1bKUkAAAAM/anime-kiss-miyamura-kiss.gif", anime: "Horimiya" },
-    { url: "https://media.tenor.com/vtOmnXkckscAAAAM/kiss.gif", anime: "Tonikawa: Over The Moon For You" },
-    { url: "https://media.tenor.com/fXn_Vgx-92YAAAAM/yuri-kiss.gif", anime: "Citrus" },
-    { url: "https://media.tenor.com/ebi-Gt7Rr_IAAAAM/funny.gif", anime: "Kaguya-sama: Love is War" },
-    { url: "https://media.tenor.com/WN1SVoPkdRIAAAAM/anime-kiss.gif", anime: "Shigatsu wa Kimi no Uso" },
-    { url: "https://media.tenor.com/K6ED8Jkuw2MAAAAM/gray-gray-fullbuster.gif", anime: "Fairy Tail" },
-    { url: "https://media.tenor.com/NoQvxyA4H0YAAAAC/engage-kiss-kisara.gif", anime: "Engage Kiss" },
     { url: "https://pa1.narvii.com/6001/1b811119db6c746925864948eb9925ca5ab63450_hq.gif", anime: "Chuunibyou demo Koi ga Shitai!" },
     { url: "https://ahegao.b-cdn.net/wp-content/uploads/2019/05/best-anime-kisses-steinsgate.gif", anime: "Steins;Gate" },
     { url: "https://img1.ak.crunchyroll.com/i/spire1/f0867433afc6aefaaa51b9cebaba8e891365107409_full.gif", anime: "Toradora!" },
@@ -60,43 +48,17 @@ router.get("/", async (req, res) => {
     try {
         // Seleccionar un GIF aleatorio
         const randomData = kissGifs[Math.floor(Math.random() * kissGifs.length)];
-        const randomGif = randomData.url;
-        const animeName = randomData.anime;
 
-        // Cargar la imagen desde la URL
-        const response = await axios.get(randomGif, { responseType: "arraybuffer" });
-        const imgBuffer = Buffer.from(response.data);
-
-        // Crear el lienzo
-        const canvas = Canvas.createCanvas(500, 500);
-        const ctx = canvas.getContext("2d");
-
-        // Cargar la imagen en el lienzo
-        const gifImage = await Canvas.loadImage(imgBuffer);
-        ctx.drawImage(gifImage, 0, 0, 500, 500);
-
-        // Agregar el nombre del anime
-        ctx.font = "bold 20px Arial";
-        ctx.fillStyle = "white";
-        ctx.textAlign = "center";
-        ctx.fillText(animeName, 250, 480); // Ubicación del texto
-
-        // Si el usuario quiere solo JSON, enviar respuesta sin imagen
-        if (req.query.json === "true") {
-            return res.json({
-                message: "💋 Beso Anime 💋",
-                anime: animeName,
-                gif: randomGif
-            });
-        }
-
-        // Enviar la imagen generada
-        res.setHeader("Content-Type", "image/png");
-        res.send(canvas.toBuffer());
+        // Responder con JSON
+        return res.json({
+            message: "💋 Beso Anime 💋",
+            anime: randomData.anime,
+            gif: randomData.url
+        });
 
     } catch (error) {
-        console.error("Error al generar la imagen:", error);
-        res.status(500).json({ error: "Error al generar la imagen de beso" });
+        console.error("Error al generar la respuesta:", error);
+        res.status(500).json({ error: "Error al generar la respuesta de beso" });
     }
 });
 
