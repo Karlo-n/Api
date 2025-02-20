@@ -9,6 +9,7 @@ const traductorRouter = require("./api/utility/traductor/index");
 const bienvenidaRouter = require("./api/utility/bienvenida/index");
 const shipRouter = require("./api/fun/ship/index");
 const kissRouter = require("./api/fun/kiss");
+const robloxRouter = require("./api/utility/roblox/index");
 
 // Usar rutas
 app.use("/api/utility/qr", qrRouter);
