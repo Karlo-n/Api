@@ -4,9 +4,13 @@ const axios = require("axios");
 const path = require("path");
 const router = express.Router();
 
+// Registrar la fuente desde la raíz
+const fontPath = path.join(__dirname, "Nexa-Heavy.ttf");
+Canvas.registerFont(fontPath, { family: "Nexa" });
+
 router.get("/", async (req, res) => {
     try {
-        const { avatar, texto1, texto2, texto3, background, texto1posicion, texto2posicion, texto3posicion, avatarposicion } = req.query;
+        const { avatar, texto1, texto2, texto3, background, texto1posicion, texto2posicion, texto3posicion, avatarposicion, color } = req.query;
 
         if (!avatar || !texto1 || !texto2 || !texto3 || !background) {
             return res.status(400).json({ error: "Faltan parámetros obligatorios. Debes enviar avatar, texto1, texto2, texto3 y background." });
@@ -60,9 +64,12 @@ router.get("/", async (req, res) => {
         ctx.arc(avatarPos[0] + 50, avatarPos[1] + 50, 50, 0, Math.PI * 2);
         ctx.stroke();
 
-        // **Dibujar los textos**
-        ctx.font = "bold 30px Arial";
-        ctx.fillStyle = "white";
+        // **Color de texto (por defecto blanco)**
+        const textColor = color || "white";
+
+        // **Dibujar los textos con la fuente Nexa**
+        ctx.font = "bold 30px Nexa";
+        ctx.fillStyle = textColor;
         ctx.textAlign = "left";
         ctx.fillText(texto1, texto1Pos[0], texto1Pos[1]);
         ctx.fillText(texto2, texto2Pos[0], texto2Pos[1]);
@@ -77,5 +84,8 @@ router.get("/", async (req, res) => {
         res.status(500).json({ error: "Error al generar la imagen de bienvenida." });
     }
 });
+
+module.exports = router;
+
 
 module.exports = router;
