@@ -8,6 +8,7 @@ const boostCardRouter = require("./api/utility/boostcard/index");
 const traductorRouter = require("./api/utility/traductor/index");
 const bienvenidaRouter = require("./api/utility/bienvenida/index");
 const shipRouter = require("./api/fun/ship/index");
+const kissRouter = require("./api/fun/kiss");
 
 // Usar rutas
 app.use("/api/utility/qr", qrRouter);
@@ -15,6 +16,7 @@ app.use("/api/utility/boostcard", boostCardRouter);
 app.use("/api/utility/traductor", traductorRouter);
 app.use("/api/fun/ship", shipRouter);
 app.use("/api/utility/bienvenida", bienvenidaRouter);
+app.use("/api/fun/kiss", kissRouter);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
