@@ -18,6 +18,7 @@ app.use("/api/utility/traductor", traductorRouter);
 app.use("/api/fun/ship", shipRouter);
 app.use("/api/utility/bienvenida", bienvenidaRouter);
 app.use("/api/fun/kiss", kissRouter);
+app.use("/api/utility/roblox", robloxRouter);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
