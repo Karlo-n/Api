@@ -33,7 +33,7 @@ const kissGifs = [
     { url: "https://media.tenor.com/dn_KuOESmUYAAAAM/engage-kiss-anime-kiss.gif", anime: "Engage Kiss" },
     { url: "https://media.tenor.com/WN1SVoPkdRIAAAAM/anime-kiss.gif", anime: "Shigatsu wa Kimi no Uso" },
     { url: "https://media.tenor.com/kkBRxFGXbxYAAAAM/kiss.gif", anime: "Kaichou wa Maid-sama!" },
-    { url: "https://media.tenor.com/r9ZU-Edb_NgAAAAM/kiss-anime-couple-kiss-neck-anime.gif", anime: "Kuzu no Honkai" }
+    { url: "https://media.tenor.com/r9ZU-Edb_NgAAAAM/kiss-anime-couple-kiss-neck-anime.gif", anime: "Kuzu no Honkai" },
     { url: "https://pa1.narvii.com/5939/70a3e6f51aae6a89e29dce8eed68b34cd497907e_hq.gif", anime: "Kaichou wa Maid-sama!" },
     { url: "https://media.tenor.com/3E9wNPpnltUAAAAM/zerotwo-anime.gif", anime: "Darling in the FranXX" },
     { url: "https://media.tenor.com/rm3WYOj5pR0AAAAM/engage-kiss-anime-kiss.gif", anime: "Engage Kiss" },
