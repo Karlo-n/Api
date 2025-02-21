@@ -1,7 +1,6 @@
 const express = require("express");
 const axios = require("axios");
-const { chromium } = require("playwright");
-const { execSync } = require("child_process"); // Agregamos esto
+const captureWebsite = require("capture-website");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -31,33 +30,14 @@ router.get("/", async (req, res) => {
         // 📸 **Captura de pantalla si el usuario lo solicita**
         if (foto === "true") {
             try {
-                // 🔧 **Forzar instalación de Chromium si no existe**
-                execSync("npx playwright install --with-deps", { stdio: "inherit" });
-
-                // 🚀 Iniciar navegador en modo headless
-                const browser = await chromium.launch({
-                    headless: true,
-                    args: [
-                        "--no-sandbox",
-                        "--disable-setuid-sandbox",
-                        "--disable-dev-shm-usage",
-                        "--disable-gpu",
-                        "--no-first-run",
-                        "--no-zygote"
-                    ]
+                const screenshot = await captureWebsite.buffer(`https://www.roblox.com/users/${usuario}/profile`, {
+                    fullPage: true,
+                    delay: 2,
+                    scaleFactor: 1
                 });
 
-                const page = await browser.newPage();
-                await page.goto(`https://www.roblox.com/users/${usuario}/profile`, { waitUntil: "domcontentloaded" });
-
-                await page.waitForTimeout(3000);
-
-                const screenshot = await page.screenshot({ fullPage: true });
-
-                await browser.close();
                 res.setHeader("Content-Type", "image/png");
                 return res.send(screenshot);
-
             } catch (err) {
                 console.error("❌ Error al tomar la captura:", err);
                 return res.status(500).json({ error: "❌ No se pudo tomar la captura de pantalla." });
