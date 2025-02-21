@@ -10,6 +10,7 @@ const bienvenidaRouter = require("./api/utility/bienvenida/index");
 const shipRouter = require("./api/fun/ship/index");
 const kissRouter = require("./api/fun/kiss");
 const robloxRouter = require("./api/utility/roblox/index");
+const robloxVerificacionRouter = require("./api/utility/roblox_verificacion/index");
 
 // Usar rutas
 app.use("/api/utility/qr", qrRouter);
@@ -19,6 +20,7 @@ app.use("/api/fun/ship", shipRouter);
 app.use("/api/utility/bienvenida", bienvenidaRouter);
 app.use("/api/fun/kiss", kissRouter);
 app.use("/api/utility/roblox", robloxRouter);
+app.use("/api/utility/roblox_verificacion", robloxVerificacionRouter);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
