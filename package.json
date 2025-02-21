@@ -4,7 +4,7 @@
   "description": "API Karl - Diversión y Utilidades",
   "main": "index.js",
   "scripts": {
-    "preinstall": "npx playwright install --with-deps",
+    "postinstall": "npx playwright install --with-deps",
     "start": "node index.js"
   },
   "dependencies": {
