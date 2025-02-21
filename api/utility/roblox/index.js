@@ -1,5 +1,6 @@
 const express = require("express");
 const axios = require("axios");
+const { chromium } = require("playwright");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -26,17 +27,21 @@ router.get("/", async (req, res) => {
             "📖 Descripción": userData.data.description || "No tiene descripción"
         };
 
-        // 📸 **Captura de pantalla con `capture-website`**
+        // 📸 **Captura de pantalla con Playwright**
         if (foto === "true") {
-            const captureWebsite = await import("capture-website");
-
-            const screenshotBuffer = await captureWebsite.buffer(`https://www.google.com/`, {
-                fullPage: true,
-                delay: 3, // Espera 3 segundos antes de tomar la captura
-                launchOptions: {
-                    args: ["--no-sandbox", "--disable-setuid-sandbox"]
-                }
+            const browser = await chromium.launch({
+                headless: true, // Usa modo sin interfaz gráfica
+                args: ["--no-sandbox", "--disable-setuid-sandbox"]
             });
+
+            const page = await browser.newPage();
+            await page.goto(`https://www.roblox.com/users/${usuario}/profile`, { waitUntil: "load", timeout: 10000 });
+            
+            await page.waitForTimeout(3000); // Esperar 3 segundos para cargar contenido dinámico
+
+            const screenshotBuffer = await page.screenshot({ fullPage: true });
+
+            await browser.close();
 
             res.setHeader("Content-Type", "image/png");
             return res.send(screenshotBuffer);
@@ -44,8 +49,8 @@ router.get("/", async (req, res) => {
 
         res.json(responseData);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "❌ Error al obtener datos de Roblox." });
+        console.error("❌ Error en la API:", error);
+        res.status(500).json({ error: "❌ Error al obtener datos de Roblox o tomar la captura." });
     }
 });
 
