@@ -26,12 +26,16 @@ router.get("/", async (req, res) => {
             "📖 Descripción": userData.data.description || "No tiene descripción"
         };
 
-        // 📸 **Captura de pantalla con `capture-website` (Debe usarse con `import()`)**
+        // 📸 **Captura de pantalla con `capture-website`**
         if (foto === "true") {
             const captureWebsite = await import("capture-website");
 
             const screenshotBuffer = await captureWebsite.buffer(`https://www.roblox.com/users/${usuario}/profile`, {
-                fullPage: true
+                fullPage: true,
+                delay: 3, // Espera 3 segundos antes de tomar la captura
+                launchOptions: {
+                    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+                }
             });
 
             res.setHeader("Content-Type", "image/png");
