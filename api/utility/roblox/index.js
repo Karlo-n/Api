@@ -1,6 +1,5 @@
 const express = require("express");
 const axios = require("axios");
-const captureWebsite = require("capture-website");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -27,21 +26,16 @@ router.get("/", async (req, res) => {
             "📖 Descripción": userData.data.description || "No tiene descripción"
         };
 
-        // 📸 **Captura de pantalla si el usuario lo solicita**
+        // 📸 **Captura de pantalla con `capture-website` (Debe usarse con `import()`)**
         if (foto === "true") {
-            try {
-                const screenshot = await captureWebsite.buffer(`https://www.roblox.com/users/${usuario}/profile`, {
-                    fullPage: true,
-                    delay: 2,
-                    scaleFactor: 1
-                });
+            const captureWebsite = await import("capture-website");
 
-                res.setHeader("Content-Type", "image/png");
-                return res.send(screenshot);
-            } catch (err) {
-                console.error("❌ Error al tomar la captura:", err);
-                return res.status(500).json({ error: "❌ No se pudo tomar la captura de pantalla." });
-            }
+            const screenshotBuffer = await captureWebsite.buffer(`https://www.roblox.com/users/${usuario}/profile`, {
+                fullPage: true
+            });
+
+            res.setHeader("Content-Type", "image/png");
+            return res.send(screenshotBuffer);
         }
 
         res.json(responseData);
