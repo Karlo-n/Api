@@ -88,21 +88,22 @@ router.get("/", async (req, res) => {
 
         if (audio) {
             const audioData = await axios.get(`https://economy.roblox.com/v1/assets/${audio}/details`);
-            const audioUrl = `https://api.roblox.com/asset/?id=${audioData.data.AssetId}`;
+            if (!audioData.data.AssetId) return res.status(404).json({ error: "Audio no encontrado" });
+
+            const audioDownloadUrl = `https://media.roblox.com/asset/?id=${audioData.data.AssetId}`;
 
             if (descargar === "true") {
                 // 📥 **Descargar y enviar el archivo de audio**
-                const audioResponse = await axios.get(audioUrl, { responseType: "stream" });
-                const filePath = path.join(__dirname, `${audioData.data.Name.replace(/[^a-zA-Z0-9]/g, "_")}.mp3`);
+                const audioResponse = await axios.get(audioDownloadUrl, { responseType: "arraybuffer" });
+                const fileName = `${audioData.data.Name.replace(/[^a-zA-Z0-9]/g, "_")}.mp3`;
+                const filePath = path.join(__dirname, fileName);
 
                 // Guardar archivo temporalmente
-                const writer = fs.createWriteStream(filePath);
-                audioResponse.data.pipe(writer);
+                fs.writeFileSync(filePath, audioResponse.data);
 
-                writer.on("finish", () => {
-                    res.download(filePath, `${audioData.data.Name}.mp3`, () => {
-                        fs.unlinkSync(filePath); // Borrar archivo después de la descarga
-                    });
+                // Enviar el archivo al usuario y eliminarlo después
+                res.download(filePath, fileName, (err) => {
+                    fs.unlinkSync(filePath); // Borrar archivo después de la descarga
                 });
             } else {
                 responseData = {
@@ -110,7 +111,7 @@ router.get("/", async (req, res) => {
                     creator: audioData.data.Creator.Name,
                     price: audioData.data.PriceInRobux || "Gratis",
                     assetId: audioData.data.AssetId,
-                    audioUrl
+                    audioUrl: audioDownloadUrl
                 };
             }
         }
