@@ -4,8 +4,6 @@
   "description": "API Karl - Diversión y Utilidades",
   "main": "index.js",
   "scripts": {
-    "preinstall": "npx playwright install-deps",
-    "postinstall": "npx playwright install chromium",
     "start": "node index.js"
   },
   "dependencies": {
@@ -13,6 +11,6 @@
     "qrcode": "^1.5.0",
     "canvas": "^3.1.0",
     "axios": "^1.7.9",
-    "playwright": "^1.41.0"
+    "capture-website": "^2.6.0"
   }
 }
