@@ -1,6 +1,6 @@
 const express = require("express");
 const axios = require("axios");
-const { chromium } = require("playwright"); // Reemplazo de Puppeteer-Core con Playwright
+const playwright = require("playwright"); // ✅ Usamos Playwright en lugar de Puppeteer-Core
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -12,11 +12,11 @@ router.get("/", async (req, res) => {
         }
 
         let responseData = {};
-    
-        // 📝 Obtener datos del usuario
+
+        // 📌 Obtener datos del usuario
         const userData = await axios.get(`https://users.roblox.com/v1/users/${usuario}`);
         const avatarData = await axios.get(`https://thumbnails.roblox.com/v1/users/avatar?userIds=${usuario}&size=420x420&format=Png&isCircular=false`);
-    
+
         responseData = {
             "👤 Usuario": userData.data.name,
             "📛 Nombre para mostrar": userData.data.displayName,
@@ -27,11 +27,15 @@ router.get("/", async (req, res) => {
             "📖 Descripción": userData.data.description || "No tiene descripción"
         };
 
-        // 📸 Captura de pantalla del perfil si el usuario lo solicita
+        // 📸 **Captura de pantalla del perfil si el usuario lo solicita**
         if (foto === "true") {
-            const browser = await chromium.launch({ headless: true });
+            const browser = await playwright.chromium.launch({
+                args: ["--no-sandbox"],
+                headless: true
+            });
+
             const page = await browser.newPage();
-            await page.goto(`https://www.roblox.com/users/${usuario}/profile`, { waitUntil: "networkidle" });
+            await page.goto(`https://www.roblox.com/users/${usuario}/profile`, { waitUntil: "networkidle2" });
             const screenshot = await page.screenshot({ fullPage: true });
 
             await browser.close();
