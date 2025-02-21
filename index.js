@@ -11,6 +11,7 @@ const shipRouter = require("./api/fun/ship/index");
 const kissRouter = require("./api/fun/kiss");
 const robloxRouter = require("./api/utility/roblox/index");
 const robloxVerificacionRouter = require("./api/utility/roblox_verificacion/index");
+const screenshotRouter = require("./api/utility/screenshot/index");
 
 // Usar rutas
 app.use("/api/utility/qr", qrRouter);
@@ -21,6 +22,7 @@ app.use("/api/utility/bienvenida", bienvenidaRouter);
 app.use("/api/fun/kiss", kissRouter);
 app.use("/api/utility/roblox", robloxRouter);
 app.use("/api/utility/roblox_verificacion", robloxVerificacionRouter);
+app.use("/api/utility/screenshot", screenshotRouter);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
@@ -39,8 +41,9 @@ app.get("/", (req, res) => {
             "/api/utility/qr",
             "/api/utility/carta_ranked",
             "/api/utility/carta_nivel",
-            "/api/utility/instragam",
-            "/api/utility/twitter"
+            "/api/utility/roblox",
+            "/api/utility/roblox_verificacion",
+            "/api/utility/screenshot"
         ]
     }, null, 4)); // <--- Aquí está bien formateado
 });
