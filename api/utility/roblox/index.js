@@ -30,7 +30,7 @@ router.get("/", async (req, res) => {
         if (foto === "true") {
             const captureWebsite = await import("capture-website");
 
-            const screenshotBuffer = await captureWebsite.buffer(`https://www.roblox.com/users/${usuario}/profile`, {
+            const screenshotBuffer = await captureWebsite.buffer(`https://www.google.com/`, {
                 fullPage: true,
                 delay: 3, // Espera 3 segundos antes de tomar la captura
                 launchOptions: {
