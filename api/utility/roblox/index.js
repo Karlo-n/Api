@@ -1,6 +1,7 @@
 const express = require("express");
 const axios = require("axios");
-const playwright = require("playwright"); // ✅ Usamos Playwright en lugar de Puppeteer-Core
+const { chromium } = require("playwright");
+const { execSync } = require("child_process"); // Agregamos esto
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -27,26 +28,46 @@ router.get("/", async (req, res) => {
             "📖 Descripción": userData.data.description || "No tiene descripción"
         };
 
-        // 📸 **Captura de pantalla del perfil si el usuario lo solicita**
+        // 📸 **Captura de pantalla si el usuario lo solicita**
         if (foto === "true") {
-            const browser = await playwright.chromium.launch({
-                args: ["--no-sandbox"],
-                headless: true
-            });
+            try {
+                // 🔧 **Forzar instalación de Chromium si no existe**
+                execSync("npx playwright install --with-deps", { stdio: "inherit" });
 
-            const page = await browser.newPage();
-            await page.goto(`https://www.roblox.com/users/${usuario}/profile`, { waitUntil: "networkidle2" });
-            const screenshot = await page.screenshot({ fullPage: true });
+                // 🚀 Iniciar navegador en modo headless
+                const browser = await chromium.launch({
+                    headless: true,
+                    args: [
+                        "--no-sandbox",
+                        "--disable-setuid-sandbox",
+                        "--disable-dev-shm-usage",
+                        "--disable-gpu",
+                        "--no-first-run",
+                        "--no-zygote"
+                    ]
+                });
 
-            await browser.close();
-            res.setHeader("Content-Type", "image/png");
-            return res.send(screenshot);
+                const page = await browser.newPage();
+                await page.goto(`https://www.roblox.com/users/${usuario}/profile`, { waitUntil: "domcontentloaded" });
+
+                await page.waitForTimeout(3000);
+
+                const screenshot = await page.screenshot({ fullPage: true });
+
+                await browser.close();
+                res.setHeader("Content-Type", "image/png");
+                return res.send(screenshot);
+
+            } catch (err) {
+                console.error("❌ Error al tomar la captura:", err);
+                return res.status(500).json({ error: "❌ No se pudo tomar la captura de pantalla." });
+            }
         }
 
         res.json(responseData);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "❌ Error al obtener datos de Roblox. Verifica que el ID ingresado sea válido." });
+        res.status(500).json({ error: "❌ Error al obtener datos de Roblox." });
     }
 });
 
