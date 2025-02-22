@@ -68,7 +68,7 @@ router.get("/", async (req, res) => {
         ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
         // Dibujar avatar correctamente en un círculo sin bordes extraños
-        const avatarX = -5;
+        const avatarX =  5;
         const avatarY = -2;
         const avatarWidth = 350; // Expandido solo en X
         const avatarHeight = 160; // Mantiene la altura
