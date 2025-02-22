@@ -93,14 +93,25 @@ router.get("/", async (req, res) => {
         ctx.font = "20px Nexa";
         ctx.fillText(`XP: ${xp} / ${xpmax}`, 200, 150);
 
-        // Dibujar barra de XP
+        // Dibujar barra de XP con esquinas redondeadas
+        const barX = 200;
+        const barY = 170;
         const barWidth = 500;
         const barHeight = 25;
+        const radius = 10;
         const filledWidth = (xp / xpmax) * barWidth;
+
+        // Barra de fondo
         ctx.fillStyle = "#777777";
-        ctx.fillRect(200, 170, barWidth, barHeight);
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, barWidth, barHeight, radius);
+        ctx.fill();
+
+        // Barra de progreso
         ctx.fillStyle = "#FFD700";
-        ctx.fillRect(200, 170, filledWidth, barHeight);
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, filledWidth, barHeight, radius);
+        ctx.fill();
 
         // Dibujar rango
         ctx.font = "bold 20px Nexa";
