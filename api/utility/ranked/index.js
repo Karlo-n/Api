@@ -73,7 +73,7 @@ router.get("/", async (req, res) => {
         ctx.arc(100, 100, 80, 0, Math.PI * 2);
         ctx.closePath();
         ctx.clip();
-        ctx.drawImage(avatarImage, 0, 5, 160, 160);
+        ctx.drawImage(avatarImage, -5, -5, 180, 180);
         ctx.restore();
         ctx.lineWidth = 3;
         ctx.strokeStyle = "white";
