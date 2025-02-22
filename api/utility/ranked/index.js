@@ -64,25 +64,8 @@ router.get("/", async (req, res) => {
             return res.status(500).json({ error: "Error al cargar las imágenes." });
         }
 
-        // **Dibujar fondo sin expandir demasiado**
-        let imgWidth = background.width;
-        let imgHeight = background.height;
-
-        if (imgWidth > canvas.width) {
-            const scale = canvas.width / imgWidth;
-            imgWidth *= scale;
-            imgHeight *= scale;
-        }
-        if (imgHeight > canvas.height) {
-            const scale = canvas.height / imgHeight;
-            imgWidth *= scale;
-            imgHeight *= scale;
-        }
-
-        const offsetX = (canvas.width - imgWidth) / 2;
-        const offsetY = (canvas.height - imgHeight) / 2;
-
-        ctx.drawImage(background, offsetX, offsetY, imgWidth, imgHeight);
+        // Dibujar el fondo expandido sin márgenes blancos
+        ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
         // Dibujar avatar con borde
         ctx.save();
@@ -98,7 +81,7 @@ router.get("/", async (req, res) => {
         ctx.arc(100, 100, 80, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Estilos de texto (todos en #b0b0b0)
+        // Estilos de texto
         ctx.fillStyle = "#b0b0b0";
         ctx.textAlign = "left";
 
