@@ -64,8 +64,23 @@ router.get("/", async (req, res) => {
             return res.status(500).json({ error: "Error al cargar las imágenes." });
         }
 
-        // Dibujar el fondo
-        ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+        // **Dibujar fondo sin distorsión**
+        const imgRatio = background.width / background.height;
+        const canvasRatio = canvas.width / canvas.height;
+        let drawWidth, drawHeight, offsetX, offsetY;
+
+        if (imgRatio > canvasRatio) {
+            drawHeight = canvas.height;
+            drawWidth = background.width * (canvas.height / background.height);
+            offsetX = (canvas.width - drawWidth) / 2;
+            offsetY = 0;
+        } else {
+            drawWidth = canvas.width;
+            drawHeight = background.height * (canvas.width / background.width);
+            offsetX = 0;
+            offsetY = (canvas.height - drawHeight) / 2;
+        }
+        ctx.drawImage(background, offsetX, offsetY, drawWidth, drawHeight);
 
         // Dibujar avatar con borde
         ctx.save();
@@ -81,7 +96,7 @@ router.get("/", async (req, res) => {
         ctx.arc(100, 100, 80, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Estilos de texto
+        // Estilos de texto (todos en #b0b0b0)
         ctx.fillStyle = "#b0b0b0";
         ctx.textAlign = "left";
 
@@ -110,8 +125,8 @@ router.get("/", async (req, res) => {
         ctx.roundRect(barX, barY, barWidth, barHeight, 12);
         ctx.fill();
 
-        // Barra de progreso
-        ctx.fillStyle = "#FFD700";
+        // Barra de progreso: Amarillo con boost, Azul sin boost
+        ctx.fillStyle = xpboost ? "#FFD700" : "#3498db";
         ctx.beginPath();
         ctx.roundRect(barX, barY, filledWidth, barHeight, 12);
         ctx.fill();
