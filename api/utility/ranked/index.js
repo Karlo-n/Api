@@ -67,19 +67,14 @@ router.get("/", async (req, res) => {
         // Dibujar el fondo expandido sin márgenes blancos
         ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
-        // Dibujar avatar con borde
+        // Dibujar avatar correctamente en un círculo sin fondo blanco
         ctx.save();
         ctx.beginPath();
-        ctx.arc(100, 100, 80, 0, Math.PI * 2);
+        ctx.arc(100, 100, 80, 0, Math.PI * 2); // Recorte circular
         ctx.closePath();
         ctx.clip();
-        ctx.drawImage(avatarImage, 50, 50, 300, 300);
+        ctx.drawImage(avatarImage, 20, 20, 160, 160); // Ajuste correcto
         ctx.restore();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "white";
-        ctx.beginPath();
-        ctx.arc(100, 100, 80, 0, Math.PI * 2);
-        ctx.stroke();
 
         // Estilos de texto
         ctx.fillStyle = "#b0b0b0";
