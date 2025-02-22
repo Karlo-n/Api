@@ -98,19 +98,27 @@ router.get("/", async (req, res) => {
         const barY = 170;
         const barWidth = 500;
         const barHeight = 25;
-        const radius = 10;
+        const radius = barHeight / 2;
         const filledWidth = (xp / xpmax) * barWidth;
 
-        // Barra de fondo
+        // **Barra de fondo con esquinas curvas**
         ctx.fillStyle = "#777777";
         ctx.beginPath();
-        ctx.roundRect(barX, barY, barWidth, barHeight, radius);
+        ctx.moveTo(barX + radius, barY);
+        ctx.lineTo(barX + barWidth - radius, barY);
+        ctx.arc(barX + barWidth - radius, barY + radius, radius, 1.5 * Math.PI, 0.5 * Math.PI);
+        ctx.lineTo(barX + radius, barY + barHeight);
+        ctx.arc(barX + radius, barY + radius, radius, 0.5 * Math.PI, 1.5 * Math.PI);
         ctx.fill();
 
-        // Barra de progreso
+        // **Barra de progreso con esquinas curvas**
         ctx.fillStyle = "#FFD700";
         ctx.beginPath();
-        ctx.roundRect(barX, barY, filledWidth, barHeight, radius);
+        ctx.moveTo(barX + radius, barY);
+        ctx.lineTo(barX + Math.max(filledWidth - radius, radius), barY);
+        ctx.arc(barX + Math.max(filledWidth - radius, radius), barY + radius, radius, 1.5 * Math.PI, 0.5 * Math.PI);
+        ctx.lineTo(barX + radius, barY + barHeight);
+        ctx.arc(barX + radius, barY + radius, radius, 0.5 * Math.PI, 1.5 * Math.PI);
         ctx.fill();
 
         // Dibujar rango
