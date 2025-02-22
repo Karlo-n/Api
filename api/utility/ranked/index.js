@@ -4,8 +4,8 @@ const axios = require("axios");
 const path = require("path");
 const router = express.Router();
 
-// Registrar la fuente personalizada
-const fontPath = path.join(__dirname, "../Oswald-VariableFont_wght.ttf");
+// Registrar la fuente personalizada desde la raíz
+const fontPath = path.join(__dirname, "Oswald-VariableFont_wght.ttf");
 Canvas.registerFont(fontPath, { family: "Oswald" });
 
 // Rutas de imágenes base según los parámetros
