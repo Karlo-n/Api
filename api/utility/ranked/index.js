@@ -73,7 +73,7 @@ router.get("/", async (req, res) => {
         ctx.arc(100, 100, 80, 0, Math.PI * 2); // Recorte circular
         ctx.closePath();
         ctx.clip();
-        ctx.drawImage(avatarImage, 20, 20, 160, 160); // Ajuste correcto
+        ctx.drawImage(avatarImage, 0, 0, 160, 160); // Ajuste correcto
         ctx.restore();
 
         // Estilos de texto
