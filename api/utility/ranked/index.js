@@ -64,23 +64,25 @@ router.get("/", async (req, res) => {
             return res.status(500).json({ error: "Error al cargar las imágenes." });
         }
 
-        // **Dibujar fondo sin distorsión**
-        const imgRatio = background.width / background.height;
-        const canvasRatio = canvas.width / canvas.height;
-        let drawWidth, drawHeight, offsetX, offsetY;
+        // **Dibujar fondo sin expandir demasiado**
+        let imgWidth = background.width;
+        let imgHeight = background.height;
 
-        if (imgRatio > canvasRatio) {
-            drawHeight = canvas.height;
-            drawWidth = background.width * (canvas.height / background.height);
-            offsetX = (canvas.width - drawWidth) / 2;
-            offsetY = 0;
-        } else {
-            drawWidth = canvas.width;
-            drawHeight = background.height * (canvas.width / background.width);
-            offsetX = 0;
-            offsetY = (canvas.height - drawHeight) / 2;
+        if (imgWidth > canvas.width) {
+            const scale = canvas.width / imgWidth;
+            imgWidth *= scale;
+            imgHeight *= scale;
         }
-        ctx.drawImage(background, offsetX, offsetY, drawWidth, drawHeight);
+        if (imgHeight > canvas.height) {
+            const scale = canvas.height / imgHeight;
+            imgWidth *= scale;
+            imgHeight *= scale;
+        }
+
+        const offsetX = (canvas.width - imgWidth) / 2;
+        const offsetY = (canvas.height - imgHeight) / 2;
+
+        ctx.drawImage(background, offsetX, offsetY, imgWidth, imgHeight);
 
         // Dibujar avatar con borde
         ctx.save();
