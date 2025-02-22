@@ -4,6 +4,10 @@ const axios = require("axios");
 const path = require("path");
 const router = express.Router();
 
+// Registrar la fuente personalizada
+const fontPath = path.join(__dirname, "../../Oswald-VariableFont_wght.ttf");
+Canvas.registerFont(fontPath, { family: "Oswald" });
+
 // Rutas de imágenes base según los parámetros
 const backgrounds = {
     "normal": "obligatorio_api.png",
@@ -78,19 +82,19 @@ router.get("/", async (req, res) => {
         ctx.stroke();
 
         // Estilos de texto
-        ctx.fillStyle = "white";
+        ctx.fillStyle = "#b0b0b0";
         ctx.textAlign = "left";
 
         // Dibujar nombre de usuario
-        ctx.font = "bold 35px Nexa";
+        ctx.font = "bold 35px Oswald";
         ctx.fillText(username, 200, 50);
 
         // Dibujar nivel
-        ctx.font = "bold 25px Nexa";
+        ctx.font = "bold 25px Oswald";
         ctx.fillText(`Nivel: ${nivel}`, 200, 100);
 
         // Dibujar XP
-        ctx.font = "20px Nexa";
+        ctx.font = "20px Oswald";
         ctx.fillText(`XP: ${xp} / ${xpmax}`, 200, 150);
 
         // Dibujar barra de XP con esquinas redondeadas
@@ -98,31 +102,22 @@ router.get("/", async (req, res) => {
         const barY = 170;
         const barWidth = 500;
         const barHeight = 25;
-        const radius = barHeight / 2;
         const filledWidth = (xp / xpmax) * barWidth;
 
-        // **Barra de fondo con esquinas curvas**
+        // Fondo de la barra
         ctx.fillStyle = "#777777";
         ctx.beginPath();
-        ctx.moveTo(barX + radius, barY);
-        ctx.lineTo(barX + barWidth - radius, barY);
-        ctx.arc(barX + barWidth - radius, barY + radius, radius, 1.5 * Math.PI, 0.5 * Math.PI);
-        ctx.lineTo(barX + radius, barY + barHeight);
-        ctx.arc(barX + radius, barY + radius, radius, 0.5 * Math.PI, 1.5 * Math.PI);
+        ctx.roundRect(barX, barY, barWidth, barHeight, 12);
         ctx.fill();
 
-        // **Barra de progreso con esquinas curvas**
+        // Barra de progreso
         ctx.fillStyle = "#FFD700";
         ctx.beginPath();
-        ctx.moveTo(barX + radius, barY);
-        ctx.lineTo(barX + Math.max(filledWidth - radius, radius), barY);
-        ctx.arc(barX + Math.max(filledWidth - radius, radius), barY + radius, radius, 1.5 * Math.PI, 0.5 * Math.PI);
-        ctx.lineTo(barX + radius, barY + barHeight);
-        ctx.arc(barX + radius, barY + radius, radius, 0.5 * Math.PI, 1.5 * Math.PI);
+        ctx.roundRect(barX, barY, filledWidth, barHeight, 12);
         ctx.fill();
 
         // Dibujar rango
-        ctx.font = "bold 20px Nexa";
+        ctx.font = "bold 20px Oswald";
         ctx.fillText(`Rango: ${rango}`, 200, 220);
 
         // Parámetros opcionales
