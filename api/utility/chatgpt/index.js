@@ -40,26 +40,27 @@ router.get("/", verificarKey, async (req, res) => {
             finalPrompt = `Instrucciones para la IA: ${rol}.\n\n${prompt}`;
         }
 
-        // Obtener la key de ChatGPT desde las variables de entorno o usar una por defecto
-        const CHATGPT_API_KEY = process.env.CHATGPT_KEY || "Kastg_ykMAbn6ipjRxHW6NpWRQ_free";
+        // Codificar el prompt para evitar errores en la URL
+        const encodedPrompt = encodeURIComponent(finalPrompt);
 
-        // URL de la API de ChatGPT con la key verificada
-        const CHATGPT_API = `https://api.kastg.xyz/api/ai/chatgptV4?prompt=${prompt}&key=Kastg_ykMAbn6ipjRxHW6NpWRQ_free`;
+        // **URL de la API de ChatGPT**
+        const CHATGPT_API_URL = `https://api.kastg.xyz/api/ai/chatgptV4?prompt=${encodedPrompt}&key=Kastg_ykMAbn6ipjRxHW6NpWRQ_free`;
 
-        // Hacer la solicitud a ChatGPT con manejo de errores
-        const response = await axios.get(CHATGPT_API, { timeout: 15000 }); // Tiempo de espera de 15s
+        // **Hacer la solicitud a ChatGPT**
+        const response = await axios.get(CHATGPT_API_URL, { timeout: 15000 });
 
-        if (!response.data || !response.data.response) {
-            return res.status(500).json({ error: "❌ La API de ChatGPT no devolvió una respuesta válida." });
+        // **Validar la respuesta**
+        if (!response.data || typeof response.data.response !== "string") {
+            throw new Error("La API de ChatGPT no devolvió una respuesta válida.");
         }
 
-        // Enviar la respuesta final
+        // **Enviar la respuesta final**
         res.json({ respuesta: response.data.response });
 
     } catch (error) {
         console.error("❌ Error en la API de ChatGPT:", error.message);
 
-        // Capturar errores específicos de Axios
+        // **Capturar errores específicos de Axios**
         if (error.response) {
             return res.status(error.response.status).json({ 
                 error: "❌ Error al procesar la solicitud.", 
