@@ -46,23 +46,30 @@ router.get("/", verificarKey, async (req, res) => {
         // URL de la API de ChatGPT con la key verificada
         const CHATGPT_API = `https://api.kastg.xyz/api/ai/chatgptV4?prompt=${encodeURIComponent(finalPrompt)}&key=${CHATGPT_API_KEY}`;
 
-        // Hacer la solicitud a ChatGPT
-        const response = await axios.get(CHATGPT_API);
+        // Hacer la solicitud a ChatGPT con manejo de errores
+        const response = await axios.get(CHATGPT_API, { timeout: 15000 }); // Tiempo de espera de 15s
 
-        // Verificar si la API de ChatGPT responde correctamente
         if (!response.data || !response.data.response) {
-            throw new Error("La API de ChatGPT no devolvió una respuesta válida.");
+            return res.status(500).json({ error: "❌ La API de ChatGPT no devolvió una respuesta válida." });
         }
 
         // Enviar la respuesta final
         res.json({ respuesta: response.data.response });
 
     } catch (error) {
-        console.error("❌ Error en la API de ChatGPT:", error.response ? error.response.data : error.message);
-        res.status(500).json({ 
-            error: "❌ Error al procesar la solicitud.", 
-            detalles: error.response ? error.response.data : error.message 
-        });
+        console.error("❌ Error en la API de ChatGPT:", error.message);
+
+        // Capturar errores específicos de Axios
+        if (error.response) {
+            return res.status(error.response.status).json({ 
+                error: "❌ Error al procesar la solicitud.", 
+                detalles: error.response.data 
+            });
+        } else if (error.code === "ECONNABORTED") {
+            return res.status(500).json({ error: "❌ La solicitud a la API de ChatGPT tardó demasiado en responder." });
+        } else {
+            return res.status(500).json({ error: "❌ Error interno del servidor.", detalles: error.message });
+        }
     }
 });
 
