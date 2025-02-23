@@ -41,7 +41,7 @@ router.get("/", verificarKey, async (req, res) => {
         }
 
         // Obtener la key de ChatGPT desde las variables de entorno o usar una por defecto
-        const CHATGPT_API_KEY = process.env.CHATGPT_KEY || "TU_KEY_AQUI";
+        const CHATGPT_API_KEY = process.env.CHATGPT_KEY || "Kastg_ykMAbn6ipjRxHW6NpWRQ_free";
 
         // URL de la API de ChatGPT con la key verificada
         const CHATGPT_API = `https://api.kastg.xyz/api/ai/chatgptV4?prompt=${encodeURIComponent(finalPrompt)}&key=${CHATGPT_API_KEY}`;
