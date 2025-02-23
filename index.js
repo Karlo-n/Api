@@ -13,6 +13,7 @@ const robloxRouter = require("./api/utility/roblox/index");
 const robloxVerificacionRouter = require("./api/utility/roblox_verificacion/index");
 const screenshotRouter = require("./api/utility/screenshot/index");
 const rankedRouter = require("./api/utility/ranked/index");
+const chatgptRoute = require("./api/utility/chatgpt");
 
 // Usar rutas
 app.use("/api/utility/qr", qrRouter);
@@ -25,6 +26,7 @@ app.use("/api/utility/roblox", robloxRouter);
 app.use("/api/utility/roblox_verificacion", robloxVerificacionRouter);
 app.use("/api/utility/screenshot", screenshotRouter);
 app.use("/api/utility/ranked", rankedRouter);
+app.use("/api/utility/chatgpt", chatgptRoute);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
