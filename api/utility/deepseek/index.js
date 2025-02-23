@@ -1,12 +1,9 @@
-const express = require("express");
-const axios = require("axios");
+import express from "express";
+import Groq from "groq-sdk";
+
 const router = express.Router();
+const groq = new Groq({ apiKey: "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" });
 
-// 📌 Ruta y clave de la API de Groq
-const GROQ_API_URL = "https://api.groq.com/v1/chat/completions";
-const GROQ_API_KEY = "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"; // Tu API Key
-
-// **Ruta para generar texto con Groq AI**
 router.get("/", async (req, res) => {
     try {
         const { prompt } = req.query;
@@ -15,56 +12,21 @@ router.get("/", async (req, res) => {
             return res.status(400).json({ error: "❌ Debes proporcionar un prompt." });
         }
 
-        // 📌 Construir el mensaje con "pensamiento" y la solicitud real
-        const systemMessage = {
-            role: "system",
-            content: "Eres un asistente útil y avanzado. Responde de manera clara y estructurada."
-        };
-
-        const userMessage = {
-            role: "user",
-            content: prompt
-        };
-
-        const requestData = {
+        // Generar respuesta con DeepSeek AI
+        const completion = await groq.chat.completions.create({
+            messages: [{ role: "user", content: prompt }],
             model: "deepseek-r1-distill-qwen-32b",
-            messages: [systemMessage, userMessage],
-            temperature: 0.7,
-            max_tokens: 500
-        };
-
-        // 📌 Hacer la solicitud a la API de Groq
-        const response = await axios.post(GROQ_API_URL, requestData, {
-            headers: {
-                "Authorization": `Bearer ${GROQ_API_KEY}`,
-                "Content-Type": "application/json"
-            }
         });
 
-        // 📌 Verificar si la API de Groq responde correctamente
-        if (!response.data || !response.data.choices || response.data.choices.length === 0) {
-            return res.status(500).json({ error: "❌ La API de Groq no devolvió una respuesta válida." });
-        }
-
-        // 📌 Extraer el "pensamiento" (primera parte de la respuesta) y la respuesta final
-        const fullResponse = response.data.choices[0].message.content;
-        const splitResponse = fullResponse.split("\n\n");
-        const pensamiento = splitResponse.length > 1 ? splitResponse[0] : "🤔 Pensando...";
-        const respuestaFinal = splitResponse.length > 1 ? splitResponse.slice(1).join("\n\n") : fullResponse;
-
-        // 📌 Enviar la respuesta final
+        // Enviar la respuesta
         res.json({
-            pensamiento: pensamiento,
-            respuesta: respuestaFinal
+            respuesta: completion.choices[0].message.content,
         });
 
     } catch (error) {
-        console.error("❌ Error en la API de Groq:", error.response ? error.response.data : error.message);
-        res.status(500).json({
-            error: "❌ Error al procesar la solicitud.",
-            detalles: error.response ? error.response.data : error.message
-        });
+        console.error("❌ Error en la API de DeepSeek:", error.message);
+        res.status(500).json({ error: "❌ Error al procesar la solicitud." });
     }
 });
 
-module.exports = router;
+export default router;
