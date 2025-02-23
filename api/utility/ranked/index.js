@@ -70,7 +70,7 @@ router.get("/", async (req, res) => {
         // Dibujar avatar correctamente en un marco más ancho
         const avatarX = 3; // Posición X
         const avatarY = 0; // Posición Y
-        const avatarWidth = 180; // Expandido solo en X
+        const avatarWidth = 200; // Expandido solo en X
         const avatarHeight = 160; // Mantiene la altura
 
         ctx.save();
