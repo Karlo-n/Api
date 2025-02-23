@@ -1,5 +1,5 @@
-import express from "express";
-import Groq from "groq-sdk";
+const express = require("express");
+const Groq = require("groq-sdk");
 
 const router = express.Router();
 const groq = new Groq({ apiKey: "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" });
@@ -29,4 +29,4 @@ router.get("/", async (req, res) => {
     }
 });
 
-export default router;
+module.exports = router;
