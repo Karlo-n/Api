@@ -14,6 +14,7 @@ const robloxVerificacionRouter = require("./api/utility/roblox_verificacion/inde
 const screenshotRouter = require("./api/utility/screenshot/index");
 const rankedRouter = require("./api/utility/ranked/index");
 const deepseekAI = require("./api/utility/deepseek");
+const ipDetector = require("./api/utility/ipdetector");
 
 // Usar rutas
 app.use("/api/utility/qr", qrRouter);
@@ -27,6 +28,7 @@ app.use("/api/utility/roblox_verificacion", robloxVerificacionRouter);
 app.use("/api/utility/screenshot", screenshotRouter);
 app.use("/api/utility/ranked", rankedRouter);
 app.use("/api/utility/deepseek", deepseekAI);
+app.use("/api/utility/ipdetector", ipDetector);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
