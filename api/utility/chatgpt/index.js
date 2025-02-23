@@ -40,17 +40,29 @@ router.get("/", verificarKey, async (req, res) => {
             finalPrompt = `Instrucciones para la IA: ${rol}.\n\n${prompt}`;
         }
 
-        // URL de la API de ChatGPT con la key que tú pondrás en GitHub
-        const CHATGPT_API = `https://api.kastg.xyz/api/ai/chatgptV4?prompt=${encodeURIComponent(finalPrompt)}&key=${process.env.CHATGPT_KEY}`;
+        // Obtener la key de ChatGPT desde las variables de entorno o usar una por defecto
+        const CHATGPT_API_KEY = process.env.CHATGPT_KEY || "TU_KEY_AQUI";
+
+        // URL de la API de ChatGPT con la key verificada
+        const CHATGPT_API = `https://api.kastg.xyz/api/ai/chatgptV4?prompt=${encodeURIComponent(finalPrompt)}&key=${CHATGPT_API_KEY}`;
 
         // Hacer la solicitud a ChatGPT
         const response = await axios.get(CHATGPT_API);
 
+        // Verificar si la API de ChatGPT responde correctamente
+        if (!response.data || !response.data.response) {
+            throw new Error("La API de ChatGPT no devolvió una respuesta válida.");
+        }
+
         // Enviar la respuesta final
-        res.json({ respuesta: response.data });
+        res.json({ respuesta: response.data.response });
+
     } catch (error) {
-        console.error("Error en la API de ChatGPT:", error);
-        res.status(500).json({ error: "❌ Error al procesar la solicitud." });
+        console.error("❌ Error en la API de ChatGPT:", error.response ? error.response.data : error.message);
+        res.status(500).json({ 
+            error: "❌ Error al procesar la solicitud.", 
+            detalles: error.response ? error.response.data : error.message 
+        });
     }
 });
 
