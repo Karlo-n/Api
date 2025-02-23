@@ -67,15 +67,21 @@ router.get("/", async (req, res) => {
         // Dibujar el fondo expandido sin márgenes blancos
         ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
-        // Dibujar avatar correctamente en un círculo sin bordes extraños
-        const avatarX =  20;
-        const avatarY = -2;
-        const avatarWidth = 160; // Expandido solo en X
+        // Dibujar avatar correctamente en un marco más ancho
+        const avatarX = 5; // Posición X
+        const avatarY = 5; // Posición Y
+        const avatarWidth = 200; // Expandido solo en X
         const avatarHeight = 160; // Mantiene la altura
 
         ctx.save();
         ctx.beginPath();
-        ctx.arc(avatarX + avatarWidth / 20, avatarY + avatarHeight / 2, avatarHeight / 2, 0, Math.PI * 2);
+        ctx.ellipse(
+            avatarX + avatarWidth / 2, // Centro X
+            avatarY + avatarHeight / 2, // Centro Y
+            avatarWidth / 2, // Radio X (más ancho)
+            avatarHeight / 2, // Radio Y (altura igual)
+            0, 0, Math.PI * 2
+        );
         ctx.clip();
         ctx.drawImage(avatarImage, avatarX, avatarY, avatarWidth, avatarHeight);
         ctx.restore();
@@ -86,18 +92,18 @@ router.get("/", async (req, res) => {
 
         // Dibujar nombre de usuario
         ctx.font = "bold 35px Oswald";
-        ctx.fillText(username, 200, 50);
+        ctx.fillText(username, 220, 50);
 
         // Dibujar nivel
         ctx.font = "bold 25px Oswald";
-        ctx.fillText(`Nivel: ${nivel}`, 200, 100);
+        ctx.fillText(`Nivel: ${nivel}`, 220, 100);
 
         // Dibujar XP
         ctx.font = "20px Oswald";
-        ctx.fillText(`XP: ${xp} / ${xpmax}`, 200, 150);
+        ctx.fillText(`XP: ${xp} / ${xpmax}`, 220, 150);
 
         // Dibujar barra de XP con esquinas redondeadas
-        const barX = 200;
+        const barX = 220;
         const barY = 170;
         const barWidth = 500;
         const barHeight = 25;
@@ -117,20 +123,20 @@ router.get("/", async (req, res) => {
 
         // Dibujar rango
         ctx.font = "bold 20px Oswald";
-        ctx.fillText(`Rango: ${rango}`, 200, 220);
+        ctx.fillText(`Rango: ${rango}`, 220, 220);
 
         // Parámetros opcionales
         let yOffset = 260;
         if (xpboost) {
-            ctx.fillText(`XP Boost: ${xpboost}x`, 200, yOffset);
+            ctx.fillText(`XP Boost: ${xpboost}x`, 220, yOffset);
             yOffset += 40;
         }
         if (ranking) {
-            ctx.fillText(`Ranking: #${ranking}`, 200, yOffset);
+            ctx.fillText(`Ranking: #${ranking}`, 220, yOffset);
             yOffset += 40;
         }
         if (mensajes) {
-            ctx.fillText(`Mensajes Totales: ${mensajes}`, 200, yOffset);
+            ctx.fillText(`Mensajes Totales: ${mensajes}`, 220, yOffset);
         }
 
         // Enviar imagen generada
