@@ -44,7 +44,7 @@ router.get("/", verificarKey, async (req, res) => {
         const CHATGPT_API_KEY = process.env.CHATGPT_KEY || "Kastg_ykMAbn6ipjRxHW6NpWRQ_free";
 
         // URL de la API de ChatGPT con la key verificada
-        const CHATGPT_API = `https://api.kastg.xyz/api/ai/chatgptV4?prompt=${encodeURIComponent(finalPrompt)}&key=${CHATGPT_API_KEY}`;
+        const CHATGPT_API = `https://api.kastg.xyz/api/ai/chatgptV4?prompt=${encodeURIComponent(finalPrompt)}&key=Kastg_ykMAbn6ipjRxHW6NpWRQ_free`;
 
         // Hacer la solicitud a ChatGPT con manejo de errores
         const response = await axios.get(CHATGPT_API, { timeout: 15000 }); // Tiempo de espera de 15s
