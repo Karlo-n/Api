@@ -75,7 +75,7 @@ router.get("/", async (req, res) => {
 
         ctx.save();
         ctx.beginPath();
-        ctx.arc(avatarX + avatarWidth / 2, avatarY + avatarHeight / 2, avatarHeight / 2, 0, Math.PI * 2);
+        ctx.arc(avatarX + avatarWidth / 8, avatarY + avatarHeight / 2, avatarHeight / 2, 0, Math.PI * 2);
         ctx.clip();
         ctx.drawImage(avatarImage, avatarX, avatarY, avatarWidth, avatarHeight);
         ctx.restore();
