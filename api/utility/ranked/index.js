@@ -68,7 +68,7 @@ router.get("/", async (req, res) => {
         ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
         // Dibujar avatar correctamente en un marco más ancho
-        const avatarX = 5; // Posición X
+        const avatarX = 0; // Posición X
         const avatarY = 5; // Posición Y
         const avatarWidth = 200; // Expandido solo en X
         const avatarHeight = 160; // Mantiene la altura
