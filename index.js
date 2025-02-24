@@ -15,6 +15,7 @@ const screenshotRouter = require("./api/utility/screenshot/index");
 const rankedRouter = require("./api/utility/ranked/index");
 const deepseekAI = require("./api/utility/deepseek");
 const ip = require("./api/utility/ip");
+const ttsRouter = require("./api/utility/tts");
 
 // Usar rutas
 app.use("/api/utility/qr", qrRouter);
@@ -29,6 +30,7 @@ app.use("/api/utility/screenshot", screenshotRouter);
 app.use("/api/utility/ranked", rankedRouter);
 app.use("/api/utility/deepseek", deepseekAI);
 app.use("/api/utility/ipdetector", ip);
+app.use("/api/utility/tts", ttsRouter);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
@@ -49,7 +51,10 @@ app.get("/", (req, res) => {
             "/api/utility/carta_nivel",
             "/api/utility/roblox",
             "/api/utility/roblox_verificacion",
-            "/api/utility/screenshot"
+            "/api/utility/screenshot",
+            "/api/utility/deepseek",
+            "/api/utility/ip",
+            "/api/utility/tss"
         ]
     }, null, 4)); // <--- Aquí está bien formateado
 });
