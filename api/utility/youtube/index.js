@@ -15,6 +15,36 @@ function formatResponse(res, data) {
   res.send(JSON.stringify(data, null, 2));
 }
 
+// Función para formatear el tiempo (convertir segundos a formato legible)
+function formatDuration(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  
+  let formattedDuration = '';
+  
+  if (hours > 0) {
+    formattedDuration = `${hours} hora${hours > 1 ? 's' : ''}`;
+    if (minutes > 0 || remainingSeconds > 0) formattedDuration += ', ';
+  }
+  
+  if (minutes > 0) {
+    formattedDuration += `${minutes} minuto${minutes > 1 ? 's' : ''}`;
+    if (remainingSeconds > 0) formattedDuration += ', ';
+  }
+  
+  if (remainingSeconds > 0 || (hours === 0 && minutes === 0)) {
+    formattedDuration += `${remainingSeconds} segundo${remainingSeconds !== 1 ? 's' : ''}`;
+  }
+  
+  return formattedDuration;
+}
+
+// Función para formatear números grandes con comas
+function formatNumber(number) {
+  return number.toLocaleString('es-ES');
+}
+
 // Ruta principal
 router.get('/', async (req, res) => {
   try {
@@ -242,7 +272,7 @@ async function getRecentShort(channelId) {
         const videoDetails = await getVideoDetails(item.id.videoId);
         
         // Los shorts generalmente tienen una duración menor a 60 segundos
-        if (videoDetails.duration < 60) {
+        if (videoDetails.durationSeconds < 60) {
           return {
             title: item.snippet.title,
             description: item.snippet.description,
@@ -282,7 +312,7 @@ async function getPopularShort(channelId) {
         const videoDetails = await getVideoDetails(item.id.videoId);
         
         // Los shorts generalmente tienen una duración menor a 60 segundos
-        if (videoDetails.duration < 60) {
+        if (videoDetails.durationSeconds < 60) {
           return {
             title: item.snippet.title,
             description: item.snippet.description,
@@ -372,13 +402,17 @@ async function getVideoDetails(videoId) {
       const videoInfo = response.data.items[0];
       
       // Convertir duración de ISO 8601 a segundos
-      const duration = parseDuration(videoInfo.contentDetails.duration);
+      const durationSeconds = parseDuration(videoInfo.contentDetails.duration);
+      
+      // Formatear la duración a un formato legible
+      const duration = formatDuration(durationSeconds);
       
       return {
         duration: duration,
-        views: parseInt(videoInfo.statistics.viewCount || 0),
-        likes: parseInt(videoInfo.statistics.likeCount || 0),
-        comments: parseInt(videoInfo.statistics.commentCount || 0)
+        durationSeconds: durationSeconds, // Mantenemos los segundos para cálculos internos
+        views: formatNumber(parseInt(videoInfo.statistics.viewCount || 0)),
+        likes: formatNumber(parseInt(videoInfo.statistics.likeCount || 0)),
+        comments: formatNumber(parseInt(videoInfo.statistics.commentCount || 0))
       };
     }
     
