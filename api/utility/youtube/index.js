@@ -1,17 +1,15 @@
-// index.js
 const express = require('express');
-const axios = require('axios');
 const { google } = require('googleapis');
-const youtube = google.youtube('v3');
-require('dotenv').config();
+const axios = require('axios');
 
-const app = express();
-const port = process.env.PORT || 3000;
+const router = express.Router();
+const youtube = google.youtube('v3');
 
 // Configuración de la API de YouTube
-const API_KEY = process.env.YOUTUBE_API_KEY; // Deberás crear este API_KEY en Google Cloud Console
+const API_KEY = process.env.YOUTUBE_API_KEY || 'AIzaSyB1feVtSuscicR_fJp-OnQJsOmAJJKPu1I';
 
-app.get('/api/youtube', async (req, res) => {
+// Ruta principal
+router.get('/', async (req, res) => {
   try {
     // Parámetros obligatorios
     const channelQuery = req.query.channel; // Nombre del canal o URL
@@ -70,7 +68,7 @@ app.get('/api/youtube', async (req, res) => {
     
     res.json(result);
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error en la API de YouTube:', error);
     res.status(500).json({ error: 'Error en el servidor', details: error.message });
   }
 });
@@ -102,7 +100,7 @@ async function getChannelId(channelQuery) {
     });
     
     if (response.data.items && response.data.items.length > 0) {
-      return response.data.items[0].snippet.channelId;
+      return response.data.items[0].id.channelId;
     }
     
     return null;
@@ -138,6 +136,7 @@ async function getRandomVideo(channelId) {
         publishedAt: randomVideo.snippet.publishedAt,
         thumbnail: randomVideo.snippet.thumbnails.high.url,
         videoUrl: `https://www.youtube.com/watch?v=${randomVideo.id.videoId}`,
+        channelTitle: randomVideo.snippet.channelTitle,
         ...videoDetails
       };
     }
@@ -171,6 +170,7 @@ async function getRecentVideo(channelId) {
         publishedAt: recentVideo.snippet.publishedAt,
         thumbnail: recentVideo.snippet.thumbnails.high.url,
         videoUrl: `https://www.youtube.com/watch?v=${recentVideo.id.videoId}`,
+        channelTitle: recentVideo.snippet.channelTitle,
         ...videoDetails
       };
     }
@@ -204,6 +204,7 @@ async function getPopularVideo(channelId) {
         publishedAt: popularVideo.snippet.publishedAt,
         thumbnail: popularVideo.snippet.thumbnails.high.url,
         videoUrl: `https://www.youtube.com/watch?v=${popularVideo.id.videoId}`,
+        channelTitle: popularVideo.snippet.channelTitle,
         ...videoDetails
       };
     }
@@ -234,15 +235,14 @@ async function getRecentShort(channelId) {
         const videoDetails = await getVideoDetails(item.id.videoId);
         
         // Los shorts generalmente tienen una duración menor a 60 segundos
-        // y una relación de aspecto vertical (alto > ancho)
-        if (videoDetails.duration < 60 && 
-            videoDetails.height > videoDetails.width) {
+        if (videoDetails.duration < 60) {
           return {
             title: item.snippet.title,
             description: item.snippet.description,
             publishedAt: item.snippet.publishedAt,
             thumbnail: item.snippet.thumbnails.high.url,
             videoUrl: `https://www.youtube.com/shorts/${item.id.videoId}`,
+            channelTitle: item.snippet.channelTitle,
             ...videoDetails
           };
         }
@@ -275,15 +275,14 @@ async function getPopularShort(channelId) {
         const videoDetails = await getVideoDetails(item.id.videoId);
         
         // Los shorts generalmente tienen una duración menor a 60 segundos
-        // y una relación de aspecto vertical (alto > ancho)
-        if (videoDetails.duration < 60 && 
-            videoDetails.height > videoDetails.width) {
+        if (videoDetails.duration < 60) {
           return {
             title: item.snippet.title,
             description: item.snippet.description,
             publishedAt: item.snippet.publishedAt,
             thumbnail: item.snippet.thumbnails.high.url,
             videoUrl: `https://www.youtube.com/shorts/${item.id.videoId}`,
+            channelTitle: item.snippet.channelTitle,
             ...videoDetails
           };
         }
@@ -339,6 +338,7 @@ async function getTikTokFromChannel(channelId) {
             thumbnail: item.snippet.thumbnails.high.url,
             videoUrl: `https://www.youtube.com/watch?v=${item.id.videoId}`,
             tiktokUrl: tiktokUrl,
+            channelTitle: item.snippet.channelTitle,
             ...videoDetails
           };
         }
@@ -371,9 +371,7 @@ async function getVideoDetails(videoId) {
         duration: duration,
         views: parseInt(videoInfo.statistics.viewCount || 0),
         likes: parseInt(videoInfo.statistics.likeCount || 0),
-        comments: parseInt(videoInfo.statistics.commentCount || 0),
-        height: videoInfo.contentDetails.definition === 'hd' ? 1080 : 720,
-        width: videoInfo.contentDetails.definition === 'hd' ? 1920 : 1280,
+        comments: parseInt(videoInfo.statistics.commentCount || 0)
       };
     }
     
@@ -394,6 +392,5 @@ function parseDuration(duration) {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-app.listen(port, () => {
-  console.log(`API de YouTube ejecutándose en http://localhost:${port}`);
-});
+// Exportar el router (esto es lo importante para que funcione con app.use)
+module.exports = router;
