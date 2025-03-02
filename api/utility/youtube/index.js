@@ -8,6 +8,13 @@ const youtube = google.youtube('v3');
 // Configuración de la API de YouTube
 const API_KEY = process.env.YOUTUBE_API_KEY || 'AIzaSyB1feVtSuscicR_fJp-OnQJsOmAJJKPu1I';
 
+// Función para formatear respuestas JSON
+function formatResponse(res, data) {
+  // Envía el JSON con indentación de 2 espacios y cada propiedad en su propia línea
+  res.setHeader('Content-Type', 'application/json');
+  res.send(JSON.stringify(data, null, 2));
+}
+
 // Ruta principal
 router.get('/', async (req, res) => {
   try {
@@ -16,14 +23,14 @@ router.get('/', async (req, res) => {
     const foto = req.query.foto?.toLowerCase() === 'si';
     
     if (!channelQuery) {
-      return res.status(400).json({ error: 'Se requiere el parámetro "channel"' });
+      return formatResponse(res, { error: 'Se requiere el parámetro "channel"' });
     }
     
     // Obtener ID del canal
     const channelId = await getChannelId(channelQuery);
     
     if (!channelId) {
-      return res.status(404).json({ error: 'Canal no encontrado' });
+      return formatResponse(res, { error: 'Canal no encontrado' });
     }
     
     // Si se solicita una captura de pantalla
@@ -41,7 +48,7 @@ router.get('/', async (req, res) => {
     // Si no hay tipo especificado, devolver un video aleatorio
     if (!videoType) {
       const randomVideo = await getRandomVideo(channelId);
-      return res.json(randomVideo);
+      return formatResponse(res, randomVideo);
     }
     
     // Procesar según el tipo de video solicitado
@@ -63,13 +70,13 @@ router.get('/', async (req, res) => {
         result = await getTikTokFromChannel(channelId);
         break;
       default:
-        return res.status(400).json({ error: 'Tipo de video no válido' });
+        return formatResponse(res, { error: 'Tipo de video no válido' });
     }
     
-    res.json(result);
+    formatResponse(res, result);
   } catch (error) {
     console.error('Error en la API de YouTube:', error);
-    res.status(500).json({ error: 'Error en el servidor', details: error.message });
+    formatResponse(res, { error: 'Error en el servidor', details: error.message });
   }
 });
 
@@ -392,5 +399,5 @@ function parseDuration(duration) {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-// Exportar el router (esto es lo importante para que funcione con app.use)
+// Exportar el router
 module.exports = router;
