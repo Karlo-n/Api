@@ -12,6 +12,8 @@
     "canvas": "^3.1.0",
     "axios": "^1.7.9",
     "playwright": "^1.41.0",
-    "groq-sdk": "^0.6.0"
+    "groq-sdk": "^0.6.0",
+    "googleapis": "^129.0.0",
+    "dotenv": "^16.3.1"
   }
 }
