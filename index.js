@@ -9,6 +9,7 @@ const magik = require("./api/fun/magik");
 const byn = require("./api/fun/byn");
 const invertir = require("./api/fun/invertir");
 const pixelArtRoutes = require('./api/fun/pixel');
+const comicFilter = require("./api/fun/comic");
 const qrRouter = require("./api/utility/qr");
 const boostCardRouter = require("./api/utility/boostcard");
 const traductorRouter = require("./api/utility/traductor");
@@ -31,6 +32,7 @@ app.use("/api/fun/magik", magik);
 app.use("/api/fun/byn", byn);
 app.use("/api/fun/invertir", invertir);
 app.use('/api/fun/pixel', pixelArtRoutes);
+app.use("/api/fun/comic", comicFilter);
 app.use("/api/utility/bienvenida", bienvenidaRouter);
 app.use("/api/utility/qr", qrRouter);
 app.use("/api/utility/boostcard", boostCardRouter);
@@ -60,6 +62,8 @@ app.get("/", (req, res) => {
     "/api/fun/magik",
     "/api/fun/byn",  // <-- Añadido aquí
     "/api/fun/invertir",
+    "/api/fun/pixel",
+    "/api/fun/comic",
     "/api/utility/boostcard",
     "/api/utility/traductor",
     "/api/utility/bienvenida",
