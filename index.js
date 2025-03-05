@@ -45,6 +45,7 @@ app.get("/", (req, res) => {
             "/api/fun/ship",
             "/api/fun/jail",
             "/api/fun/lyric",
+            "/api/fun/magik",
             "/api/utility/boostcard",
             "/api/utility/traductor",
             "/api/utility/bienvenida",
@@ -56,7 +57,7 @@ app.get("/", (req, res) => {
             "/api/utility/screenshot",
             "/api/utility/deepseek",
             "/api/utility/ip",
-            "/api/utility/tss"
+            "/api/utility/youtube"
         ]
     }, null, 4)); // <--- Aquí está bien formateado
 });
