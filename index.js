@@ -17,6 +17,7 @@ const deepseekAI = require("./api/utility/deepseek");
 const ip = require("./api/utility/ip");
 const youtube = require("./api/utility/youtube");
 const magik = require("./api/fun/magik");
+const byn = require("./api/fun/byn");
 
 // Usar rutas
 app.use("/api/utility/qr", qrRouter);
@@ -33,6 +34,7 @@ app.use("/api/utility/deepseek", deepseekAI);
 app.use("/api/utility/ipdetector", ip);
 app.use("/api/utility/youtube", youtube);
 app.use("/api/fun/magik", magik);
+app.use("/api/fun/byn", byn);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
