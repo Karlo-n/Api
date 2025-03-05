@@ -20,6 +20,9 @@ const deepseekAI = require("./api/utility/deepseek");
 const ip = require("./api/utility/ip");
 const youtube = require("./api/utility/youtube");
 const binarioRouter = require("./api/utility/binario");
+const binarioRouter = require("./api/utility/binario/index");
+const invertidoRouter = require("./api/utility/invertido/index");
+const obfuscarRouter = require("./api/utility/obfuscar/index");
 
 // Usar rutas
 app.use("/api/fun/ship", shipRouter);
@@ -39,6 +42,9 @@ app.use("/api/utility/deepseek", deepseekAI);
 app.use("/api/utility/ipdetector", ip);
 app.use("/api/utility/youtube", youtube);
 app.use("/api/utility/binario", binarioRouter);
+app.use("/api/utility/binario", binarioRouter);
+app.use("/api/utility/invertido", invertidoRouter);
+app.use("/api/utility/obfuscar", obfuscarRouter);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
