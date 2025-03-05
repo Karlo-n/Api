@@ -41,7 +41,6 @@ app.use("/api/utility/deepseek", deepseekAI);
 app.use("/api/utility/ipdetector", ip);
 app.use("/api/utility/youtube", youtube);
 app.use("/api/utility/binario", binarioRouter);
-app.use("/api/utility/binario", binarioRouter);
 app.use("/api/utility/invertido", invertidoRouter);
 app.use("/api/utility/obfuscar", obfuscarRouter);
 
