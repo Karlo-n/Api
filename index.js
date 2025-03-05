@@ -18,6 +18,7 @@ const ip = require("./api/utility/ip");
 const youtube = require("./api/utility/youtube");
 const magik = require("./api/fun/magik");
 const byn = require("./api/fun/byn");
+const invertir = require("./api/fun/invertir");
 
 // Usar rutas
 app.use("/api/utility/qr", qrRouter);
@@ -35,6 +36,7 @@ app.use("/api/utility/ipdetector", ip);
 app.use("/api/utility/youtube", youtube);
 app.use("/api/fun/magik", magik);
 app.use("/api/fun/byn", byn);
+app.use("/api/fun/invertir", invertir);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
@@ -49,6 +51,7 @@ app.get("/", (req, res) => {
     "/api/fun/lyric",
     "/api/fun/magik",
     "/api/fun/byn",  // <-- Añadido aquí
+    "/api/fun/invertir",
     "/api/utility/boostcard",
     "/api/utility/traductor",
     "/api/utility/bienvenida",
