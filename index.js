@@ -9,6 +9,9 @@ const traductorRouter = require("./api/utility/traductor/index");
 const bienvenidaRouter = require("./api/utility/bienvenida/index");
 const shipRouter = require("./api/fun/ship/index");
 const kissRouter = require("./api/fun/kiss");
+const magik = require("./api/fun/magik");
+const byn = require("./api/fun/byn");
+const invertir = require("./api/fun/invertir");
 const robloxRouter = require("./api/utility/roblox/index");
 const robloxVerificacionRouter = require("./api/utility/roblox_verificacion/index");
 const screenshotRouter = require("./api/utility/screenshot/index");
@@ -16,17 +19,18 @@ const rankedRouter = require("./api/utility/ranked/index");
 const deepseekAI = require("./api/utility/deepseek");
 const ip = require("./api/utility/ip");
 const youtube = require("./api/utility/youtube");
-const magik = require("./api/fun/magik");
-const byn = require("./api/fun/byn");
-const invertir = require("./api/fun/invertir");
+const binarioRouter = require("./api/utility/binario");
 
 // Usar rutas
+app.use("/api/fun/ship", shipRouter);
+app.use("/api/fun/kiss", kissRouter);
+app.use("/api/fun/magik", magik);
+app.use("/api/fun/byn", byn);
+app.use("/api/fun/invertir", invertir);
+app.use("/api/utility/bienvenida", bienvenidaRouter);
 app.use("/api/utility/qr", qrRouter);
 app.use("/api/utility/boostcard", boostCardRouter);
 app.use("/api/utility/traductor", traductorRouter);
-app.use("/api/fun/ship", shipRouter);
-app.use("/api/utility/bienvenida", bienvenidaRouter);
-app.use("/api/fun/kiss", kissRouter);
 app.use("/api/utility/roblox", robloxRouter);
 app.use("/api/utility/roblox_verificacion", robloxVerificacionRouter);
 app.use("/api/utility/screenshot", screenshotRouter);
@@ -34,9 +38,7 @@ app.use("/api/utility/ranked", rankedRouter);
 app.use("/api/utility/deepseek", deepseekAI);
 app.use("/api/utility/ipdetector", ip);
 app.use("/api/utility/youtube", youtube);
-app.use("/api/fun/magik", magik);
-app.use("/api/fun/byn", byn);
-app.use("/api/fun/invertir", invertir);
+app.use("/api/utility/binario", binarioRouter);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
