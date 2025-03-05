@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Configuración para guardar imágenes
 const IMAGES_DIR = path.join(__dirname, "output");
-const PUBLIC_URL_BASE = process.env.PUBLIC_URL || "https://tudominio.com"; // Cambia esto a tu dominio
+const PUBLIC_URL_BASE = process.env.PUBLIC_URL || "https://api.apikarl.com"; // Cambia esto a tu dominio
 const PUBLIC_PATH = "/api/fun/meme/output"; // Ruta pública para acceder a las imágenes
 
 // Crear directorio de salida si no existe
