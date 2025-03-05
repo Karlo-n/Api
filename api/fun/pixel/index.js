@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Configuración para guardar imágenes
 const IMAGES_DIR = path.join(__dirname, "output");
-const PUBLIC_URL_BASE = process.env.PUBLIC_URL || "https://api.apikarl.com"; // Cambia esto a tu dominio
+const PUBLIC_URL_BASE = process.env.PUBLIC_URL || "https://tudominio.com"; // Cambia esto a tu dominio
 const PUBLIC_PATH = "/api/fun/pixel/output"; // Ruta pública para acceder a las imágenes
 
 // Crear directorio de salida si no existe
@@ -21,17 +21,44 @@ if (!fs.existsSync(IMAGES_DIR)) {
 const DEFAULT_SCALE = 8;
 const MIN_SCALE = 4;
 const MAX_SCALE = 32;
+const MAX_WIDTH = 1000; // Ancho máximo de imagen para procesar
 
-// Parámetro opcional para estilo de paleta
+// Parámetro opcional para estilo de paleta (usando valores RGB para mayor compatibilidad)
 const PALETAS = {
     "default": null, // Usa colores originales pero pixelados
-    "gameboy": ["#0f380f", "#306230", "#8bac0f", "#9bbc0f"], // Paleta Game Boy clásico
-    "nes": ["#000000", "#0000AA", "#00AA00", "#00AAAA", "#AA0000", "#AA00AA", "#AA5500", "#AAAAAA", 
-            "#555555", "#5555FF", "#55FF55", "#55FFFF", "#FF5555", "#FF55FF", "#FFFF55", "#FFFFFF"], // Paleta NES
-    "c64": ["#000000", "#626262", "#898989", "#adadad", "#ffffff", "#9f4e44", "#cb7e75", "#6d5412", 
-            "#a1683c", "#c9d487", "#9ae29b", "#5cab5e", "#6abfc6", "#887ecb", "#50459b", "#a057a3"], // Commodore 64
-    "cga": ["#000000", "#0000AA", "#00AA00", "#00AAAA", "#AA0000", "#AA00AA", "#AA5500", "#AAAAAA",
-            "#555555", "#5555FF", "#55FF55", "#55FFFF", "#FF5555", "#FF55FF", "#FFFF55", "#FFFFFF"] // CGA
+    "gameboy": [
+        { r: 15, g: 56, b: 15 },    // #0f380f
+        { r: 48, g: 98, b: 48 },    // #306230
+        { r: 139, g: 172, b: 15 },  // #8bac0f
+        { r: 155, g: 188, b: 15 }   // #9bbc0f
+    ],
+    "nes": [
+        { r: 0, g: 0, b: 0 },         // Negro
+        { r: 0, g: 0, b: 170 },       // Azul oscuro
+        { r: 0, g: 170, b: 0 },       // Verde
+        { r: 0, g: 170, b: 170 },     // Cian
+        { r: 170, g: 0, b: 0 },       // Rojo
+        { r: 170, g: 0, b: 170 },     // Magenta
+        { r: 170, g: 85, b: 0 },      // Marrón
+        { r: 170, g: 170, b: 170 },   // Gris claro
+        { r: 85, g: 85, b: 85 },      // Gris
+        { r: 85, g: 85, b: 255 },     // Azul claro
+        { r: 85, g: 255, b: 85 },     // Verde claro
+        { r: 85, g: 255, b: 255 },    // Cian claro
+        { r: 255, g: 85, b: 85 },     // Rojo claro
+        { r: 255, g: 85, b: 255 },    // Magenta claro
+        { r: 255, g: 255, b: 85 },    // Amarillo
+        { r: 255, g: 255, b: 255 }    // Blanco
+    ],
+    "bw": [
+        { r: 0, g: 0, b: 0 },         // Negro
+        { r: 255, g: 255, b: 255 }    // Blanco
+    ],
+    "sepia": [
+        { r: 112, g: 66, b: 20 },    // Sepia oscuro
+        { r: 170, g: 120, b: 70 },   // Sepia medio
+        { r: 220, g: 180, b: 130 }   // Sepia claro
+    ]
 };
 
 // Ruta para servir las imágenes guardadas
@@ -58,8 +85,8 @@ router.get("/output/:filename", (req, res) => {
  * 
  * @apiParam {String} imagen URL de la imagen a convertir a pixel art
  * @apiParam {Number} [escala=8] Tamaño de los píxeles (4-32)
- * @apiParam {String} [paleta=default] Estilo de colores (default, gameboy, nes, c64, cga)
- * @apiParam {Boolean} [dithering=false] Aplicar dithering para mejorar detalles (true/false)
+ * @apiParam {String} [paleta=default] Estilo de colores (default, gameboy, nes, bw, sepia)
+ * @apiParam {String} [contraste=normal] Nivel de contraste (bajo, normal, alto)
  * 
  * @apiSuccess {Boolean} success Indica si la operación fue exitosa
  * @apiSuccess {String} url URL de la imagen pixelada
@@ -67,7 +94,7 @@ router.get("/output/:filename", (req, res) => {
 router.get("/", async (req, res) => {
     try {
         // Obtener parámetros
-        const { imagen, escala = DEFAULT_SCALE, paleta = "default", dithering = "false" } = req.query;
+        const { imagen, escala = DEFAULT_SCALE, paleta = "default", contraste = "normal" } = req.query;
         
         // Validar que se proporcionó una imagen
         if (!imagen) {
@@ -86,8 +113,8 @@ router.get("/", async (req, res) => {
         // Validar paleta
         const paletaSeleccionada = PALETAS[paleta.toLowerCase()] || PALETAS["default"];
         
-        // Validar dithering
-        const aplicarDithering = dithering.toLowerCase() === "true";
+        // Validar contraste
+        const nivelContraste = getNivelContraste(contraste);
 
         console.log(`Procesando imagen: ${imagen} con escala ${escalaAjustada} y paleta ${paleta}`);
         
@@ -108,10 +135,10 @@ router.get("/", async (req, res) => {
         }
         
         // Procesar la imagen para convertirla en pixel art
-        const imagenPixelada = await pixelarImagen(imagenBuffer, escalaAjustada, paletaSeleccionada, aplicarDithering);
+        const imagenPixelada = await pixelarImagen(imagenBuffer, escalaAjustada, paletaSeleccionada, nivelContraste);
         
         // Generar nombre único para la imagen
-        const hash = crypto.createHash('md5').update(imagen + escalaAjustada + paleta + dithering + Date.now()).digest('hex');
+        const hash = crypto.createHash('md5').update(imagen + escalaAjustada + paleta + contraste + Date.now()).digest('hex');
         const filename = `pixel-${hash}.png`;
         const filePath = path.join(IMAGES_DIR, filename);
         
@@ -127,7 +154,7 @@ router.get("/", async (req, res) => {
             url: imageUrl,
             escala: escalaAjustada,
             paleta: paleta,
-            dithering: aplicarDithering,
+            contraste: contraste,
             mensaje: "Imagen pixelada generada correctamente"
         });
         
@@ -141,65 +168,110 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * Función para pixelar una imagen con opciones de estilo retro
- * @param {Buffer} imagenBuffer - Buffer de la imagen original
- * @param {Number} escala - Tamaño de los píxeles
- * @param {Array} paleta - Paleta de colores a utilizar (opcional)
- * @param {Boolean} dithering - Si se debe aplicar dithering
- * @returns {Buffer} - Buffer de la imagen procesada
+ * Obtiene el valor de contraste basado en el parámetro de entrada
+ * @param {String} contraste - Nivel de contraste (bajo, normal, alto)
+ * @returns {Number} - Valor de contraste
  */
-async function pixelarImagen(imagenBuffer, escala, paleta, dithering) {
-    // Crear una instancia de Sharp con la imagen
-    let imagen = sharp(imagenBuffer);
-    
-    // Obtener metadatos
-    const metadata = await imagen.metadata();
-    const { width, height } = metadata;
-    
-    // Calcular dimensiones reducidas para lograr el efecto pixelado
-    const smallWidth = Math.max(1, Math.floor(width / escala));
-    const smallHeight = Math.max(1, Math.floor(height / escala));
-    
-    // Reducir la imagen (esto crea el efecto de pixelación)
-    imagen = imagen.resize(smallWidth, smallHeight, {
-        fit: 'fill',
-        kernel: 'nearest'
-    });
-    
-    // Aplicar cuantización de colores si se especificó una paleta
-    if (paleta) {
-        // Transformar la paleta de códigos hex a objeto de configuración para sharp
-        const colorsConfig = {
-            colors: paleta.length,
-            dither: dithering
-        };
-        
-        imagen = imagen.quantize(colorsConfig);
+function getNivelContraste(contraste) {
+    switch(contraste.toLowerCase()) {
+        case "bajo": return 0.8;
+        case "alto": return 1.5;
+        default: return 1.0; // normal
     }
-    
-    // Ampliar la imagen sin interpolación para mantener píxeles cuadrados
-    imagen = imagen.resize(smallWidth * escala, smallHeight * escala, {
-        fit: 'fill',
-        kernel: 'nearest',
-        withoutEnlargement: false
-    });
-    
-    // Agregar un borde sutil para mejorar la apariencia retro (opcional)
-    // imagen = imagen.recomb([[0.95, 0, 0], [0, 0.95, 0], [0, 0, 0.95]]);
-    
-    // Convertir a PNG y devolver el buffer
-    return await imagen.png().toBuffer();
 }
 
 /**
- * Rutas adicionales para ejemplos y estilos
+ * Función mejorada para pixelar una imagen con opciones de estilo retro
+ * @param {Buffer} imagenBuffer - Buffer de la imagen original
+ * @param {Number} escala - Tamaño de los píxeles
+ * @param {Array} paleta - Paleta de colores a utilizar (opcional)
+ * @param {Number} contraste - Nivel de contraste (1.0 es normal)
+ * @returns {Buffer} - Buffer de la imagen procesada
+ */
+async function pixelarImagen(imagenBuffer, escala, paleta, contraste) {
+    try {
+        // Crear una instancia de Sharp con la imagen
+        let img = sharp(imagenBuffer);
+        
+        // Obtener metadatos de la imagen
+        const metadata = await img.metadata();
+        let { width, height } = metadata;
+        
+        // Limitar tamaño máximo para evitar problemas con imágenes muy grandes
+        if (width > MAX_WIDTH) {
+            const ratio = MAX_WIDTH / width;
+            width = MAX_WIDTH;
+            height = Math.round(height * ratio);
+            
+            // Redimensionar manteniendo la proporción
+            img = img.resize(width, height, { fit: 'inside' });
+        }
+        
+        // Aplicar contraste si es diferente de 1.0
+        if (contraste !== 1.0) {
+            img = img.modulate({ contrast: contraste });
+        }
+        
+        // Calcular dimensiones para el efecto pixelado
+        // Usamos una reducción más agresiva para mejorar el efecto
+        const smallWidth = Math.max(1, Math.floor(width / (escala * 1.5)));
+        const smallHeight = Math.max(1, Math.floor(height / (escala * 1.5)));
+        
+        // Reducir la imagen (esto crea el efecto de pixelación base)
+        img = img.resize(smallWidth, smallHeight, {
+            fit: 'fill',
+            kernel: 'nearest'
+        });
+        
+        // Aplicar paleta de colores si se especificó
+        if (paleta) {
+            if (paleta.length === 2) {
+                // Para paletas de 2 colores (como blanco y negro), usamos threshold
+                img = img.grayscale().threshold(128);
+            } else if (paleta.length <= 4) {
+                // Para paletas pequeñas (como Game Boy), usamos posterize
+                img = img.grayscale().normalize().modulate({ saturation: 0 }).posterize(paleta.length);
+            } else {
+                // Para otras paletas, aplicamos otras técnicas
+                img = img.normalize().modulate({ saturation: 0.7 }).posterize(8);
+            }
+        }
+        
+        // Si la paleta es especial, aplicamos ajustes adicionales
+        if (paleta && paleta.length > 0) {
+            if (paleta === PALETAS["gameboy"]) {
+                img = img.tint({ r: 15, g: 56, b: 15 });
+            } else if (paleta === PALETAS["sepia"]) {
+                img = img.tint({ r: 112, g: 66, b: 20 }).sepia();
+            }
+        }
+        
+        // Ampliar la imagen sin interpolación para mantener píxeles cuadrados definidos
+        img = img.resize(smallWidth * escala, smallHeight * escala, {
+            fit: 'fill',
+            kernel: 'nearest',
+            withoutEnlargement: false
+        });
+        
+        // Para un efecto de píxel más marcado, agregamos un sutil sharpen
+        img = img.sharpen({ sigma: 1, m1: 0.5, m2: 0.5 });
+        
+        // Convertir a PNG y devolver el buffer
+        return await img.png({ compressionLevel: 9 }).toBuffer();
+    } catch (error) {
+        console.error("Error al pixelar la imagen:", error);
+        throw new Error(`Error procesando la imagen: ${error.message}`);
+    }
+}
+
+/**
+ * Ruta para obtener los estilos disponibles
  */
 router.get("/estilos", (req, res) => {
     const estilos = Object.keys(PALETAS).map(key => {
         return {
             id: key,
             nombre: key.charAt(0).toUpperCase() + key.slice(1),
-            colores: PALETAS[key] || "Original con pixelado",
             descripcion: getDescripcionPaleta(key)
         };
     });
@@ -211,6 +283,11 @@ router.get("/estilos", (req, res) => {
             escala_retro: 8,
             escala_minimalista: 16,
             escala_detallada: 4
+        },
+        ejemplos: {
+            gameboy: `/api/fun/pixel?imagen=URL_IMAGEN&paleta=gameboy&escala=8`,
+            bw: `/api/fun/pixel?imagen=URL_IMAGEN&paleta=bw&escala=12`,
+            sepia: `/api/fun/pixel?imagen=URL_IMAGEN&paleta=sepia&escala=10&contraste=alto`
         }
     });
 });
@@ -223,8 +300,8 @@ function getDescripcionPaleta(key) {
         "default": "Usa los colores originales de la imagen pero con efecto pixelado",
         "gameboy": "Paleta de 4 tonos verdosos al estilo de la Game Boy clásica",
         "nes": "Paleta de 16 colores al estilo de Nintendo Entertainment System",
-        "c64": "Paleta de 16 colores al estilo de Commodore 64",
-        "cga": "Paleta de colores CGA de las primeras computadoras PC"
+        "bw": "Blanco y negro clásico para un estilo minimalista",
+        "sepia": "Tonos sepia para un efecto vintage y nostálgico"
     };
     
     return descripciones[key] || "Estilo de paleta personalizado";
