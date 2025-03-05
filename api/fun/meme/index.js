@@ -400,11 +400,30 @@ router.get("/output/:filename", (req, res) => {
     }
 });
 
-// Listar plantillas disponibles
+// Listar plantillas disponibles de manera organizada
 router.get("/plantillas", (req, res) => {
-    // Crear un objeto con información detallada sobre cada plantilla
-    const plantillasInfo = {};
+    // Categorizar las plantillas
+    const categorias = {
+        "populares": [],
+        "clasicos": [],
+        "modernos": [],
+        "especiales": [],
+        "varios": []
+    };
     
+    // Plantillas más populares
+    const popularesKeys = ["drake", "distracted", "button", "change", "woman-yelling", "gru-plan", "stonks", "surprised-pikachu", "tuxedo-pooh", "mocking-spongebob"];
+    
+    // Plantillas clásicas
+    const clasicosKeys = ["doge", "fry", "wonka", "success", "rollsafe", "one-does-not", "alien", "hide-the-pain", "waiting-skeleton", "this-is-fine"];
+    
+    // Memes modernos
+    const modernosKeys = ["expanding", "cat", "butterfly", "always-has-been", "trade-offer", "buff-doge", "cheems", "pointing-spiderman", "laughing-leo", "chad"];
+    
+    // Memes con formato especial
+    const especialesKeys = ["american-chopper", "galaxy-brain", "and-just", "bernie-mittens", "they-dont-know", "sad-pablo", "incredibles"];
+    
+    // Recorrer todas las plantillas y organizarlas
     Object.keys(MEME_TEMPLATES).forEach(key => {
         const template = MEME_TEMPLATES[key];
         let numZonas = 2; // Por defecto
@@ -413,40 +432,124 @@ router.get("/plantillas", (req, res) => {
             numZonas = template.textZones.length;
         }
         
-        plantillasInfo[key] = {
-            nombre: key,
+        const plantillaInfo = {
+            id: key,
+            nombre: getNombreAmigable(key),
             zonas_texto: numZonas,
             descripcion: getPlantillaDescripcion(key, numZonas)
         };
+        
+        // Determinar a qué categoría pertenece
+        if (popularesKeys.includes(key)) {
+            categorias.populares.push(plantillaInfo);
+        } else if (clasicosKeys.includes(key)) {
+            categorias.clasicos.push(plantillaInfo);
+        } else if (modernosKeys.includes(key)) {
+            categorias.modernos.push(plantillaInfo);
+        } else if (especialesKeys.includes(key)) {
+            categorias.especiales.push(plantillaInfo);
+        } else {
+            categorias.varios.push(plantillaInfo);
+        }
     });
+    
+    // Añadir información de uso
+    const ejemplos = {
+        "ejemplo_basico": "/api/fun/meme?plantilla=drake&textoArriba=No usar APIs&textoAbajo=Usar API Karl",
+        "ejemplo_tres_zonas": "/api/fun/meme?plantilla=distracted&textoArriba=Otra API&textoAbajo=API Karl",
+        "ejemplo_personalizado": "/api/fun/meme?imagen=https://ejemplo.com/imagen.jpg&textoArriba=Mi texto&textoAbajo=Personalizado"
+    };
     
     return res.json({
         success: true,
         total_plantillas: Object.keys(MEME_TEMPLATES).length,
-        plantillas: plantillasInfo,
-        uso: "Usa el parámetro 'plantilla' con alguno de estos nombres",
-        ejemplo: "/api/fun/meme?plantilla=drake&textoArriba=No usar APIs&textoAbajo=Usar API Karl"
+        categorias: categorias,
+        ejemplos: ejemplos,
+        instrucciones: "Usa el parámetro 'plantilla' con el id de alguna de estas plantillas"
     });
 });
 
-// Función auxiliar para generar descripciones de plantillas
-function getPlantillaDescripcion(nombre, numZonas) {
-    const descripciones = {
-        "drake": "Drake rechazando y aceptando",
-        "distracted": "Chico distraído mirando a otra chica",
-        "button": "Persona indecisa con dos botones",
-        "change": "Change my mind",
-        "expanding": "Cerebro expansivo con etapas de iluminación",
-        "woman-yelling": "Mujer gritando al gato",
-        "gru-plan": "Plan de Gru (4 paneles)",
-        "tuxedo-pooh": "Winnie Pooh normal y elegante",
-        "stonks": "Hombre de negocios con gráfico",
-        "mocking-spongebob": "Bob Esponja burlándose",
-        "trade-offer": "Propuesta de intercambio",
-        "always-has-been": "Astronautas: siempre ha sido así",
+// Función para obtener nombres más amigables
+function getNombreAmigable(key) {
+    const nombresAmigables = {
+        "drake": "Drake Hotline Bling",
+        "distracted": "Novio Distraído",
+        "button": "Dos Botones",
+        "change": "Change My Mind",
+        "doge": "Doge",
+        "alien": "Ancient Aliens",
+        "fry": "Futurama Fry",
+        "wonka": "Willy Wonka",
+        "success": "Success Kid",
+        "rollsafe": "Roll Safe",
+        "expanding": "Cerebro Expansivo",
+        "woman-yelling": "Mujer Gritando al Gato",
+        "cat": "Gato en Mesa",
+        "butterfly": "¿Es Esto una Mariposa?",
+        "always-has-been": "Siempre lo ha sido",
+        "stonks": "Stonks",
+        "not-stonks": "Not Stonks",
+        "trade-offer": "Oferta de Intercambio",
+        "mike-sullivan": "Mike Sullivan",
+        "one-does-not": "One Does Not Simply",
+        "disaster-girl": "Niña Desastre",
+        "cry": "First World Problems",
+        "evil-kermit": "Kermit Malvado",
+        "patrick": "Patrick Malvado",
+        "this-is-fine": "Esto está bien",
+        "hide-the-pain": "Hide the Pain Harold",
+        "waiting-skeleton": "Esqueleto Esperando",
+        "awkward-monkey": "Mono Incómodo",
+        "surprised-pikachu": "Pikachu Sorprendido",
+        "gru-plan": "Plan de Gru",
+        "and-just": "Salida de Autopista",
+        "buff-doge": "Doge Fuerte vs Cheems",
+        "cheems": "Cheems",
+        "tuxedo-pooh": "Winnie Pooh Elegante",
+        "pointing-spiderman": "Spiderman Señalando",
+        "unsettled-tom": "Tom Perturbado",
+        "they-dont-know": "Ellos no saben",
+        "bernie-mittens": "Bernie Mittens",
+        "chad": "Fan Promedio vs Disfrutador Promedio",
+        "omg": "Cara de OMG",
+        "galaxy-brain": "Cerebro Galaxia",
+        "american-chopper": "Discusión American Chopper",
+        "mocking-spongebob": "Bob Esponja Burlón",
+        "think-about-it": "Think About It",
+        "laughing-leo": "Leonardo DiCaprio Riendo",
+        "sad-pablo": "Pablo Escobar Triste",
+        "pretend": "Fingir Felicidad",
+        "incredibles": "Si Tuviera Uno"
     };
     
-    return descripciones[nombre] || `Plantilla con ${numZonas} zonas de texto`;
+    return nombresAmigables[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' ');
+}
+
+// Función mejorada para generar descripciones de plantillas
+function getPlantillaDescripcion(nombre, numZonas) {
+    const descripciones = {
+        "drake": "Drake rechazando en la parte superior y aceptando en la parte inferior",
+        "distracted": "Chico distraído mirando a otra chica mientras su novia lo mira indignada",
+        "button": "Persona sudando mientras decide entre dos botones",
+        "change": "Steven Crowder con un cartel pidiendo que cambien su opinión",
+        "expanding": "Cerebro expansivo mostrando etapas de iluminación progresiva",
+        "woman-yelling": "Mujer gritando a un gato confundido sentado en una mesa",
+        "gru-plan": "Gru presentando su plan en 4 paneles con un giro inesperado",
+        "tuxedo-pooh": "Winnie Pooh normal y elegante con smoking",
+        "stonks": "Hombre de negocios con gráfico ascendente y texto \"Stonks\"",
+        "mocking-spongebob": "Bob Esponja burlándose con texto alternando mayúsculas y minúsculas",
+        "trade-offer": "Streamer haciendo una propuesta de intercambio a la cámara",
+        "always-has-been": "Astronautas: \"¿Todo es X?\" \"Siempre lo ha sido\" con pistola",
+        "american-chopper": "Discusión acalorada en 5 paneles entre mecánicos de motos",
+        "galaxy-brain": "Cuatro niveles de cerebro cada vez más iluminados",
+        "pointing-spiderman": "Dos Spiderman idénticos señalándose mutuamente",
+        "buff-doge": "Comparación entre un doge musculoso y un cheems débil",
+        "sad-pablo": "Pablo Escobar esperando solo en diferentes escenas",
+        "surprised-pikachu": "Pikachu con cara de sorpresa extrema",
+        "they-dont-know": "Persona en una fiesta pensando \"Ellos no saben que yo...\"",
+    };
+    
+    return descripciones[nombre] || `Meme con ${numZonas} zonas de texto disponibles`;
 }
 
 /**
@@ -473,8 +576,7 @@ router.get("/", async (req, res) => {
             if (!MEME_TEMPLATES[plantillaLower]) {
                 return res.status(400).json({ 
                     error: "Plantilla no encontrada", 
-                    plantillas_disponibles: Object.keys(MEME_TEMPLATES),
-                    consultar: "/api/fun/meme/plantillas"
+                    plantillas_disponibles: "/api/fun/meme/plantillas"
                 });
             }
             
