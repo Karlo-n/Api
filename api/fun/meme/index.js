@@ -453,6 +453,26 @@ router.get("/plantillas", (req, res) => {
         }
     });
     
+    // Formatear cada categoría para mostrar nombres en líneas separadas
+    const categoriasFormateadas = {};
+    
+    Object.keys(categorias).forEach(categoria => {
+        // Crear un objeto con texto formateado para cada categoría
+        const plantillasTexto = categorias[categoria].map(p => p.nombre).join('\n');
+        const plantillasIds = categorias[categoria].map(p => p.id).join('\n');
+        const plantillasDescripcion = categorias[categoria].map(p => p.descripcion).join('\n');
+        const plantillasZonas = categorias[categoria].map(p => p.zonas_texto).join('\n');
+        
+        categoriasFormateadas[categoria] = {
+            nombres: plantillasTexto,
+            ids: plantillasIds,
+            descripciones: plantillasDescripcion,
+            zonas_texto: plantillasZonas,
+            // Mantener también el array original para facilitar procesamiento programático
+            plantillas_array: categorias[categoria]
+        };
+    });
+    
     // Añadir información de uso
     const ejemplos = {
         "ejemplo_basico": "/api/fun/meme?plantilla=drake&textoArriba=No usar APIs&textoAbajo=Usar API Karl",
@@ -463,7 +483,7 @@ router.get("/plantillas", (req, res) => {
     return res.json({
         success: true,
         total_plantillas: Object.keys(MEME_TEMPLATES).length,
-        categorias: categorias,
+        categorias: categoriasFormateadas,
         ejemplos: ejemplos,
         instrucciones: "Usa el parámetro 'plantilla' con el id de alguna de estas plantillas"
     });
