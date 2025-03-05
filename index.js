@@ -65,7 +65,8 @@ app.get("/", (req, res) => {
     "/api/utility/screenshot",
     "/api/utility/deepseek",
     "/api/utility/ip",
-    "/api/utility/youtube"
+    "/api/utility/youtube",
+    "/api/utility/binario"
 ]
     }, null, 4)); // <--- Aquí está bien formateado
 });
