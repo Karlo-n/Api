@@ -400,7 +400,7 @@ router.get("/output/:filename", (req, res) => {
     }
 });
 
-// Listar plantillas disponibles de manera organizada
+// Listar plantillas disponibles de manera organizada con formato HTML
 router.get("/plantillas", (req, res) => {
     // Categorizar las plantillas
     const categorias = {
@@ -453,15 +453,15 @@ router.get("/plantillas", (req, res) => {
         }
     });
     
-    // Formatear cada categoría para mostrar nombres en líneas separadas
+    // Formatear cada categoría para mostrar nombres en líneas separadas con HTML
     const categoriasFormateadas = {};
     
     Object.keys(categorias).forEach(categoria => {
-        // Crear un objeto con texto formateado para cada categoría
-        const plantillasTexto = categorias[categoria].map(p => p.nombre).join('\n');
-        const plantillasIds = categorias[categoria].map(p => p.id).join('\n');
-        const plantillasDescripcion = categorias[categoria].map(p => p.descripcion).join('\n');
-        const plantillasZonas = categorias[categoria].map(p => p.zonas_texto).join('\n');
+        // Crear un objeto con texto formateado para cada categoría usando <br> para HTML
+        const plantillasTexto = categorias[categoria].map(p => p.nombre).join('<br>');
+        const plantillasIds = categorias[categoria].map(p => p.id).join('<br>');
+        const plantillasDescripcion = categorias[categoria].map(p => p.descripcion).join('<br>');
+        const plantillasZonas = categorias[categoria].map(p => p.zonas_texto).join('<br>');
         
         categoriasFormateadas[categoria] = {
             nombres: plantillasTexto,
@@ -479,6 +479,9 @@ router.get("/plantillas", (req, res) => {
         "ejemplo_tres_zonas": "/api/fun/meme?plantilla=distracted&textoArriba=Otra API&textoAbajo=API Karl",
         "ejemplo_personalizado": "/api/fun/meme?imagen=https://ejemplo.com/imagen.jpg&textoArriba=Mi texto&textoAbajo=Personalizado"
     };
+    
+    // Configurar header para indicar que la respuesta contiene HTML
+    res.setHeader('Content-Type', 'application/json');
     
     return res.json({
         success: true,
