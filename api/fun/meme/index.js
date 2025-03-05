@@ -527,7 +527,118 @@ router.get("/", async (req, res) => {
         const fontSize = Math.floor(height / 10);
         ctx.font = `bold ${fontSize}px Impact, Arial, sans-serif`;
         
+        // Función para manejar el ajuste de texto largo
+        const wrapText = (text, x, y, maxWidth, lineHeight, align = "center", alternatingCase = false) => {
+            if (!text) return;
+            
+            // Convertir texto según formato requerido
+            let processedText = text;
+            if (alternatingCase) {
+                // Texto con alternancia de mayúsculas y minúsculas (estilo Spongebob burlón)
+                processedText = text.split('').map((char, i) => 
+                    i % 2 === 0 ? char.toLowerCase() : char.toUpperCase()
+                ).join('');
+            } else {
+                // Por defecto en mayúsculas para estilo meme clásico
+                processedText = text.toUpperCase();
+            }
+            
+            // Dividir por palabras
+            const words = processedText.split(' ');
+            let line = '';
+            let lines = [];
+            
+            // Crear las líneas
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + words[n] + ' ';
+                const metrics = ctx.measureText(testLine);
+                const testWidth = metrics.width;
+                
+                if (testWidth > maxWidth && n > 0) {
+                    lines.push(line);
+                    line = words[n] + ' ';
+                } else {
+                    line = testLine;
+                }
+            }
+            lines.push(line);
+            
+            // Configurar alineación
+            const originalAlign = ctx.textAlign;
+            ctx.textAlign = align;
+            
+            // Dibujar cada línea
+            for (let i = 0; i < lines.length; i++) {
+                const textY = y + (i * lineHeight);
+                ctx.strokeText(lines[i], x, textY);
+                ctx.fillText(lines[i], x, textY);
+            }
+            
+            // Restaurar alineación original
+            ctx.textAlign = originalAlign;
+        };
+        
+        // Obtener configuración de la plantilla o configuración predeterminada para imagen personalizada
+        let templateConfig;
+        let textZones = [];
+        let textStyle = {};
+        
+        if (plantilla && MEME_TEMPLATES[plantilla.toLowerCase()]) {
+            // Usar configuración específica de la plantilla
+            templateConfig = MEME_TEMPLATES[plantilla.toLowerCase()];
+            
+            if (typeof templateConfig === 'string') {
+                // Si es solo una URL (formato antiguo), usar configuración predeterminada
+                textZones = [
+                    { x: width / 2, y: fontSize + 20, width: width * 0.9, align: "center" }, // Arriba
+                    { x: width / 2, y: height - 30, width: width * 0.9, align: "center" }   // Abajo
+                ];
+            } else {
+                // Usar configuración específica de la plantilla
+                textZones = templateConfig.textZones || [];
+                textStyle = templateConfig.textStyle || {};
+            }
+        } else {
+            // Configuración predeterminada para imágenes personalizadas
+            textZones = [
+                { x: width / 2, y: fontSize + 20, width: width * 0.9, align: "center" }, // Arriba
+                { x: width / 2, y: height - 30, width: width * 0.9, align: "center" }   // Abajo
+            ];
+        }
+        
+        // Establecer colores de texto personalizados si están definidos en la plantilla
+        if (textStyle.color) {
+            ctx.fillStyle = textStyle.color;
+        }
+        if (textStyle.strokeColor) {
+            ctx.strokeStyle = textStyle.strokeColor;
+        }
+        
+        // Determinar cuántos textos tenemos para agregar
+        const textos = [];
+        if (textoArriba) textos.push(textoArriba);
+        if (textoAbajo) textos.push(textoAbajo);
+        
+        // Lineheight para espaciado de texto multilínea
+        const lineHeight = fontSize + 8;
 
+        // Agregar cada texto disponible a las zonas de texto correspondientes
+        for (let i = 0; i < Math.min(textos.length, textZones.length); i++) {
+            const texto = textos[i];
+            const zona = textZones[i];
+            
+            // Si tenemos más zonas que textos, dejamos zonas vacías
+            if (texto) {
+                wrapText(
+                    texto, 
+                    zona.x, 
+                    zona.y, 
+                    zona.width, 
+                    lineHeight, 
+                    zona.align || "center",
+                    i === 1 && textStyle.alternatingCase // Aplicar caso alternante solo si está especificado y es el segundo texto
+                );
+            }
         }
         
         // Generar nombre único para la imagen
