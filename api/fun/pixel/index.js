@@ -45,7 +45,7 @@ router.get("/", async (req, res) => {
             });
         }
         
-        console.log(`Procesando imagen: ${imagen}`);
+        console.log(`Procesando imagen para pixel art: ${imagen}`);
         
         // Descargar la imagen
         let imagenBuffer;
@@ -94,34 +94,51 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * Función que convierte una imagen en pixel art
+ * Función que convierte una imagen en pixel art usando un enfoque más agresivo
  */
 async function crearPixelArt(imagenBuffer) {
     try {
         // Obtener metadatos de la imagen
         const metadata = await sharp(imagenBuffer).metadata();
-        let { width, height } = metadata;
         
-        // Calcular dimensiones para un buen efecto pixel art
-        const pixelSize = 8; // Valor fijo para un buen efecto pixel art
+        // Reducción extrema para forzar efecto pixel art
+        // Usamos valores fijos para asegurar un efecto pixel art fuerte
+        const targetWidth = 32; // Ancho objetivo muy pequeño para forzar pixelado
         
-        // Aplicar el efecto pixel art
-        const img = sharp(imagenBuffer)
-            // Paso 1: Reducir a tamaño pequeño (esto crea el efecto pixelado)
-            .resize(Math.max(1, Math.floor(width / pixelSize)), 
-                   Math.max(1, Math.floor(height / pixelSize)), {
+        // Calcular proporción para mantener relación de aspecto
+        const aspectRatio = metadata.width / metadata.height;
+        const targetHeight = Math.round(targetWidth / aspectRatio);
+        
+        // Proceso de pixelado en dos etapas con sharp
+        return await sharp(imagenBuffer)
+            // 1. Reducir drásticamente la imagen (esto crea los píxeles grandes)
+            .resize(targetWidth, targetHeight, {
                 fit: 'fill',
                 kernel: 'nearest'
             })
-            // Paso 2: Ampliar sin interpolación para mantener los píxeles
-            .resize(Math.max(1, Math.floor(width / pixelSize)) * pixelSize, 
-                   Math.max(1, Math.floor(height / pixelSize)) * pixelSize, {
+            // 2. Ampliar a un tamaño razonable manteniendo los píxeles
+            .resize(targetWidth * 8, targetHeight * 8, {
                 fit: 'fill',
-                kernel: 'nearest'
-            });
-        
-        // Convertir a PNG y devolver el buffer
-        return await img.png().toBuffer();
+                kernel: 'nearest',
+                withoutEnlargement: false
+            })
+            // 3. Aumentar saturación para colores más vibrantes tipo pixel art
+            .modulate({
+                saturation: 1.3,
+                brightness: 1.1
+            })
+            // 4. Asegurar bordes nítidos entre píxeles
+            .sharpen({
+                sigma: 1,
+                flat: 2,
+                jagged: 1
+            })
+            // 5. Convertir a PNG con alta calidad
+            .png({
+                compressionLevel: 9,
+                palette: true
+            })
+            .toBuffer();
     } catch (error) {
         console.error("Error creando pixel art:", error);
         throw new Error(`Error procesando la imagen: ${error.message}`);
