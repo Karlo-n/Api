@@ -94,50 +94,35 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * Función que convierte una imagen en pixel art usando un enfoque más agresivo
+ * Función que convierte una imagen en pixel art usando SOLO pixelado
  */
 async function crearPixelArt(imagenBuffer) {
     try {
         // Obtener metadatos de la imagen
         const metadata = await sharp(imagenBuffer).metadata();
         
-        // Reducción extrema para forzar efecto pixel art
-        // Usamos valores fijos para asegurar un efecto pixel art fuerte
-        const targetWidth = 32; // Ancho objetivo muy pequeño para forzar pixelado
+        // Reducción para efecto pixel art (más extrema)
+        // Usamos un valor muy pequeño para forzar pixelado fuerte
+        const targetWidth = 24; // Aún más pequeño para mayor pixelado
         
         // Calcular proporción para mantener relación de aspecto
         const aspectRatio = metadata.width / metadata.height;
         const targetHeight = Math.round(targetWidth / aspectRatio);
         
-        // Proceso de pixelado en dos etapas con sharp
+        // Proceso de pixelado simplificado al máximo
         return await sharp(imagenBuffer)
-            // 1. Reducir drásticamente la imagen (esto crea los píxeles grandes)
+            // 1. Reducir extremadamente la imagen (esto crea píxeles grandes)
             .resize(targetWidth, targetHeight, {
                 fit: 'fill',
                 kernel: 'nearest'
             })
-            // 2. Ampliar a un tamaño razonable manteniendo los píxeles
-            .resize(targetWidth * 8, targetHeight * 8, {
+            // 2. Ampliar manteniendo los píxeles bien definidos
+            .resize(targetWidth * 10, targetHeight * 10, {
                 fit: 'fill',
-                kernel: 'nearest',
-                withoutEnlargement: false
+                kernel: 'nearest'
             })
-            // 3. Aumentar saturación para colores más vibrantes tipo pixel art
-            .modulate({
-                saturation: 1.3,
-                brightness: 1.1
-            })
-            // 4. Asegurar bordes nítidos entre píxeles
-            .sharpen({
-                sigma: 1,
-                flat: 2,
-                jagged: 1
-            })
-            // 5. Convertir a PNG con alta calidad
-            .png({
-                compressionLevel: 9,
-                palette: true
-            })
+            // 3. Convertir a PNG
+            .png()
             .toBuffer();
     } catch (error) {
         console.error("Error creando pixel art:", error);
