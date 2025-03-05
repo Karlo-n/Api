@@ -42,25 +42,26 @@ app.get("/", (req, res) => {
     res.send(JSON.stringify({
         message: "🚀 Bienvenido a API Karl - Lista de Endpoints Disponibles",
         endpoints: [
-            "/api/fun/kiss",
-            "/api/fun/slap",
-            "/api/fun/ship",
-            "/api/fun/jail",
-            "/api/fun/lyric",
-            "/api/fun/magik",
-            "/api/utility/boostcard",
-            "/api/utility/traductor",
-            "/api/utility/bienvenida",
-            "/api/utility/qr",
-            "/api/utility/carta_ranked",
-            "/api/utility/carta_nivel",
-            "/api/utility/roblox",
-            "/api/utility/roblox_verificacion",
-            "/api/utility/screenshot",
-            "/api/utility/deepseek",
-            "/api/utility/ip",
-            "/api/utility/youtube"
-        ]
+    "/api/fun/kiss",
+    "/api/fun/slap",
+    "/api/fun/ship",
+    "/api/fun/jail",
+    "/api/fun/lyric",
+    "/api/fun/magik",
+    "/api/fun/byn",  // <-- Añadido aquí
+    "/api/utility/boostcard",
+    "/api/utility/traductor",
+    "/api/utility/bienvenida",
+    "/api/utility/qr",
+    "/api/utility/carta_ranked",
+    "/api/utility/carta_nivel",
+    "/api/utility/roblox",
+    "/api/utility/roblox_verificacion",
+    "/api/utility/screenshot",
+    "/api/utility/deepseek",
+    "/api/utility/ip",
+    "/api/utility/youtube"
+]
     }, null, 4)); // <--- Aquí está bien formateado
 });
 
