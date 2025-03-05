@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Configuración para guardar imágenes
 const IMAGES_DIR = path.join(__dirname, "output");
-const PUBLIC_URL_BASE = process.env.PUBLIC_URL || "https://api.apikarl.com"; // Cambia esto a tu dominio
+const PUBLIC_URL_BASE = process.env.PUBLIC_URL || "https://tudominio.com"; // Cambia esto a tu dominio
 const PUBLIC_PATH = "/api/fun/meme/output"; // Ruta pública para acceder a las imágenes
 
 // Crear directorio de salida si no existe
@@ -17,67 +17,371 @@ if (!fs.existsSync(IMAGES_DIR)) {
     fs.mkdirSync(IMAGES_DIR, { recursive: true });
 }
 
-// Plantillas predefinidas de memes populares (50 plantillas)
+// Configuración de las plantillas de memes con posicionamiento y estilo personalizado
 const MEME_TEMPLATES = {
-    // Clásicos y más populares
-    "drake": "https://imgflip.com/s/meme/Drake-Hotline-Bling.jpg",
-    "distracted": "https://imgflip.com/s/meme/Distracted-Boyfriend.jpg",
-    "button": "https://imgflip.com/s/meme/Two-Buttons.jpg",
-    "change": "https://imgflip.com/s/meme/Change-My-Mind.jpg",
-    "doge": "https://imgflip.com/s/meme/Doge.jpg",
-    "alien": "https://imgflip.com/s/meme/Ancient-Aliens.jpg",
-    "fry": "https://imgflip.com/s/meme/Futurama-Fry.jpg",
-    "wonka": "https://imgflip.com/s/meme/Creepy-Condescending-Wonka.jpg",
-    "success": "https://imgflip.com/s/meme/Success-Kid.jpg",
-    "rollsafe": "https://imgflip.com/s/meme/Roll-Safe-Think-About-It.jpg",
+    // Cada meme tiene: url, zonas de texto (textZones), y opcionalmente estilos específicos (textStyle)
+    
+    // Clásicos y más populares con configuración de zonas de texto
+    "drake": {
+        url: "https://imgflip.com/s/meme/Drake-Hotline-Bling.jpg",
+        textZones: [
+            { x: 290, y: 130, width: 250, align: "left" },  // Arriba (rechazando)
+            { x: 290, y: 390, width: 250, align: "left" }   // Abajo (aprobando)
+        ]
+    },
+    "distracted": {
+        url: "https://imgflip.com/s/meme/Distracted-Boyfriend.jpg",
+        textZones: [
+            { x: 160, y: 100, width: 140, align: "center" },  // Chica nueva
+            { x: 370, y: 100, width: 140, align: "center" },  // Novio
+            { x: 240, y: 220, width: 140, align: "center" }   // Novia
+        ]
+    },
+    "button": {
+        url: "https://imgflip.com/s/meme/Two-Buttons.jpg",
+        textZones: [
+            { x: 105, y: 100, width: 170, align: "center" },  // Botón izquierdo
+            { x: 245, y: 100, width: 170, align: "center" },  // Botón derecho
+            { x: 180, y: 320, width: 200, align: "center" }   // Persona sudando
+        ]
+    },
+    "change": {
+        url: "https://imgflip.com/s/meme/Change-My-Mind.jpg",
+        textZones: [
+            { x: 180, y: 135, width: 350, align: "center" }   // Texto en cartel
+        ]
+    },
+    "doge": {
+        url: "https://imgflip.com/s/meme/Doge.jpg",
+        textZones: [
+            { x: 150, y: 100, width: 250, align: "center" },  // Arriba izquierda
+            { x: 350, y: 200, width: 250, align: "center" },  // Medio derecha
+            { x: 150, y: 300, width: 250, align: "center" }   // Abajo izquierda
+        ],
+        textStyle: { color: "red", strokeColor: "white" }     // Estilo específico para doge
+    },
+    "alien": {
+        url: "https://imgflip.com/s/meme/Ancient-Aliens.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 380, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "fry": {
+        url: "https://imgflip.com/s/meme/Futurama-Fry.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 380, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "wonka": {
+        url: "https://imgflip.com/s/meme/Creepy-Condescending-Wonka.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 380, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "success": {
+        url: "https://imgflip.com/s/meme/Success-Kid.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 320, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "rollsafe": {
+        url: "https://imgflip.com/s/meme/Roll-Safe-Think-About-It.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 320, width: 450, align: "center" }   // Abajo
+        ]
+    },
     
     // Expansión - Memes populares modernos
-    "expanding": "https://imgflip.com/s/meme/Expanding-Brain.jpg",
-    "boyfriend": "https://imgflip.com/s/meme/Distracted-Boyfriend.jpg",
-    "woman-yelling": "https://imgflip.com/s/meme/Woman-Yelling-At-Cat.jpg",
-    "cat": "https://imgflip.com/s/meme/Smudge-the-Cat.jpg",
-    "butterfly": "https://imgflip.com/s/meme/Is-This-A-Pigeon.jpg",
-    "always-has-been": "https://imgflip.com/s/meme/Always-Has-Been.png",
-    "stonks": "https://imgflip.com/s/meme/Stonks.jpg",
-    "not-stonks": "https://imgflip.com/s/meme/Not-Stonks.jpg",
-    "trade-offer": "https://imgflip.com/s/meme/Trade-Offer.jpg",
-    "mike-sullivan": "https://imgflip.com/s/meme/Sully-Face-Swap.jpg",
+    "expanding": {
+        url: "https://imgflip.com/s/meme/Expanding-Brain.jpg",
+        textZones: [
+            { x: 410, y: 80, width: 200, align: "center" },   // Primer cerebro
+            { x: 410, y: 230, width: 200, align: "center" },  // Segundo cerebro
+            { x: 410, y: 370, width: 200, align: "center" },  // Tercer cerebro
+            { x: 410, y: 510, width: 200, align: "center" }   // Cuarto cerebro iluminado
+        ]
+    },
+    "woman-yelling": {
+        url: "https://imgflip.com/s/meme/Woman-Yelling-At-Cat.jpg",
+        textZones: [
+            { x: 225, y: 120, width: 250, align: "center" },  // Mujer gritando
+            { x: 650, y: 120, width: 250, align: "center" }   // Gato
+        ]
+    },
+    "cat": {
+        url: "https://imgflip.com/s/meme/Smudge-the-Cat.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 260, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "butterfly": {
+        url: "https://imgflip.com/s/meme/Is-This-A-Pigeon.jpg",
+        textZones: [
+            { x: 180, y: 90, width: 150, align: "center" },   // Mariposa
+            { x: 370, y: 180, width: 170, align: "center" },  // Hombre
+            { x: 225, y: 300, width: 300, align: "center" }   // "¿Es esto...?"
+        ]
+    },
+    "always-has-been": {
+        url: "https://imgflip.com/s/meme/Always-Has-Been.png",
+        textZones: [
+            { x: 300, y: 150, width: 300, align: "center" },  // Astronauta mirando
+            { x: 300, y: 300, width: 300, align: "center" }   // Astronauta con pistola
+        ]
+    },
+    "stonks": {
+        url: "https://imgflip.com/s/meme/Stonks.jpg",
+        textZones: [
+            { x: 225, y: 280, width: 450, align: "center" }   // Texto abajo
+        ]
+    },
+    "not-stonks": {
+        url: "https://imgflip.com/s/meme/Not-Stonks.jpg",
+        textZones: [
+            { x: 225, y: 280, width: 450, align: "center" }   // Texto abajo
+        ]
+    },
+    "trade-offer": {
+        url: "https://imgflip.com/s/meme/Trade-Offer.jpg",
+        textZones: [
+            { x: 155, y: 125, width: 300, align: "center" },  // Yo recibo
+            { x: 155, y: 280, width: 300, align: "center" },  // Tú recibes
+            { x: 155, y: 400, width: 300, align: "center" }   // Nombre
+        ]
+    },
+    "mike-sullivan": {
+        url: "https://imgflip.com/s/meme/Sully-Face-Swap.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 320, width: 450, align: "center" }   // Abajo
+        ]
+    },
     
     // Más clásicos
-    "one-does-not": "https://imgflip.com/s/meme/One-Does-Not-Simply.jpg",
-    "disaster-girl": "https://imgflip.com/s/meme/Disaster-Girl.jpg",
-    "cry": "https://imgflip.com/s/meme/First-World-Problems.jpg",
-    "evil-kermit": "https://imgflip.com/s/meme/Evil-Kermit.jpg",
-    "patrick": "https://imgflip.com/s/meme/Evil-Patrick.jpg",
-    "this-is-fine": "https://imgflip.com/s/meme/This-Is-Fine.jpg",
-    "hide-the-pain": "https://imgflip.com/s/meme/Hide-the-Pain-Harold.jpg",
-    "waiting-skeleton": "https://imgflip.com/s/meme/Waiting-Skeleton.jpg",
-    "awkward-monkey": "https://imgflip.com/s/meme/Monkey-Puppet.jpg",
-    "sweating-button": "https://imgflip.com/s/meme/Blank-Button.jpg",
+    "one-does-not": {
+        url: "https://imgflip.com/s/meme/One-Does-Not-Simply.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 280, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "disaster-girl": {
+        url: "https://imgflip.com/s/meme/Disaster-Girl.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 300, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "cry": {
+        url: "https://imgflip.com/s/meme/First-World-Problems.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 300, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "evil-kermit": {
+        url: "https://imgflip.com/s/meme/Evil-Kermit.jpg",
+        textZones: [
+            { x: 150, y: 80, width: 250, align: "center" },   // Kermit normal
+            { x: 350, y: 250, width: 250, align: "center" }   // Kermit oscuro
+        ]
+    },
+    "patrick": {
+        url: "https://imgflip.com/s/meme/Evil-Patrick.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 280, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "this-is-fine": {
+        url: "https://imgflip.com/s/meme/This-Is-Fine.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 280, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "hide-the-pain": {
+        url: "https://imgflip.com/s/meme/Hide-the-Pain-Harold.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 300, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "waiting-skeleton": {
+        url: "https://imgflip.com/s/meme/Waiting-Skeleton.jpg",
+        textZones: [
+            { x: 225, y: 390, width: 450, align: "center" }   // Solo texto abajo
+        ]
+    },
+    "awkward-monkey": {
+        url: "https://imgflip.com/s/meme/Monkey-Puppet.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 420, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "sweating-button": {
+        url: "https://imgflip.com/s/meme/Blank-Button.jpg",
+        textZones: [
+            { x: 225, y: 150, width: 450, align: "center" },  // Botón
+            { x: 225, y: 350, width: 450, align: "center" }   // Persona sudando
+        ]
+    },
     
     // Más memes modernos
-    "surprised-pikachu": "https://imgflip.com/s/meme/Surprised-Pikachu.jpg",
-    "gru-plan": "https://imgflip.com/s/meme/Grus-Plan.jpg",
-    "and-just": "https://imgflip.com/s/meme/Left-Exit-12-Off-Ramp.jpg",
-    "buff-doge": "https://imgflip.com/s/meme/Buff-Doge-vs-Cheems.png",
-    "cheems": "https://imgflip.com/s/meme/Swole-Doge-vs-Cheems.png",
-    "tuxedo-pooh": "https://imgflip.com/s/meme/Tuxedo-Winnie-The-Pooh.png",
-    "pointing-spiderman": "https://imgflip.com/s/meme/Spider-Man-Pointing-at-Spider-Man.jpg",
-    "unsettled-tom": "https://imgflip.com/s/meme/Unsettled-Tom.jpg",
-    "they-dont-know": "https://imgflip.com/s/meme/They-Dont-Know.jpg",
-    "bernie-mittens": "https://imgflip.com/s/meme/Bernie-I-Am-Once-Again-Asking-For-Your-Support.jpg",
+    "surprised-pikachu": {
+        url: "https://imgflip.com/s/meme/Surprised-Pikachu.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 300, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "gru-plan": {
+        url: "https://imgflip.com/s/meme/Grus-Plan.jpg",
+        textZones: [
+            { x: 450, y: 120, width: 280, align: "center" },  // Panel 1
+            { x: 450, y: 320, width: 280, align: "center" },  // Panel 2
+            { x: 450, y: 520, width: 280, align: "center" },  // Panel 3
+            { x: 450, y: 720, width: 280, align: "center" }   // Panel 4
+        ]
+    },
+    "and-just": {
+        url: "https://imgflip.com/s/meme/Left-Exit-12-Off-Ramp.jpg",
+        textZones: [
+            { x: 210, y: 120, width: 200, align: "center" },  // Salida
+            { x: 400, y: 180, width: 200, align: "center" },  // Seguir recto
+            { x: 300, y: 320, width: 250, align: "center" }   // Carro
+        ]
+    },
+    "buff-doge": {
+        url: "https://imgflip.com/s/meme/Buff-Doge-vs-Cheems.png",
+        textZones: [
+            { x: 180, y: 120, width: 200, align: "center" },  // Doge fuerte
+            { x: 500, y: 120, width: 200, align: "center" }   // Cheems débil
+        ]
+    },
+    "cheems": {
+        url: "https://imgflip.com/s/meme/Swole-Doge-vs-Cheems.png",
+        textZones: [
+            { x: 180, y: 120, width: 200, align: "center" },  // Doge grande
+            { x: 490, y: 120, width: 200, align: "center" }   // Cheems
+        ]
+    },
+    "tuxedo-pooh": {
+        url: "https://imgflip.com/s/meme/Tuxedo-Winnie-The-Pooh.png",
+        textZones: [
+            { x: 300, y: 100, width: 300, align: "left" },    // Pooh normal
+            { x: 300, y: 330, width: 300, align: "left" }     // Pooh elegante
+        ]
+    },
+    "pointing-spiderman": {
+        url: "https://imgflip.com/s/meme/Spider-Man-Pointing-at-Spider-Man.jpg",
+        textZones: [
+            { x: 160, y: 150, width: 150, align: "center" },  // Spiderman izquierda
+            { x: 330, y: 150, width: 150, align: "center" }   // Spiderman derecha
+        ]
+    },
+    "unsettled-tom": {
+        url: "https://imgflip.com/s/meme/Unsettled-Tom.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 290, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "they-dont-know": {
+        url: "https://imgflip.com/s/meme/They-Dont-Know.jpg",
+        textZones: [
+            { x: 180, y: 280, width: 150, align: "center" }   // Texto en el pensamiento
+        ]
+    },
+    "bernie-mittens": {
+        url: "https://imgflip.com/s/meme/Bernie-I-Am-Once-Again-Asking-For-Your-Support.jpg",
+        textZones: [
+            { x: 225, y: 300, width: 450, align: "center" }   // Texto abajo
+        ]
+    },
     
     // Últimas adiciones
-    "chad": "https://imgflip.com/s/meme/Average-Fan-vs-Average-Enjoyer.jpg",
-    "omg": "https://imgflip.com/s/meme/OMG-Face.jpg",
-    "galaxy-brain": "https://imgflip.com/s/meme/Galaxy-Brain.jpg",
-    "american-chopper": "https://imgflip.com/s/meme/American-Chopper-Argument.jpg",
-    "mocking-spongebob": "https://imgflip.com/s/meme/Mocking-Spongebob.jpg",
-    "think-about-it": "https://imgflip.com/s/meme/Think-About-It.jpg",
-    "laughing-leo": "https://imgflip.com/s/meme/Leonardo-Dicaprio-Cheers.jpg",
-    "sad-pablo": "https://imgflip.com/s/meme/Sad-Pablo-Escobar.jpg",
-    "pretend": "https://imgflip.com/s/meme/Pretend-To-Be-Happy-Hiding-Pain.jpg",
-    "incredibles": "https://imgflip.com/s/meme/If-I-Had-One.jpg"
+    "chad": {
+        url: "https://imgflip.com/s/meme/Average-Fan-vs-Average-Enjoyer.jpg",
+        textZones: [
+            { x: 180, y: 180, width: 200, align: "center" },  // Fan izquierda
+            { x: 520, y: 180, width: 200, align: "center" }   // Chad derecha
+        ]
+    },
+    "omg": {
+        url: "https://imgflip.com/s/meme/OMG-Face.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 320, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "galaxy-brain": {
+        url: "https://imgflip.com/s/meme/Galaxy-Brain.jpg",
+        textZones: [
+            { x: 400, y: 130, width: 350, align: "right" },   // Cerebro pequeño
+            { x: 400, y: 330, width: 350, align: "right" },   // Cerebro mediano
+            { x: 400, y: 530, width: 350, align: "right" },   // Cerebro brillante
+            { x: 400, y: 730, width: 350, align: "right" }    // Cerebro galaxia
+        ]
+    },
+    "american-chopper": {
+        url: "https://imgflip.com/s/meme/American-Chopper-Argument.jpg",
+        textZones: [
+            { x: 270, y: 90, width: 250, align: "left" },     // Panel 1
+            { x: 270, y: 290, width: 250, align: "left" },    // Panel 2
+            { x: 270, y: 490, width: 250, align: "left" },    // Panel 3
+            { x: 270, y: 690, width: 250, align: "left" },    // Panel 4
+            { x: 270, y: 890, width: 250, align: "left" }     // Panel 5
+        ]
+    },
+    "mocking-spongebob": {
+        url: "https://imgflip.com/s/meme/Mocking-Spongebob.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba (texto normal)
+            { x: 225, y: 290, width: 450, align: "center" }   // Abajo (texto burlón)
+        ],
+        textStyle: { alternatingCase: true }  // Para el texto inferior
+    },
+    "think-about-it": {
+        url: "https://imgflip.com/s/meme/Think-About-It.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 280, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "laughing-leo": {
+        url: "https://imgflip.com/s/meme/Leonardo-Dicaprio-Cheers.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 280, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "sad-pablo": {
+        url: "https://imgflip.com/s/meme/Sad-Pablo-Escobar.jpg",
+        textZones: [
+            { x: 225, y: 320, width: 450, align: "center" }   // Texto abajo
+        ]
+    },
+    "pretend": {
+        url: "https://imgflip.com/s/meme/Pretend-To-Be-Happy-Hiding-Pain.jpg",
+        textZones: [
+            { x: 225, y: 50, width: 450, align: "center" },   // Arriba
+            { x: 225, y: 280, width: 450, align: "center" }   // Abajo
+        ]
+    },
+    "incredibles": {
+        url: "https://imgflip.com/s/meme/If-I-Had-One.jpg",
+        textZones: [
+            { x: 225, y: 250, width: 450, align: "center" }   // Texto central
+        ]
+    }
 };
 
 // Ruta para servir las imágenes guardadas
@@ -98,12 +402,52 @@ router.get("/output/:filename", (req, res) => {
 
 // Listar plantillas disponibles
 router.get("/plantillas", (req, res) => {
+    // Crear un objeto con información detallada sobre cada plantilla
+    const plantillasInfo = {};
+    
+    Object.keys(MEME_TEMPLATES).forEach(key => {
+        const template = MEME_TEMPLATES[key];
+        let numZonas = 2; // Por defecto
+        
+        if (typeof template !== 'string' && template.textZones) {
+            numZonas = template.textZones.length;
+        }
+        
+        plantillasInfo[key] = {
+            nombre: key,
+            zonas_texto: numZonas,
+            descripcion: getPlantillaDescripcion(key, numZonas)
+        };
+    });
+    
     return res.json({
         success: true,
-        plantillas: Object.keys(MEME_TEMPLATES),
-        mensaje: "Usa estas plantillas en el parámetro 'plantilla' de la API"
+        total_plantillas: Object.keys(MEME_TEMPLATES).length,
+        plantillas: plantillasInfo,
+        uso: "Usa el parámetro 'plantilla' con alguno de estos nombres",
+        ejemplo: "/api/fun/meme?plantilla=drake&textoArriba=No usar APIs&textoAbajo=Usar API Karl"
     });
 });
+
+// Función auxiliar para generar descripciones de plantillas
+function getPlantillaDescripcion(nombre, numZonas) {
+    const descripciones = {
+        "drake": "Drake rechazando y aceptando",
+        "distracted": "Chico distraído mirando a otra chica",
+        "button": "Persona indecisa con dos botones",
+        "change": "Change my mind",
+        "expanding": "Cerebro expansivo con etapas de iluminación",
+        "woman-yelling": "Mujer gritando al gato",
+        "gru-plan": "Plan de Gru (4 paneles)",
+        "tuxedo-pooh": "Winnie Pooh normal y elegante",
+        "stonks": "Hombre de negocios con gráfico",
+        "mocking-spongebob": "Bob Esponja burlándose",
+        "trade-offer": "Propuesta de intercambio",
+        "always-has-been": "Astronautas: siempre ha sido así",
+    };
+    
+    return descripciones[nombre] || `Plantilla con ${numZonas} zonas de texto`;
+}
 
 /**
  * API Generador de Memes - Crea memes personalizados con texto arriba y abajo
@@ -124,15 +468,22 @@ router.get("/", async (req, res) => {
         // Determinar la URL de la imagen a usar
         let imagenUrl;
         if (plantilla) {
+            const plantillaLower = plantilla.toLowerCase();
             // Verificar si la plantilla existe
-            if (!MEME_TEMPLATES[plantilla.toLowerCase()]) {
+            if (!MEME_TEMPLATES[plantillaLower]) {
                 return res.status(400).json({ 
                     error: "Plantilla no encontrada", 
                     plantillas_disponibles: Object.keys(MEME_TEMPLATES),
                     consultar: "/api/fun/meme/plantillas"
                 });
             }
-            imagenUrl = MEME_TEMPLATES[plantilla.toLowerCase()];
+            
+            // Obtener la URL dependiendo del formato del objeto de plantilla
+            if (typeof MEME_TEMPLATES[plantillaLower] === 'string') {
+                imagenUrl = MEME_TEMPLATES[plantillaLower];
+            } else {
+                imagenUrl = MEME_TEMPLATES[plantillaLower].url;
+            }
         } else {
             imagenUrl = imagen;
         }
@@ -176,50 +527,7 @@ router.get("/", async (req, res) => {
         const fontSize = Math.floor(height / 10);
         ctx.font = `bold ${fontSize}px Impact, Arial, sans-serif`;
         
-        // Función para manejar el ajuste de texto largo
-        const wrapText = (text, x, y, maxWidth, lineHeight) => {
-            if (!text) return;
-            
-            // Dividir por palabras
-            const words = text.split(' ');
-            let line = '';
-            let lines = [];
-            
-            // Crear las líneas
-            for (let n = 0; n < words.length; n++) {
-                const testLine = line + words[n] + ' ';
-                const metrics = ctx.measureText(testLine);
-                const testWidth = metrics.width;
-                
-                if (testWidth > maxWidth && n > 0) {
-                    lines.push(line);
-                    line = words[n] + ' ';
-                } else {
-                    line = testLine;
-                }
-            }
-            lines.push(line);
-            
-            // Dibujar cada línea
-            for (let i = 0; i < lines.length; i++) {
-                const textY = y + (i * lineHeight);
-                ctx.strokeText(lines[i], x, textY);
-                ctx.fillText(lines[i], x, textY);
-            }
-        };
-        
-        // Agregar texto
-        const maxWidth = width * 0.9;
-        const lineHeight = fontSize + 10;
-        
-        // Texto superior
-        if (textoArriba) {
-            wrapText(textoArriba.toUpperCase(), width / 2, fontSize + 20, maxWidth, lineHeight);
-        }
-        
-        // Texto inferior
-        if (textoAbajo) {
-            wrapText(textoAbajo.toUpperCase(), width / 2, height - 30, maxWidth, lineHeight);
+
         }
         
         // Generar nombre único para la imagen
