@@ -1,10 +1,12 @@
 const express = require("express");
 const axios = require("axios");
+const crypto = require("crypto");
 const router = express.Router();
 
 /**
- * API de Verificación Roblox - Versión mejorada
- * Verifica diversos aspectos del perfil de un usuario de Roblox
+ * API de Verificación Roblox - Versión mejorada con verificación de contacto
+ * Verifica diversos aspectos del perfil de un usuario de Roblox,
+ * incluyendo verificación de correo o teléfono mediante código
  */
 router.get("/", async (req, res) => {
     try {
@@ -16,7 +18,10 @@ router.get("/", async (req, res) => {
             gamepass_id, 
             grupo_id, 
             juego_id,
-            juego_favorito_id
+            juego_favorito_id,
+            contacto,
+            codigo_verificacion,
+            generar_codigo
         } = req.query;
 
         // Verificar al menos un parámetro válido
@@ -215,6 +220,45 @@ router.get("/", async (req, res) => {
             }
         }
 
+        // 7. Verificación de contacto (email/teléfono)
+        if (contacto && codigo_verificacion) {
+            try {
+                // Generar hash del contacto para comparar con el código de verificación
+                const contactoHash = generarHashContacto(contacto, id);
+                const prefijo = contactoHash.substring(0, 8);
+                
+                // Verificar si el código proporcionado coincide con el esperado
+                const codigoValido = codigo_verificacion === prefijo;
+                
+                respuesta.verificaciones.contacto = {
+                    contacto_parcial: ocultarContacto(contacto),
+                    codigo_valido: codigoValido
+                };
+            } catch (error) {
+                respuesta.verificaciones.contacto = { 
+                    error: "Error al verificar contacto", 
+                    detalles: error.message 
+                };
+            }
+        } else if (contacto && generar_codigo === "true") {
+            try {
+                // Generar un código para verificación basado en el contacto y el id de usuario
+                const contactoHash = generarHashContacto(contacto, id);
+                const codigo = contactoHash.substring(0, 8);
+                
+                respuesta.verificaciones.contacto = {
+                    contacto_parcial: ocultarContacto(contacto),
+                    codigo_generado: codigo,
+                    instrucciones: "Agrega este código a la descripción del usuario para verificar que tienes acceso al contacto"
+                };
+            } catch (error) {
+                respuesta.verificaciones.contacto = { 
+                    error: "Error al generar código de verificación", 
+                    detalles: error.message 
+                };
+            }
+        }
+
         // Verificar si se realizó al menos una verificación
         if (Object.keys(respuesta.verificaciones).length === 0) {
             return res.status(400).json({ 
@@ -225,7 +269,9 @@ router.get("/", async (req, res) => {
                     "gamepass_id - Verifica si posee un gamepass",
                     "grupo_id - Verifica pertenencia a un grupo",
                     "juego_id - Verifica si ha jugado un juego (basado en votos)",
-                    "juego_favorito_id - Verifica si tiene un juego como favorito"
+                    "juego_favorito_id - Verifica si tiene un juego como favorito",
+                    "contacto + codigo_verificacion - Verifica si el código corresponde al contacto indicado",
+                    "contacto + generar_codigo=true - Genera un código de verificación para el contacto"
                 ]
             });
         }
@@ -257,5 +303,48 @@ router.get("/", async (req, res) => {
         });
     }
 });
+
+/**
+ * Función para generar un hash de un contacto combinado con el ID de usuario
+ * Esto crea un código único para cada combinación de contacto+usuario
+ */
+function generarHashContacto(contacto, userId) {
+    // Normalizar contacto (eliminar espacios, convertir a minúsculas)
+    const contactoNormalizado = contacto.trim().toLowerCase();
+    
+    // Combinar con el ID de usuario para hacerlo único por usuario
+    const datos = `${contactoNormalizado}:${userId}`;
+    
+    // Generar hash SHA-256 y devolver en hexadecimal
+    return crypto.createHash('sha256').update(datos).digest('hex');
+}
+
+/**
+ * Función para ocultar parcialmente un contacto (email/teléfono)
+ * para mostrar en respuestas sin exponer datos sensibles
+ */
+function ocultarContacto(contacto) {
+    if (!contacto) return null;
+    
+    // Detectar si es email o teléfono
+    if (contacto.includes('@')) {
+        // Es un email
+        const [usuario, dominio] = contacto.split('@');
+        const usuarioOculto = usuario.substring(0, 1) + '*'.repeat(usuario.length - 1);
+        const dominioPartes = dominio.split('.');
+        const dominioOculto = dominioPartes.map(parte => 
+            parte.substring(0, 1) + '*'.repeat(parte.length - 1)
+        ).join('.');
+        
+        return `${usuarioOculto}@${dominioOculto}`;
+    } else {
+        // Asumir que es un teléfono
+        const visible = contacto.substring(0, 2);
+        const oculto = '*'.repeat(contacto.length - 4);
+        const ultimos = contacto.substring(contacto.length - 2);
+        
+        return `${visible}${oculto}${ultimos}`;
+    }
+}
 
 module.exports = router;
