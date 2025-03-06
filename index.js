@@ -25,6 +25,7 @@ const binarioRouter = require("./api/utility/binario");
 const invertidoRouter = require("./api/utility/invertido");
 const obfuscarRouter = require("./api/utility/obfuscar");
 const captchaRouter = require("./api/utility/captcha");
+const blackjackRouter = require("./api/fun/blackjack");
 
 // Usar rutas
 app.use("/api/fun/ship", shipRouter);
@@ -49,6 +50,7 @@ app.use("/api/utility/binario", binarioRouter);
 app.use("/api/utility/invertido", invertidoRouter);
 app.use("/api/utility/obfuscar", obfuscarRouter);
 app.use("/api/utility/captcha", captchaRouter);
+app.use("/api/fun/blackjack", blackjackRouter);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
