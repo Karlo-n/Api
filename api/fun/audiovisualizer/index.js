@@ -8,6 +8,7 @@ const axios = require('axios');
 const ffmpeg = require('fluent-ffmpeg');
 const { v4: uuidv4 } = require('uuid');
 const os = require('os');
+const multer = require('multer');
 
 // Configurar directorio para archivos temporales
 const TEMP_DIR = path.join(os.tmpdir(), 'audiovisualizer');
@@ -21,8 +22,107 @@ if (!fs.existsSync(OUTPUT_DIR)) {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }
 
+// Configurar multer para la subida de archivos
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, TEMP_DIR);
+    },
+    filename: function (req, file, cb) {
+        const jobId = uuidv4();
+        // Guardar el jobId en el objeto request para usarlo más tarde
+        req.jobId = jobId;
+        const fileExt = path.extname(file.originalname);
+        cb(null, `${jobId}_uploaded${fileExt}`);
+    }
+});
+
+// Filtro para aceptar solo archivos MP3 y MP4
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype === 'audio/mp3' || 
+        file.mimetype === 'audio/mpeg' || 
+        file.mimetype === 'video/mp4') {
+        cb(null, true);
+    } else {
+        cb(new Error('Formato de archivo no admitido. Solo se aceptan MP3 y MP4.'), false);
+    }
+};
+
+const upload = multer({ 
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 50 * 1024 * 1024 // Limitar a 50MB
+    }
+});
+
 /**
- * API de Visualizador de Audio - Convierte audio en visualización tipo onda
+ * Endpoint para subir archivos MP3/MP4 y generar visualización
+ */
+router.post("/upload", upload.single('audioFile'), async (req, res) => {
+    try {
+        // Verificar si se subió un archivo
+        if (!req.file) {
+            return res.status(400).json({ 
+                error: "No se proporcionó ningún archivo", 
+                ejemplo: "Envía un archivo MP3 o MP4 con el nombre 'audioFile'"
+            });
+        }
+
+        const { type = 'bars', color = '#3498db', bgColor = '#000000', duration } = req.query;
+        const jobId = req.jobId;
+        const uploadedFilePath = req.file.path;
+        let audioFilePath;
+
+        // Si es un archivo MP4, extraer el audio
+        if (req.file.mimetype === 'video/mp4') {
+            audioFilePath = path.join(TEMP_DIR, `${jobId}_extracted_audio.mp3`);
+            await extractAudioFromVideo(uploadedFilePath, audioFilePath);
+        } else {
+            // Si ya es un archivo de audio, usarlo directamente
+            audioFilePath = uploadedFilePath;
+        }
+
+        // Procesar la visualización
+        const result = await processAudioVisualization(
+            jobId,
+            audioFilePath,
+            type,
+            color,
+            bgColor,
+            duration
+        );
+
+        // Limpiar archivos temporales después de un tiempo
+        setTimeout(() => {
+            try {
+                fs.rmSync(uploadedFilePath, { force: true });
+                if (req.file.mimetype === 'video/mp4') {
+                    fs.rmSync(audioFilePath, { force: true });
+                }
+            } catch (cleanupError) {
+                console.error("Error en limpieza:", cleanupError);
+            }
+        }, 60000); // Limpiar después de 1 minuto
+
+        res.json({
+            success: true,
+            message: "Visualización generada con éxito a partir del archivo subido",
+            videoUrl: result.publicUrl,
+            type,
+            jobId
+        });
+
+    } catch (error) {
+        console.error("Error procesando archivo subido:", error);
+        res.status(500).json({ 
+            error: "Error al procesar la visualización", 
+            detalle: error.message 
+        });
+    }
+});
+
+/**
+ * Endpoint para generar visualización a partir de URL (mantiene compatibilidad)
  */
 router.get("/", async (req, res) => {
     try {
@@ -36,12 +136,9 @@ router.get("/", async (req, res) => {
             });
         }
 
-        // Generar nombres de archivos temporales únicos
+        // Generar ID único para este trabajo
         const jobId = uuidv4();
         const audioFilePath = path.join(TEMP_DIR, `${jobId}_audio.mp3`);
-        const visualizationPath = path.join(TEMP_DIR, `${jobId}_visualization`);
-        const outputVideoPath = path.join(OUTPUT_DIR, `${jobId}_output.mp4`);
-        const publicUrl = `/visualizer/${jobId}_output.mp4`;
 
         // Descargar el archivo de audio
         try {
@@ -63,29 +160,13 @@ router.get("/", async (req, res) => {
             return res.status(400).json({ error: "No se pudo descargar el audio de la URL proporcionada" });
         }
 
-        // Analizar el audio para obtener datos de forma de onda
-        const audioData = await analyzeAudio(audioFilePath);
-        
-        // Generar las imágenes de visualización
-        const frameCount = Math.min(audioData.length, 300); // Limitar a 300 frames máximo
-        for (let i = 0; i < frameCount; i++) {
-            const frameData = audioData[Math.floor(i * audioData.length / frameCount)];
-            const frameFilePath = path.join(visualizationPath, `frame_${i.toString().padStart(5, '0')}.png`);
-            
-            // Asegurarse de que el directorio de frames existe
-            if (i === 0 && !fs.existsSync(visualizationPath)) {
-                fs.mkdirSync(visualizationPath, { recursive: true });
-            }
-            
-            // Generar el frame de visualización
-            generateVisualizationFrame(frameData, frameFilePath, type, color, bgColor);
-        }
-
-        // Crear el video a partir de las imágenes
-        await createVisualizationVideo(
-            visualizationPath, 
-            audioFilePath, 
-            outputVideoPath, 
+        // Procesar la visualización
+        const result = await processAudioVisualization(
+            jobId,
+            audioFilePath,
+            type,
+            color,
+            bgColor,
             duration
         );
 
@@ -93,7 +174,6 @@ router.get("/", async (req, res) => {
         setTimeout(() => {
             try {
                 fs.rmSync(audioFilePath, { force: true });
-                fs.rmSync(visualizationPath, { recursive: true, force: true });
             } catch (cleanupError) {
                 console.error("Error en limpieza:", cleanupError);
             }
@@ -103,7 +183,7 @@ router.get("/", async (req, res) => {
         res.json({
             success: true,
             message: "Visualización de audio generada con éxito",
-            videoUrl: publicUrl,
+            videoUrl: result.publicUrl,
             type,
             jobId
         });
@@ -116,6 +196,80 @@ router.get("/", async (req, res) => {
         });
     }
 });
+
+/**
+ * Función unificada para procesar audio y generar visualización
+ * @param {string} jobId ID único del trabajo
+ * @param {string} audioFilePath Ruta al archivo de audio
+ * @param {string} type Tipo de visualización
+ * @param {string} color Color de la visualización
+ * @param {string} bgColor Color de fondo
+ * @param {number} duration Duración forzada del video (opcional)
+ * @returns {Promise<Object>} Resultado del procesamiento
+ */
+async function processAudioVisualization(jobId, audioFilePath, type, color, bgColor, duration) {
+    const visualizationPath = path.join(TEMP_DIR, `${jobId}_visualization`);
+    const outputVideoPath = path.join(OUTPUT_DIR, `${jobId}_output.mp4`);
+    const publicUrl = `/visualizer/${jobId}_output.mp4`;
+
+    // Analizar el audio para obtener datos de forma de onda
+    const audioData = await analyzeAudio(audioFilePath);
+    
+    // Generar las imágenes de visualización
+    const frameCount = Math.min(audioData.length, 300); // Limitar a 300 frames máximo
+    for (let i = 0; i < frameCount; i++) {
+        const frameData = audioData[Math.floor(i * audioData.length / frameCount)];
+        const frameFilePath = path.join(visualizationPath, `frame_${i.toString().padStart(5, '0')}.png`);
+        
+        // Asegurarse de que el directorio de frames existe
+        if (i === 0 && !fs.existsSync(visualizationPath)) {
+            fs.mkdirSync(visualizationPath, { recursive: true });
+        }
+        
+        // Generar el frame de visualización
+        generateVisualizationFrame(frameData, frameFilePath, type, color, bgColor);
+    }
+
+    // Crear el video a partir de las imágenes
+    await createVisualizationVideo(
+        visualizationPath, 
+        audioFilePath, 
+        outputVideoPath, 
+        duration
+    );
+
+    // Limpiar archivos temporales de frames
+    setTimeout(() => {
+        try {
+            fs.rmSync(visualizationPath, { recursive: true, force: true });
+        } catch (cleanupError) {
+            console.error("Error en limpieza de frames:", cleanupError);
+        }
+    }, 60000); // Limpiar después de 1 minuto
+
+    return { 
+        publicUrl,
+        jobId
+    };
+}
+
+/**
+ * Extrae el audio de un archivo de video
+ * @param {string} videoPath Ruta al archivo de video
+ * @param {string} audioOutputPath Ruta donde guardar el audio extraído
+ * @returns {Promise} Promesa que se resuelve cuando termina la extracción
+ */
+function extractAudioFromVideo(videoPath, audioOutputPath) {
+    return new Promise((resolve, reject) => {
+        ffmpeg(videoPath)
+            .outputOptions('-q:a 0') // Mantener calidad de audio
+            .noVideo()
+            .output(audioOutputPath)
+            .on('end', resolve)
+            .on('error', reject)
+            .run();
+    });
+}
 
 /**
  * Analiza un archivo de audio para extraer datos de forma de onda
