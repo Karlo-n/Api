@@ -15,10 +15,28 @@ const partidasActivas = {};
  */
 router.get("/", async (req, res) => {
     try {
-        const { cartasJugador, cartasDealer, accion, partidaId } = req.query;
+        const { cartasJugador, cartasDealer, accion, partidaId, id } = req.query;
 
+        // Verificar si una partida existe
+        if (id && !accion) {
+            if (partidasActivas[id]) {
+                return res.json({
+                    existe: true,
+                    partidaId: id,
+                    acciones_restantes: 10 - partidasActivas[id].contador,
+                    acciones_totales: partidasActivas[id].acciones.length,
+                    fecha_creacion: partidasActivas[id].fechaCreacion
+                });
+            } else {
+                return res.json({
+                    existe: false,
+                    mensaje: "La partida no existe o ha expirado"
+                });
+            }
+        }
+        
         // Caso especial: Iniciar nueva partida
-        if (accion === "iniciar" && !partidaId) {
+        if (accion === "iniciar") {
             const nuevoId = uuidv4();
             partidasActivas[nuevoId] = {
                 acciones: [],
@@ -29,10 +47,20 @@ router.get("/", async (req, res) => {
             return res.json({
                 mensaje: "Nueva partida de 21 iniciada",
                 partidaId: nuevoId,
+                acciones_restantes: 10,
                 instrucciones: "Usa este partidaId en tus próximas solicitudes. La partida durará por 10 acciones."
             });
         }
 
+        // Validar que se proporcione partidaId para todas las demás acciones
+        if (!partidaId) {
+            return res.status(400).json({ 
+                error: "Debes proporcionar un partidaId", 
+                instrucciones: "Primero inicia una partida con ?accion=iniciar o proporciona un partidaId válido",
+                ejemplo: "/api/fun/blackjack?partidaId=abc123&cartasJugador=A,10&cartasDealer=8,4&accion=pedir"
+            });
+        }
+        
         // Validar parámetros
         if (!cartasJugador || !cartasDealer) {
             return res.status(400).json({ 
