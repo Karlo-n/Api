@@ -88,26 +88,28 @@ router.get("/", async (req, res) => {
         // Determinar estado actual del juego
         let estadoJuego = determinarEstadoJuego(valorJugador, valorDealer);
 
-        // Si el juego sigue en curso, consultar a Groq para la próxima acción del dealer
+        // Consultar a la API de DeepSeek para la próxima acción y pensamiento del dealer
         let decisionDealer = null;
         let pensamientoDealer = null;
         let resultado = null;
 
-        // Obtener siempre el pensamiento del dealer mientras el juego esté en curso
+        // Obtener siempre el pensamiento del dealer
         if (estadoJuego === "en_curso") {
+            // Obtener decisión y pensamiento del dealer
             const respuestaDealer = await consultarGroqDealer(cartasJugadorArray, cartasDealerArray, valorJugador, valorDealer);
             pensamientoDealer = respuestaDealer.pensamiento;
             
-            if (accion === "plantar") {
-                // El jugador se planta, el dealer toma su decisión
-                decisionDealer = respuestaDealer.decision;
+            // El dealer toma la decisión automáticamente (sin considerar accion)
+            decisionDealer = respuestaDealer.decision;
+            
+            if (decisionDealer === "parar") {
+                // El dealer decide plantarse
                 resultado = procesarDecisionDealer(decisionDealer, valorJugador, valorDealer);
             } else {
-                // El juego continúa, pero el dealer sigue analizando
-                decisionDealer = "esperando";
+                // El dealer analiza pero todavía no toma una decisión final
                 resultado = {
                     estado: "en_curso",
-                    mensaje: "El juego continúa. Puedes pedir otra carta o plantarte."
+                    mensaje: "El juego continúa. El dealer está analizando la situación."
                 };
             }
         } else {
@@ -117,7 +119,7 @@ router.get("/", async (req, res) => {
                 mensaje: obtenerMensajeFinal(estadoJuego)
             };
             
-            // Aún así, obtener el pensamiento del dealer sobre el resultado final
+            // Obtener el pensamiento del dealer sobre el resultado final
             const respuestaDealer = await consultarGroqDealerFinal(cartasJugadorArray, cartasDealerArray, valorJugador, valorDealer, estadoJuego);
             pensamientoDealer = respuestaDealer.pensamiento;
         }
@@ -168,13 +170,18 @@ router.get("/", async (req, res) => {
             resultado: resultado
         };
 
-        // Incluir información de la partida si hay partidaId
-        if (partidaId && partidasActivas[partidaId]) {
+        // Incluir información de la partida (siempre debería existir en este punto)
+        if (partidasActivas[partidaId]) {
             respuesta.partida = {
                 id: partidaId,
                 acciones_restantes: 10 - partidasActivas[partidaId].contador,
+                acciones_totales: partidasActivas[partidaId].acciones.length,
+                fecha_creacion: partidasActivas[partidaId].fechaCreacion,
                 historial: partidasActivas[partidaId].acciones
             };
+        } else {
+            // Si llegamos aquí, la partida ha expirado durante la ejecución
+            respuesta.error = "La partida ha expirado durante la ejecución de esta acción";
         }
 
         res.json(respuesta);
@@ -233,10 +240,12 @@ function determinarEstadoJuego(valorJugador, valorDealer) {
 }
 
 /**
- * Consulta a Groq para obtener la decisión y el pensamiento del dealer durante el juego
+ * Consulta a la API de DeepSeek para obtener la decisión y el pensamiento del dealer durante el juego
  */
 async function consultarGroqDealer(cartasJugador, cartasDealer, valorJugador, valorDealer) {
     try {
+        const axios = require('axios');
+        
         const prompt = `
 Estás jugando una partida de 21 como dealer (similar al Blackjack).
 Reglas:
@@ -250,76 +259,65 @@ Situación actual:
 - Tus cartas como dealer: ${cartasDealer.join(', ')} (Valor total: ${valorDealer})
 
 Analiza la situación como un dealer experto. Responde en formato JSON con estos dos campos:
-1. "pensamiento": Escribe tu análisis detallado de la situación actual, valorando las probabilidades y riesgos (entre 50-100 caracteres)
+1. "pensamiento": Escribe tu análisis detallado de la situación, incluye tus probabilidades estimadas de pasarte de 21 si pides otra carta, y tu estrategia considerando la mano del jugador (mínimo 100 caracteres)
 2. "decision": SOLO puedes responder con "continuar" o "parar"
 
 Formato exacto de respuesta:
 {
-  "pensamiento": "Tu análisis aquí (50-100 caracteres)",
+  "pensamiento": "Tu análisis aquí (mínimo 100 caracteres)",
   "decision": "continuar" o "parar"
 }
 `;
 
-        const completion = await groq.chat.completions.create({
-            messages: [{ role: "user", content: prompt }],
-            model: "deepseek-r1-distill-qwen-32b",
-            max_tokens: 200,
-            temperature: 0.7
-        });
-
-        const respuesta = completion.choices[0].message.content.trim();
+        // Codificar el prompt para la URL
+        const promptEncoded = encodeURIComponent(prompt);
+        const apiUrl = `http://api.apikarl.com/api/utility/deepseek?prompt=${promptEncoded}`;
         
-        try {
-            // Intentar parsear la respuesta como JSON
-            const jsonRespuesta = JSON.parse(respuesta);
-            
-            // Asegurarse de que la decisión esté normalizada
-            if (jsonRespuesta.decision) {
-                jsonRespuesta.decision = jsonRespuesta.decision.toLowerCase();
-                // Normalizar la decisión a solo "continuar" o "parar"
-                if (jsonRespuesta.decision.includes("continuar") || 
-                    jsonRespuesta.decision.includes("pedir") || 
-                    jsonRespuesta.decision.includes("otra carta") ||
-                    jsonRespuesta.decision.includes("avanzar")) {
-                    jsonRespuesta.decision = "continuar";
+        // Realizar la petición a la API
+        const response = await axios.get(apiUrl);
+        
+        // Verificar si tenemos una respuesta válida
+        if (response.data && response.data.respuesta) {
+            try {
+                // Intentar parsear la respuesta como JSON
+                const jsonRespuesta = JSON.parse(response.data.respuesta);
+                
+                // Asegurarse de que la decisión esté normalizada
+                if (jsonRespuesta.decision) {
+                    jsonRespuesta.decision = jsonRespuesta.decision.toLowerCase();
+                    // Normalizar la decisión a solo "continuar" o "parar"
+                    if (jsonRespuesta.decision.includes("continuar") || 
+                        jsonRespuesta.decision.includes("pedir") || 
+                        jsonRespuesta.decision.includes("otra carta") ||
+                        jsonRespuesta.decision.includes("avanzar")) {
+                        jsonRespuesta.decision = "continuar";
+                    } else {
+                        jsonRespuesta.decision = "parar";
+                    }
                 } else {
-                    jsonRespuesta.decision = "parar";
+                    // Si no hay decisión, establecer valor por defecto
+                    jsonRespuesta.decision = valorDealer < 17 ? "continuar" : "parar";
                 }
-            } else {
-                // Si no hay decisión, establecer valor por defecto
-                jsonRespuesta.decision = valorDealer < 17 ? "continuar" : "parar";
+                
+                return {
+                    pensamiento: jsonRespuesta.pensamiento || response.data.respuesta,
+                    decision: jsonRespuesta.decision
+                };
+            } catch (jsonError) {
+                console.error("Error al parsear JSON de la respuesta:", jsonError);
+                
+                // Si no es JSON válido, usar la respuesta completa como pensamiento
+                return {
+                    pensamiento: response.data.respuesta,
+                    decision: valorDealer < 17 ? "continuar" : "parar"
+                };
             }
-            
-            return {
-                pensamiento: jsonRespuesta.pensamiento || "Con " + valorDealer + " puntos, analizo probabilidades y me guío por la estrategia básica del 21.",
-                decision: jsonRespuesta.decision
-            };
-        } catch (jsonError) {
-            console.error("Error al parsear JSON de la respuesta:", jsonError);
-            
-            // Extracción de pensamiento por defecto basado en la situación
-            let pensamiento = "Con " + valorDealer + " puntos, debo seguir la estrategia básica del 21.";
-            
-            // Si no se puede parsear como JSON, intentar extraer la decisión del texto
-            let decision = valorDealer < 17 ? "continuar" : "parar";
-            if (respuesta.toLowerCase().includes("continuar") || 
-                respuesta.toLowerCase().includes("pedir") || 
-                respuesta.toLowerCase().includes("otra carta") ||
-                respuesta.toLowerCase().includes("avanzar")) {
-                decision = "continuar";
-            } else if (respuesta.toLowerCase().includes("parar") || 
-                       respuesta.toLowerCase().includes("planto") || 
-                       respuesta.toLowerCase().includes("me quedo")) {
-                decision = "parar";
-            }
-            
-            return {
-                pensamiento: pensamiento,
-                decision: decision
-            };
+        } else {
+            // Si no hay respuesta válida de la API
+            throw new Error("La API de DeepSeek no devolvió una respuesta válida");
         }
     } catch (error) {
-        console.error("Error consultando a Groq:", error);
+        console.error("Error consultando a la API de DeepSeek:", error);
         // En caso de error, tomar una decisión por defecto basada en reglas clásicas
         return {
             pensamiento: valorDealer < 17 ? 
@@ -331,10 +329,12 @@ Formato exacto de respuesta:
 }
 
 /**
- * Consulta a Groq para obtener el pensamiento del dealer sobre el resultado final
+ * Consulta a la API de DeepSeek para obtener el pensamiento del dealer sobre el resultado final
  */
 async function consultarGroqDealerFinal(cartasJugador, cartasDealer, valorJugador, valorDealer, estadoJuego) {
     try {
+        const axios = require('axios');
+        
         let situacion = "";
         if (estadoJuego === "blackjack_jugador") {
             situacion = "El jugador tiene 21 exactos y ha ganado.";
@@ -352,40 +352,47 @@ Partida de 21 finalizada:
 - Tus cartas como dealer: ${cartasDealer.join(', ')} (Valor total: ${valorDealer})
 - Resultado: ${situacion}
 
-Como dealer experto, analiza brevemente el resultado final del juego.
-Responde SOLO con un objeto JSON con un campo "pensamiento" que contenga tu análisis (entre 50-100 caracteres).
+Como dealer experto, analiza detalladamente el resultado final del juego.
+¿Qué probabilidades teníamos cada uno? ¿Fue cuestión de suerte o de estrategia?
+¿Qué jugadas alternativas habrías considerado?
+
+Responde en formato JSON con un campo "pensamiento" que contenga tu análisis detallado (mínimo 100 caracteres).
 
 Formato exacto de respuesta:
 {
-  "pensamiento": "Tu análisis aquí (50-100 caracteres)"
+  "pensamiento": "Tu análisis aquí (mínimo 100 caracteres)"
 }
 `;
 
-        const completion = await groq.chat.completions.create({
-            messages: [{ role: "user", content: prompt }],
-            model: "deepseek-r1-distill-qwen-32b",
-            max_tokens: 150,
-            temperature: 0.7
-        });
-
-        const respuesta = completion.choices[0].message.content.trim();
+        // Codificar el prompt para la URL
+        const promptEncoded = encodeURIComponent(prompt);
+        const apiUrl = `http://api.apikarl.com/api/utility/deepseek?prompt=${promptEncoded}`;
         
-        try {
-            // Intentar parsear la respuesta como JSON
-            const jsonRespuesta = JSON.parse(respuesta);
-            return {
-                pensamiento: jsonRespuesta.pensamiento || `Partida finalizada con ${valorDealer} vs ${valorJugador}. ${situacion}`
-            };
-        } catch (jsonError) {
-            // Si falla el parseo, extraer un pensamiento del texto o usar uno predeterminado
-            return {
-                pensamiento: `Partida finalizada con ${valorDealer} vs ${valorJugador}. ${situacion}`
-            };
+        // Realizar la petición a la API
+        const response = await axios.get(apiUrl);
+        
+        // Verificar si tenemos una respuesta válida
+        if (response.data && response.data.respuesta) {
+            try {
+                // Intentar parsear la respuesta como JSON
+                const jsonRespuesta = JSON.parse(response.data.respuesta);
+                return {
+                    pensamiento: jsonRespuesta.pensamiento || response.data.respuesta
+                };
+            } catch (jsonError) {
+                // Si falla el parseo, usar la respuesta completa como pensamiento
+                return {
+                    pensamiento: response.data.respuesta
+                };
+            }
+        } else {
+            // Si no hay respuesta válida de la API
+            throw new Error("La API de DeepSeek no devolvió una respuesta válida");
         }
     } catch (error) {
-        console.error("Error consultando a Groq para el resultado final:", error);
+        console.error("Error consultando a la API de DeepSeek para el resultado final:", error);
         return {
-            pensamiento: `Partida finalizada. ${estadoJuego.replace('_', ' ')}.`
+            pensamiento: `Partida finalizada con ${valorDealer} vs ${valorJugador}. ${estadoJuego.replace('_', ' ')}.`
         };
     }
 }
