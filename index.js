@@ -2,6 +2,9 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Servir archivos estáticos desde la carpeta public
+app.use(express.static('public'));
+
 // Importar rutas
 const shipRouter = require("./api/fun/ship");
 const kissRouter = require("./api/fun/kiss");
@@ -26,6 +29,7 @@ const invertidoRouter = require("./api/utility/invertido");
 const obfuscarRouter = require("./api/utility/obfuscar");
 const captchaRouter = require("./api/utility/captcha");
 const blackjackRouter = require("./api/fun/blackjack");
+const audioVisualizerRouter = require("./api/fun/audiovisualizer");
 
 // Usar rutas
 app.use("/api/fun/ship", shipRouter);
@@ -51,6 +55,7 @@ app.use("/api/utility/invertido", invertidoRouter);
 app.use("/api/utility/obfuscar", obfuscarRouter);
 app.use("/api/utility/captcha", captchaRouter);
 app.use("/api/fun/blackjack", blackjackRouter);
+app.use("/api/fun/audiovisualizer", audioVisualizerRouter);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
@@ -64,10 +69,12 @@ app.get("/", (req, res) => {
     "/api/fun/jail",
     "/api/fun/lyric",
     "/api/fun/magik",
-    "/api/fun/byn",  // <-- Añadido aquí
+    "/api/fun/byn",
     "/api/fun/invertir",
     "/api/fun/pixel",
     "/api/fun/comic",
+    "/api/fun/blackjack",
+    "/api/fun/audiovisualizer",
     "/api/utility/boostcard",
     "/api/utility/traductor",
     "/api/utility/bienvenida",
