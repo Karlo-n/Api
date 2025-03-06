@@ -116,43 +116,123 @@ function validarLongitud(longitud) {
  * Genera un código alfanumérico aleatorio
  */
 function generarCodigo(longitud) {
-    const caracteres = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz'; // Sin caracteres ambiguos
+    // Caracteres sin ambigüedades (sin 0/O, 1/l/I, etc.)
+    const caracteres = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz';
     let codigo = '';
     
     for (let i = 0; i < longitud; i++) {
         codigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
     }
     
-    return codigo;
+    // Alternar entre mayúsculas y minúsculas para mejor legibilidad
+    // pero manteniendo la complejidad
+    let codigoFinal = '';
+    for (let i = 0; i < codigo.length; i++) {
+        // 70% probabilidad de mantener el caso original, 30% de cambiarlo
+        // Esto mantiene aleatoriedad pero mejora la distribución visual
+        const char = codigo[i];
+        if (Math.random() > 0.7) {
+            if (char === char.toUpperCase()) {
+                codigoFinal += char.toLowerCase();
+            } else {
+                codigoFinal += char.toUpperCase();
+            }
+        } else {
+            codigoFinal += char;
+        }
+    }
+    
+    return codigoFinal;
 }
 
 /**
- * Genera una imagen CAPTCHA con el código dado
+ * Genera una imagen CAPTCHA con el código dado, estilo Google reCAPTCHA
  */
 async function generarImagenCaptcha(codigo, dificultad) {
     // Configuración del canvas según dificultad
     const config = getConfiguracionPorDificultad(dificultad, codigo.length);
     
+    // Aumentar dimensiones para añadir el diseño de Google
+    const captchaWidth = config.width;
+    const captchaHeight = config.height;
+    const paddingX = 20;
+    const paddingY = 20;
+    const headerHeight = 40;
+    const footerHeight = 40;
+    
+    // Dimensiones totales del canvas
+    const totalWidth = captchaWidth + (paddingX * 2);
+    const totalHeight = captchaHeight + headerHeight + footerHeight + (paddingY * 2);
+    
     // Crear canvas
-    const canvas = Canvas.createCanvas(config.width, config.height);
+    const canvas = Canvas.createCanvas(totalWidth, totalHeight);
     const ctx = canvas.getContext('2d');
     
-    // Fondo
-    ctx.fillStyle = config.backgroundColor;
+    // Fondo principal (blanco)
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Dibujar borde del CAPTCHA
+    ctx.strokeStyle = '#e8e8e8';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, 0, canvas.width, canvas.height);
+    
+    // Header con logo y texto
+    ctx.fillStyle = '#f9f9f9';
+    ctx.fillRect(0, 0, canvas.width, headerHeight);
+    
+    // Línea divisoria del header
+    ctx.strokeStyle = '#e8e8e8';
+    ctx.beginPath();
+    ctx.moveTo(0, headerHeight);
+    ctx.lineTo(canvas.width, headerHeight);
+    ctx.stroke();
+    
+    // Logo de "CAPTCHA" (simulado)
+    ctx.fillStyle = '#4285f4'; // Azul de Google
+    ctx.font = 'bold 20px Arial';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('CAPTCHA', paddingX, headerHeight / 2);
+    
+    // Área del CAPTCHA con fondo gris claro
+    ctx.fillStyle = config.backgroundColor;
+    ctx.fillRect(paddingX, headerHeight + paddingY, captchaWidth, captchaHeight);
+    
+    // Guardar contexto para el área del CAPTCHA
+    ctx.save();
+    ctx.translate(paddingX, headerHeight + paddingY);
+    
+    // Agregar un borde con sombra sutil al área del CAPTCHA
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+    ctx.shadowBlur = 5;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 2;
+    ctx.strokeStyle = '#d8d8d8';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, 0, captchaWidth, captchaHeight);
+    ctx.shadowColor = 'transparent';
+    
     // Dibujar ruido de fondo
-    dibujarRuidoFondo(ctx, canvas.width, canvas.height, config.noiseLevel);
+    dibujarRuidoFondo(ctx, captchaWidth, captchaHeight, config.noiseLevel);
+    
+    // Dibujar grid/patrón de fondo estilo reCAPTCHA
+    dibujarPatronFondo(ctx, captchaWidth, captchaHeight, dificultad);
     
     // Texto principal
     ctx.font = `${config.fontWeight} ${config.fontSize}px ${config.fontFamily}`;
     ctx.textBaseline = 'middle';
-
+    
     // Dibujar cada carácter con estilo aleatorio
-    let xPos = config.paddingX;
+    let xPos = config.letterSpacing;
     for (let i = 0; i < codigo.length; i++) {
         // Color aleatorio
         ctx.fillStyle = getRandomColor(config.textColors);
+        
+        // Añadir sombra al texto para más profundidad
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 2;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
         
         // Rotación aleatoria
         ctx.save();
@@ -161,11 +241,24 @@ async function generarImagenCaptcha(codigo, dificultad) {
         
         // Posición con espacio aleatorio
         xPos += Math.random() * 5;
-        const yPos = config.height / 2 + (Math.random() - 0.5) * config.verticalOffset;
+        const yPos = captchaHeight / 2 + (Math.random() - 0.5) * config.verticalOffset;
         
         // Transformación para rotación
         ctx.translate(xPos + charWidth / 2, yPos);
         ctx.rotate(rotacion);
+        
+        // Dibujar carácter con efecto 3D sutil
+        if (dificultad === "alta") {
+            // Efecto 3D para dificultad alta
+            const shadowColor = 'rgba(0, 0, 0, 0.4)';
+            for (let d = 1; d <= 2; d++) {
+                ctx.fillStyle = shadowColor;
+                ctx.fillText(codigo[i], -charWidth / 2 + d, d);
+            }
+        }
+        
+        // Texto principal
+        ctx.fillStyle = getRandomColor(config.textColors);
         ctx.fillText(codigo[i], -charWidth / 2, 0);
         ctx.restore();
         
@@ -175,8 +268,51 @@ async function generarImagenCaptcha(codigo, dificultad) {
     
     // Añadir líneas para mayor dificultad
     if (dificultad !== "baja") {
-        dibujarLineasConfusion(ctx, canvas.width, canvas.height, config.lines);
+        dibujarLineasConfusion(ctx, captchaWidth, captchaHeight, config.lines);
     }
+    
+    // Restaurar contexto
+    ctx.restore();
+    
+    // Footer con "Verificar que eres humano"
+    ctx.fillStyle = '#f9f9f9';
+    ctx.fillRect(0, canvas.height - footerHeight, canvas.width, footerHeight);
+    
+    // Línea divisoria del footer
+    ctx.strokeStyle = '#e8e8e8';
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height - footerHeight);
+    ctx.lineTo(canvas.width, canvas.height - footerHeight);
+    ctx.stroke();
+    
+    // Texto del footer
+    ctx.fillStyle = '#555555';
+    ctx.font = '14px Arial';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Verificar que eres humano', paddingX, canvas.height - (footerHeight / 2));
+    
+    // Ícono de recarga simulado
+    ctx.fillStyle = '#4285f4';
+    ctx.beginPath();
+    const reloadX = canvas.width - paddingX - 15;
+    const reloadY = canvas.height - (footerHeight / 2);
+    const reloadRadius = 8;
+    ctx.arc(reloadX, reloadY, reloadRadius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Símbolo de recarga
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(reloadX, reloadY, reloadRadius - 3, 0, Math.PI * 1.5);
+    ctx.stroke();
+    
+    // Flecha de recarga
+    ctx.beginPath();
+    ctx.moveTo(reloadX + 3, reloadY - 5);
+    ctx.lineTo(reloadX + 3, reloadY);
+    ctx.lineTo(reloadX, reloadY - 2);
+    ctx.stroke();
     
     // Convertir canvas a buffer PNG
     return canvas.toBuffer('image/png');
@@ -186,54 +322,54 @@ async function generarImagenCaptcha(codigo, dificultad) {
  * Devuelve configuración según nivel de dificultad
  */
 function getConfiguracionPorDificultad(dificultad, longitudCodigo) {
-    // Base width calculado según longitud del código
-    const baseWidth = 40 * longitudCodigo;
+    // Base width calculado según longitud del código (ajustado para el nuevo diseño)
+    const baseWidth = 36 * longitudCodigo;
     
     const configuraciones = {
         baja: {
             width: baseWidth,
-            height: 100,
-            fontSize: 40,
+            height: 80,
+            fontSize: 38,
             fontWeight: 'bold',
             fontFamily: 'Arial, sans-serif',
-            backgroundColor: '#f0f0f0',
-            textColors: ['#3366CC', '#CC3366', '#66CC33', '#CC6633'],
+            backgroundColor: '#f5f5f5',
+            textColors: ['#4285f4', '#ea4335', '#fbbc05', '#34a853'], // Colores de Google
             letterSpacing: 8,
             paddingX: 15,
-            rotationAngle: 0.2, // Rotación leve
-            verticalOffset: 8,
-            noiseLevel: 50, // Menos ruido
+            rotationAngle: 0.15, // Rotación leve
+            verticalOffset: 6,
+            noiseLevel: 40, // Menos ruido
             lines: 2 // Pocas líneas
         },
         media: {
             width: baseWidth,
-            height: 100,
-            fontSize: 42,
+            height: 80,
+            fontSize: 40,
             fontWeight: 'bold',
             fontFamily: 'Arial, sans-serif',
-            backgroundColor: '#e8e8e8',
-            textColors: ['#2255BB', '#BB2255', '#55BB22', '#BB5522', '#22BBBB'],
+            backgroundColor: '#f0f0f0',
+            textColors: ['#4285f4', '#ea4335', '#fbbc05', '#34a853', '#1a73e8'], // Colores de Google expandidos
             letterSpacing: 6,
             paddingX: 15,
-            rotationAngle: 0.4, // Rotación media
-            verticalOffset: 12,
-            noiseLevel: 100, // Ruido medio
-            lines: 5 // Líneas medias
+            rotationAngle: 0.3, // Rotación media
+            verticalOffset: 10,
+            noiseLevel: 80, // Ruido medio
+            lines: 4 // Líneas medias
         },
         alta: {
             width: baseWidth + 20, // Un poco más ancho para mayor confusión
-            height: 120,
-            fontSize: 44,
+            height: 90,
+            fontSize: 42,
             fontWeight: 'bold',
             fontFamily: 'Arial, sans-serif',
-            backgroundColor: '#e0e0e0',
-            textColors: ['#114499', '#991144', '#449911', '#994411', '#119944'],
+            backgroundColor: '#ebebeb',
+            textColors: ['#4285f4', '#ea4335', '#fbbc05', '#34a853', '#1a73e8', '#185abc'], // Más variaciones
             letterSpacing: 4,
             paddingX: 20,
-            rotationAngle: 0.6, // Rotación fuerte
-            verticalOffset: 18,
-            noiseLevel: 150, // Mucho ruido
-            lines: 8 // Muchas líneas
+            rotationAngle: 0.45, // Rotación fuerte
+            verticalOffset: 15,
+            noiseLevel: 120, // Mucho ruido
+            lines: 6 // Muchas líneas
         }
     };
     
@@ -261,15 +397,20 @@ function dibujarRuidoFondo(ctx, width, height, cantidad) {
  * Dibuja líneas para dificultar reconocimiento automatizado
  */
 function dibujarLineasConfusion(ctx, width, height, cantidad) {
+    // Colores más suaves y en el estilo de Google
+    const colores = [
+        'rgba(66, 133, 244, 0.4)',  // Azul Google
+        'rgba(234, 67, 53, 0.4)',   // Rojo Google
+        'rgba(251, 188, 5, 0.4)',   // Amarillo Google
+        'rgba(52, 168, 83, 0.4)'    // Verde Google
+    ];
+    
     for (let i = 0; i < cantidad; i++) {
-        const color = `rgba(${Math.floor(Math.random() * 100)}, 
-                            ${Math.floor(Math.random() * 100)}, 
-                            ${Math.floor(Math.random() * 100)}, 
-                            ${Math.random() * 0.5})`;
+        const color = colores[Math.floor(Math.random() * colores.length)];
         
         ctx.beginPath();
         ctx.strokeStyle = color;
-        ctx.lineWidth = Math.random() * 2;
+        ctx.lineWidth = Math.random() * 1.5 + 0.5;
         
         // Líneas curvas aleatorias para mayor dificultad
         const startX = Math.random() * width;
@@ -284,6 +425,46 @@ function dibujarLineasConfusion(ctx, width, height, cantidad) {
         ctx.moveTo(startX, startY);
         ctx.bezierCurveTo(controlX1, controlY1, controlX2, controlY2, endX, endY);
         ctx.stroke();
+    }
+}
+
+/**
+ * Dibuja patrón de fondo similar al diseño de Google reCAPTCHA
+ */
+function dibujarPatronFondo(ctx, width, height, dificultad) {
+    // Patrón de cuadrícula sutil
+    const tamañoCelda = dificultad === "alta" ? 8 : dificultad === "media" ? 10 : 12;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.lineWidth = 0.5;
+    
+    // Líneas horizontales
+    for (let y = 0; y <= height; y += tamañoCelda) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+    }
+    
+    // Líneas verticales
+    for (let x = 0; x <= width; x += tamañoCelda) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+    }
+    
+    // Añadir algunos círculos decorativos sutiles (estilo reCAPTCHA)
+    const numCirculos = dificultad === "alta" ? 5 : dificultad === "media" ? 3 : 2;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+    
+    for (let i = 0; i < numCirculos; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const radio = Math.random() * 15 + 5;
+        
+        ctx.beginPath();
+        ctx.arc(x, y, radio, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 
