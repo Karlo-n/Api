@@ -43,7 +43,7 @@ app.use("/api/utility/roblox_verificacion", robloxVerificacionRouter);
 app.use("/api/utility/screenshot", screenshotRouter);
 app.use("/api/utility/ranked", rankedRouter);
 app.use("/api/utility/deepseek", deepseekAI);
-app.use("/api/utility/ipdetector", ip);
+app.use("/api/utility/ip", ip);
 app.use("/api/utility/youtube", youtube);
 app.use("/api/utility/binario", binarioRouter);
 app.use("/api/utility/invertido", invertidoRouter);
