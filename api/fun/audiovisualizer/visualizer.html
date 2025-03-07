@@ -3,694 +3,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizador de Audio</title>
+    <title>Visualizador de Audio Simplificado</title>
     <style>
-        :root {
-            --primary-color: #3498db;
-            --secondary-color: #2980b9;
-            --background-color: #f5f5f5;
-            --card-color: #ffffff;
-            --text-color: #333333;
-            --border-color: #dddddd;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .container {
-            max-width: 900px;
-            width: 100%;
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
             padding: 20px;
-            box-sizing: border-box;
+            background-color: #f5f5f5;
         }
-
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 100%;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 2.2rem;
-        }
-
-        .subtitle {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            margin-top: 10px;
-        }
-
         .card {
-            background-color: var(--card-color);
+            background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-
-        .card-header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 15px 20px;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-
-        .card-body {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             padding: 20px;
+            margin-bottom: 20px;
         }
-
+        h1 {
+            color: #3498db;
+            text-align: center;
+        }
         .upload-area {
-            border: 2px dashed var(--border-color);
-            border-radius: 8px;
-            padding: 40px 20px;
+            border: 2px dashed #ccc;
+            padding: 20px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .upload-area:hover, .upload-area.dragover {
-            border-color: var(--primary-color);
-            background-color: rgba(52, 152, 219, 0.05);
-        }
-
-        .upload-area input {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            color: var(--primary-color);
             margin-bottom: 15px;
+            border-radius: 8px;
         }
-
+        .upload-area:hover {
+            border-color: #3498db;
+            background-color: #f0f8ff;
+        }
         .btn {
-            background-color: var(--primary-color);
+            background-color: #3498db;
             color: white;
             border: none;
             padding: 10px 20px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s;
+            font-size: 16px;
         }
-
-        .btn:hover {
-            background-color: var(--secondary-color);
-        }
-
         .btn:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
         }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-
-        select, input[type="color"] {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-
         .status {
-            margin-top: 15px;
-            padding: 15px;
-            border-radius: 4px;
-            display: none;
-        }
-
-        .status.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            display: block;
-        }
-
-        .status.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            display: block;
-        }
-
-        .file-info {
+            padding: 10px;
             margin-top: 10px;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .visualizer-container {
-            margin-top: 20px;
-            width: 100%;
-            display: none;
-        }
-
-        .video-container {
-            width: 100%;
-            background-color: #000;
             border-radius: 4px;
-            overflow: hidden;
         }
-
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .loading {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
         video {
             width: 100%;
-            display: block;
+            border-radius: 4px;
+            background: #000;
         }
-
-        .controls {
-            margin-top: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .play-button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.5rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .play-button:hover {
-            background-color: var(--secondary-color);
-        }
-
-        .volume-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .volume-icon {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-        }
-
-        .progress-container {
-            flex-grow: 1;
-            margin: 0 15px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background-color: #ddd;
-            border-radius: 3px;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .progress {
-            height: 100%;
-            background-color: var(--primary-color);
-            border-radius: 3px;
-            width: 0;
-        }
-
-        .time-display {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 5px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
-
-        .download-btn {
-            background-color: #28a745;
-        }
-
-        .download-btn:hover {
-            background-color: #218838;
-        }
-
-        .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid var(--primary-color);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 2s linear infinite;
-            margin: 20px auto;
-            display: none;
-        }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .controls {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .volume-control {
-                width: 100%;
-            }
-            
-            .actions {
-                flex-direction: column;
-            }
-            
-            .btn {
-                width: 100%;
-            }
-        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Visualizador de Audio</h1>
-            <div class="subtitle">Crea visualizaciones para archivos MP3 y MP4</div>
-        </header>
-
-        <div class="card">
-            <div class="card-header">Subir Archivo</div>
-            <div class="card-body">
-                <div class="upload-area" id="upload-area">
-                    <div class="upload-icon">📁</div>
-                    <h3>Arrastra y suelta tu archivo aquí</h3>
-                    <p>o haz clic para seleccionar un archivo MP3 o MP4</p>
-                    <input type="file" id="file-input" accept=".mp3,.mp4">
-                </div>
-                <div id="file-info" class="file-info"></div>
-                
-                <div class="form-group">
-                    <label for="visualizer-type">Tipo de Visualización:</label>
-                    <select id="visualizer-type">
-                        <option value="bars">Barras</option>
-                        <option value="wave">Onda</option>
-                        <option value="line">Línea</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="visualizer-color">Color de Visualización:</label>
-                    <input type="color" id="visualizer-color" value="#3498db">
-                </div>
-                
-                <div class="form-group">
-                    <label for="background-color">Color de Fondo:</label>
-                    <input type="color" id="background-color" value="#000000">
-                </div>
-                
-                <button id="generate-btn" class="btn" disabled>Generar Visualización</button>
-                <div id="status" class="status"></div>
-                <div id="loader" class="loader"></div>
-            </div>
+    <h1>Visualizador de Audio</h1>
+    
+    <div class="card">
+        <div class="upload-area" id="upload-area">
+            <h3>Arrastra un archivo MP3 o MP4 aquí</h3>
+            <p>o haz clic para seleccionar</p>
+            <input type="file" id="file-input" accept=".mp3,.mp4" style="display: none;">
         </div>
-
-        <div class="visualizer-container" id="visualizer-container">
-            <div class="card">
-                <div class="card-header">Visualización</div>
-                <div class="card-body">
-                    <div class="video-container">
-                        <video id="video-player" controls></video>
-                    </div>
-                    
-                    <div class="actions">
-                        <a id="download-btn" class="btn download-btn" download>Descargar Visualización</a>
-                        <button id="share-btn" class="btn">Compartir</button>
-                    </div>
-                </div>
-            </div>
+        
+        <div id="file-info"></div>
+        
+        <button id="process-btn" class="btn" disabled>Procesar Archivo</button>
+        
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+    
+    <div id="result" class="card" style="display: none;">
+        <h3>Tu Visualización</h3>
+        <video id="player" controls></video>
+        <div style="margin-top: 15px;">
+            <button id="download-btn" class="btn">Descargar</button>
         </div>
     </div>
-
+    
     <script>
-        // Variables globales
-let currentFile = null;
-let currentJobId = null;
-let statusCheckInterval = null;
-let processingTimeout = null;
-let retryCount = 0;
-const MAX_RETRIES = 3;
-const MAX_PROCESSING_TIME = 60000; // 60 segundos máximo de espera
-
-// Elementos del DOM
-const fileInput = document.getElementById('file-input');
-const fileInfo = document.getElementById('file-info');
-const generateBtn = document.getElementById('generate-btn');
-const uploadArea = document.getElementById('upload-area');
-const statusEl = document.getElementById('status');
-const loaderEl = document.getElementById('loader');
-const visualizerContainer = document.getElementById('visualizer-container');
-const videoPlayer = document.getElementById('video-player');
-const downloadBtn = document.getElementById('download-btn');
-const shareBtn = document.getElementById('share-btn');
-const visualizerType = document.getElementById('visualizer-type');
-const visualizerColor = document.getElementById('visualizer-color');
-const backgroundColor = document.getElementById('background-color');
-
-// Funciones auxiliares
-function showStatus(message, type) {
-    statusEl.textContent = message;
-    statusEl.className = `status ${type}`;
-    statusEl.style.display = 'block';
-}
-
-function hideStatus() {
-    statusEl.style.display = 'none';
-}
-
-function showLoader() {
-    loaderEl.style.display = 'block';
-}
-
-function hideLoader() {
-    loaderEl.style.display = 'none';
-}
-
-// Eventos de arrastrar y soltar
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, e => {
-        e.preventDefault();
-        e.stopPropagation();
-    }, false);
-});
-
-['dragenter', 'dragover'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, () => {
-        uploadArea.classList.add('dragover');
-    }, false);
-});
-
-['dragleave', 'drop'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, () => {
-        uploadArea.classList.remove('dragover');
-    }, false);
-});
-
-uploadArea.addEventListener('drop', e => {
-    const files = e.dataTransfer.files;
-    if (files.length) {
-        fileInput.files = files;
-        handleFileSelect();
-    }
-}, false);
-
-// Manejar la selección de archivos
-fileInput.addEventListener('change', handleFileSelect);
-
-function handleFileSelect() {
-    if (fileInput.files.length === 0) return;
-    
-    const file = fileInput.files[0];
-    
-    // Verificar que sea un archivo de audio o video
-    if (!file.type.match('audio.*') && !file.type.match('video.*')) {
-        showStatus('Solo se permiten archivos MP3 y MP4', 'error');
-        return;
-    }
-    
-    currentFile = file;
-    
-    // Mostrar información del archivo
-    const fileSize = (file.size / (1024 * 1024)).toFixed(2);
-    fileInfo.textContent = `${file.name} (${fileSize} MB)`;
-    
-    // Habilitar botón de generación
-    generateBtn.disabled = false;
-    
-    hideStatus();
-}
-
-// Generar la visualización - Versión mejorada
-generateBtn.addEventListener('click', generateVisualization);
-
-async function generateVisualization() {
-    if (!currentFile) return;
-    
-    // Reiniciar contadores y estados
-    retryCount = 0;
-    clearTimeout(processingTimeout);
-    clearInterval(statusCheckInterval);
-    
-    // Mostrar indicadores de carga
-    showLoader();
-    hideStatus();
-    showStatus('Subiendo archivo...', 'success');
-    
-    // Desactivar botón mientras procesa
-    generateBtn.disabled = true;
-    
-    try {
-        // Preparar datos - Usar FormData para mejor compatibilidad
-        const formData = new FormData();
-        formData.append('file', currentFile);
+        // Elementos DOM
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+        const processBtn = document.getElementById('process-btn');
+        const statusDiv = document.getElementById('status');
+        const resultDiv = document.getElementById('result');
+        const player = document.getElementById('player');
+        const downloadBtn = document.getElementById('download-btn');
         
-        // Obtener configuración
-        const type = visualizerType.value || 'bars'; // Usar 'bars' por defecto (más estable)
-        const color = visualizerColor.value.substring(1);
-        const bgColor = backgroundColor.value.substring(1);
+        // Variables
+        let currentFile = null;
+        let processingTimeout = null;
         
-        // Forzar duración más corta para acelerar procesamiento
-        const maxDuration = Math.min(30, currentFile.size > 10000000 ? 15 : 30); // Máximo 30 seg, 15 para archivos grandes
+        // Eventos para arrastrar y soltar
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
         
-        // Realizar la solicitud
-        showStatus('Procesando archivo...', 'success');
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#3498db';
+            uploadArea.style.backgroundColor = '#f0f8ff';
+        });
         
-        // Versión simplificada de la solicitud con mejor manejo de errores
-        let response;
-        try {
-            response = await fetch(`/api/fun/audiovisualizer?type=${type}&color=${color}&bgColor=${bgColor}&duration=${maxDuration}`, {
-                method: 'POST',
-                body: currentFile,
-                headers: {
-                    'Content-Type': currentFile.type
-                },
-                timeout: 30000 // 30 segundos máximo para la subida
-            });
-        } catch (uploadError) {
-            // Intentar con un enfoque alternativo - FormData
-            console.warn('Error en la subida directa, intentando con FormData:', uploadError);
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            uploadArea.style.backgroundColor = '';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            uploadArea.style.backgroundColor = '';
             
-            const formData = new FormData();
-            formData.append('audioFile', currentFile);
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect();
+            }
+        });
+        
+        // Manejar selección de archivo
+        function handleFileSelect() {
+            if (!fileInput.files.length) return;
             
-            response = await fetch(`/api/fun/audiovisualizer?type=${type}&color=${color}&bgColor=${bgColor}&duration=${maxDuration}`, {
-                method: 'POST',
-                body: formData
-            });
-        }
-        
-        if (!response.ok) {
-            throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-            throw new Error(data.error || 'Error desconocido al generar la visualización');
-        }
-        
-        // Guardar ID y comenzar a verificar estado
-        currentJobId = data.jobId;
-        
-        // Establecer timeout general
-        processingTimeout = setTimeout(() => {
-            clearInterval(statusCheckInterval);
-            hideLoader();
-            showStatus('El procesamiento está tomando demasiado tiempo. Intente con un archivo más pequeño o el tipo "barras".', 'error');
-            generateBtn.disabled = false;
-        }, MAX_PROCESSING_TIME);
-        
-        // Verificar estado con intervalo variable (más frecuente al inicio)
-        checkVisualizationStatus();
-        
-    } catch (error) {
-        console.error('Error generando visualización:', error);
-        showStatus(`Error: ${error.message}`, 'error');
-        hideLoader();
-        generateBtn.disabled = false;
-    }
-}
-
-// Verificar estado con mejor manejo de errores
-async function checkVisualizationStatus() {
-    if (!currentJobId) return;
-    
-    // Limpiar intervalo anterior
-    clearInterval(statusCheckInterval);
-    
-    // Intervalo de comprobación: más frecuente al inicio, luego más espaciado
-    const checkInterval = retryCount < 5 ? 1500 : 3000;
-    
-    statusCheckInterval = setInterval(async () => {
-        try {
-            const response = await fetch(`/api/fun/audiovisualizer/status/${currentJobId}`);
+            const file = fileInput.files[0];
             
-            if (!response.ok) {
-                retryCount++;
-                if (retryCount > MAX_RETRIES) {
-                    clearInterval(statusCheckInterval);
-                    clearTimeout(processingTimeout);
-                    hideLoader();
-                    showStatus('No se pudo verificar el estado de la visualización.', 'error');
-                    generateBtn.disabled = false;
-                    return;
-                }
-                return; // Intentar en el siguiente intervalo
+            // Verificar tipo de archivo
+            if (!file.type.includes('audio') && !file.type.includes('video')) {
+                showStatus('Solo se permiten archivos de audio (MP3) o video (MP4)', 'error');
+                return;
             }
             
-            const data = await response.json();
+            currentFile = file;
+            fileInfo.textContent = `Archivo: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            processBtn.disabled = false;
+            hideStatus();
+        }
+        
+        // Mostrar mensajes de estado
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+        
+        function showStatusWithSpinner(message) {
+            const spinner = document.createElement('div');
+            spinner.className = 'loading';
             
-            if (data.status === 'completed') {
-                // Éxito - visualización lista
-                clearInterval(statusCheckInterval);
-                clearTimeout(processingTimeout);
-                hideLoader();
-                showStatus('Visualización generada correctamente', 'success');
-                generateBtn.disabled = false;
+            statusDiv.innerHTML = '';
+            statusDiv.appendChild(spinner);
+            statusDiv.appendChild(document.createTextNode(message));
+            statusDiv.className = 'status';
+            statusDiv.style.display = 'block';
+        }
+        
+        function hideStatus() {
+            statusDiv.style.display = 'none';
+        }
+        
+        // Procesar el archivo
+        processBtn.addEventListener('click', processFile);
+        
+        async function processFile() {
+            if (!currentFile) return;
+            
+            processBtn.disabled = true;
+            showStatusWithSpinner('Subiendo y procesando archivo...');
+            resultDiv.style.display = 'none';
+            
+            // Establecer timeout para mostrar error después de 20 segundos
+            clearTimeout(processingTimeout);
+            processingTimeout = setTimeout(() => {
+                showStatus('El procesamiento está tomando demasiado tiempo. Intente con un archivo más pequeño.', 'error');
+                processBtn.disabled = false;
+            }, 20000);
+            
+            try {
+                // Enviar el archivo directamente
+                const response = await fetch('/api/fun/audiovisualizer', {
+                    method: 'POST',
+                    body: currentFile,
+                    headers: {
+                        'Content-Type': currentFile.type
+                    }
+                });
                 
-                // Cargar el video
-                loadVideoPlayer(data.videoUrl);
-            } else if (data.status === 'error') {
-                // Error reportado por el servidor
-                clearInterval(statusCheckInterval);
+                const data = await response.json();
+                
+                // Limpiar timeout
                 clearTimeout(processingTimeout);
-                hideLoader();
-                showStatus(`Error: ${data.message || 'Error desconocido'}`, 'error');
-                generateBtn.disabled = false;
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Error desconocido');
+                }
+                
+                // Mostrar el video
+                const videoUrl = data.videoUrl;
+                player.src = videoUrl.startsWith('http') ? videoUrl : window.location.origin + videoUrl;
+                player.load();
+                
+                // Configurar botón de descarga
+                downloadBtn.onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = player.src;
+                    a.download = `visualizacion-${Date.now()}.mp4`;
+                    a.click();
+                };
+                
+                // Mostrar resultado
+                resultDiv.style.display = 'block';
+                showStatus('Visualización generada correctamente', 'success');
+                
+                // Scroll al resultado
+                resultDiv.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                clearTimeout(processingTimeout);
+                console.error('Error:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                processBtn.disabled = false;
             }
-            // Si está en processing, continuar esperando
-            
-        } catch (error) {
-            console.warn('Error verificando estado:', error);
-            // No mostrar error al usuario en cada intento fallido,
-            // solo incrementar contador de reintentos
-            retryCount++;
         }
-    }, checkInterval);
-}
-
-// Función mejorada para cargar el video
-function loadVideoPlayer(videoUrl) {
-    // Asegurarse de que la URL sea absoluta
-    const fullUrl = videoUrl.startsWith('http') ? videoUrl : window.location.origin + videoUrl;
-    
-    console.log('Cargando video:', fullUrl);
-    
-    // Configurar el reproductor
-    videoPlayer.src = fullUrl;
-    
-    // Asegurarse de que el reproductor reinicia correctamente
-    videoPlayer.load();
-    
-    // Configurar botón de descarga
-    downloadBtn.href = fullUrl;
-    downloadBtn.download = `visualizacion_${Date.now()}.mp4`;
-    
-    // Mostrar contenedor
-    visualizerContainer.style.display = 'block';
-    
-    // Scroll a la visualización
-    visualizerContainer.scrollIntoView({ behavior: 'smooth' });
-    
-    // Manejar errores de carga
-    videoPlayer.onerror = (e) => {
-        console.error('Error cargando video:', e);
-        showStatus('Error cargando el video. Intente recargar la página.', 'error');
-    };
-    
-    // Intentar reproducción automática
-    videoPlayer.play().catch(err => {
-        console.warn('Reproducción automática bloqueada:', err);
-        // Esto es normal, muchos navegadores bloquean reproducción automática
-    });
-}
-
-// Compartir
-shareBtn.addEventListener('click', () => {
-    if (!videoPlayer.src) return;
-    
-    try {
-        if (navigator.share) {
-            navigator.share({
-                title: 'Visualización de Audio',
-                text: 'Mira esta visualización de audio que creé con API Karl',
-                url: videoPlayer.src
-            }).catch(() => {
-                // Fallback si falla el compartir
-                copyToClipboard(videoPlayer.src);
-            });
-        } else {
-            copyToClipboard(videoPlayer.src);
-        }
-    } catch (e) {
-        copyToClipboard(videoPlayer.src);
-    }
-});
-
-// Función auxiliar para copiar al portapapeles
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showStatus('URL copiada al portapapeles', 'success');
-    }).catch(() => {
-        // Fallback para navegadores antiguos
-        const input = document.createElement('input');
-        input.value = text;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        showStatus('URL copiada al portapapeles', 'success');
-    });
-}
     </script>
 </body>
 </html>
