@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador Automático de Subtítulos</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+    <style>
+        :root {
+            --primary: #5e72e4;
+            --primary-gradient: linear-gradient(90deg, #5e72e4 0%, #825ee4 100%);
+            --secondary: #f7fafc;
+            --success: #2dce89;
+            --info: #11cdef;
+            --warning: #fb6340;
+            --danger: #f5365c;
+            --light: #f8f9fe;
+            --dark: #172b4d;
+            --border-radius: 16px;
+            --shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.07);
+            --shadow-lg: 0 10px 30px 0 rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--secondary);
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+            margin-bottom: 40px;
+            border-radius: 0 0 30px 30px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -10%;
+            left: -10%;
+            width: 120%;
+            height: 120%;
+            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTExIDExaDE5djE5SDExem0zMCAwaDI2djI2SDQxem0zNyAwaDExdjExSDc4ek0xMSA0MWgxMXYxMUgxMXptMTkgMGgxMXYxMUgzMHptMTkgMGgxOXYxOUg0OXptMzAgMGgxMXYxMUg3OHptLTY3IDE5aDE5djE5SDExem0zMCAwaDExdjExSDQxem0xOSAwaDExdjExSDYwem0xOSAwaDExdjExSDc5eiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIuMSIgZmlsbC1ydWxlPSJldmVub2RkIi8+PC9zdmc+') repeat;
+            opacity: 0.1;
+            z-index: 0;
+        }
+        
+        .header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header p {
+            font-size: 18px;
+            opacity: 0.95;
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 35px;
+            margin-bottom: 40px;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.025);
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .card-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--primary-gradient);
+            border-radius: 10px;
+        }
+        
+        .card-title svg {
+            margin-right: 15px;
+        }
+        
+        .upload-area {
+            border: 2px dashed #e2e8f0;
+            border-radius: var(--border-radius);
+            padding: 50px 25px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 30px;
+            transition: var(--transition);
+            background-color: #f8fafc;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background-color: rgba(94, 114, 228, 0.05);
+            transform: scale(1.01);
+        }
+        
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(-45deg, rgba(94, 114, 228, 0.05) 25%, transparent 25%, transparent 50%, rgba(94, 114, 228, 0.05) 50%, rgba(94, 114, 228, 0.05) 75%, transparent 75%, transparent);
+            background-size: 20px 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .upload-area:hover::before {
+            opacity: 1;
+        }
+        
+        .upload-area svg {
+            width: 70px;
+            height: 70px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+        
+        .upload-area:hover svg {
+            transform: translateY(-5px);
+        }
+        
+        .upload-area h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+        
+        .upload-area p {
+            font-size: 15px;
+            color: #8392ab;
+        }
+        
+        .upload-area input {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+        }
+        
+        .file-info {
+            padding: 15px 20px;
+            background-color: #f8fafc;
+            border-radius: var(--border-radius);
+            font-size: 15px;
+            margin-bottom: 30px;
+            display: none;
+            border-left: 4px solid var(--primary);
+            font-weight: 500;
+        }
+        
+        .file-info.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        .btn {
+            display: inline-block;
+            font-weight: 600;
+            text-align: center;
+            padding: 14px 28px;
+            border-radius: var(--border-radius);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 16px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            margin-bottom: 15px;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+            z-index: -1;
+        }
+        
+        .btn:hover::before {
+            left: 0;
+        }
+        
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 12px rgba(94, 114, 228, 0.3);
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 7px 14px rgba(94, 114, 228, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary:disabled {
+            background: linear-gradient(90deg, #a3acdf 0%, #b5a6df 100%);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        .btn-success {
+            background: linear-gradient(90deg, #2dce89 0%, #2dceb3 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(45, 206, 137, 0.3);
+        }
+        
+        .btn-success:hover {
+            box-shadow: 0 7px 14px rgba(45, 206, 137, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(90deg, #f5365c 0%, #f56036 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(245, 54, 92, 0.3);
+        }
+        
+        .btn-danger:hover {
+            box-shadow: 0 7px 14px rgba(245, 54, 92, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            padding: 18px;
+            border-radius: var(--border-radius);
+            margin-top: 25px;
+            display: none;
+            font-size: 15px;
+            align-items: center;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background-color: rgba(45, 206, 137, 0.1);
+            color: var(--success);
+            display: flex;
+            animation: fadeIn 0.5s;
+        }
+        
+        .status.error {
+            background-color: rgba(245, 54, 92, 0.1);
+            color: var(--danger);
+            display: flex;
+            animation: fadeIn 0.5s;
+        }
+        
+        .status.info {
+            background-color: rgba(17, 205, 239, 0.1);
+            color: var(--info);
+            display: flex;
+            animation: fadeIn 0.5s;
+        }
+        
+        .spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid rgba(94, 114, 228, 0.3);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+        
+        .result-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 40px;
+            display: none;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.025);
+        }
+        
+        .result-container.active {
+            display: block;
+            animation: fadeIn 0.7s;
+        }
+        
+        .result-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 22px;
+            font-weight: 600;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .result-content {
+            padding: 25px;
+        }
+        
+        .subtitle-result {
+            width: 100%;
+            height: 300px;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            line-height: 1.8;
+            resize: vertical;
+            margin-bottom: 20px;
+        }
+        
+        .preview-container {
+            width: 100%;
+            background-color: black;
+            position: relative;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            overflow: hidden;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+        
+        .subtitle-video {
+            background-color: #000;
+            width: 100%;
+            height: auto;
+            display: block;
+            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+        }
+        
+        .audio-controls {
+            display: flex;
+            padding: 18px 22px;
+            align-items: center;
+            border-top: 1px solid #eee;
+            background-color: #fafafa;
+        }
+        
+        .play-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-right: 18px;
+            transition: var(--transition);
+            box-shadow: 0 4px 8px rgba(94, 114, 228, 0.2);
+        }
+        
+        .play-btn:hover {
+            box-shadow: 0 7px 14px rgba(94, 114, 228, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .time-display {
+            font-size: 15px;
+            color: #555;
+            margin-right: 18px;
+            min-width: 85px;
+            font-weight: 500;
+        }
+        
+        .progress-container {
+            flex: 1;
+            height: 8px;
+            background-color: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .progress-container:hover .progress-bar {
+            height: 10px;
+            margin-top: -1px;
+            box-shadow: 0 1px 5px rgba(94, 114, 228, 0.3);
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: var(--primary-gradient);
+            width: 0%;
+            transition: all 0.2s;
+        }
+        
+        .result-actions {
+            padding: 22px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            background-color: #fafafa;
+            border-top: 1px solid #eee;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .recording-indicator {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background-color: rgba(245, 54, 92, 0.1);
+            color: var(--danger);
+            border-radius: 20px;
+            font-weight: 500;
+            margin-top: 15px;
+            font-size: 14px;
+            animation: pulse 1.5s infinite;
+            display: none;
+        }
+        
+        .recording-indicator.active {
+            display: flex;
+        }
+        
+        .recording-indicator .dot {
+            width: 12px;
+            height: 12px;
+            background-color: var(--danger);
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: blink 1s infinite;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 70px;
+            padding: 25px;
+            color: #7d8fb3;
+            font-size: 15px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            background-color: #fafafa;
+        }
+        
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        
+        /* Estilos responsive */
+        @media screen and (max-width: 992px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .card {
+                padding: 25px;
+            }
+        }
+        
+        @media screen and (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+            
+            .header p {
+                font-size: 16px;
+            }
+            
+            .card-title {
+                font-size: 20px;
+            }
+            
+            .result-actions {
+                flex-direction: column;
+            }
+            
+            .btn-group {
+                width: 100%;
+            }
+            
+            .btn-group .btn {
+                flex: 1;
+            }
+        }
+        
+        @media screen and (max-width: 576px) {
+            .upload-area {
+                padding: 25px 15px;
+            }
+            
+            .upload-area svg {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .time-display {
+                min-width: 60px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>Generador Automático de Subtítulos</h1>
+            <p>Sube tu archivo MP3 o MP4 y genera subtítulos automáticamente</p>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="card">
+            <h2 class="card-title">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <line x1="10" y1="9" x2="8" y2="9"></line>
+                </svg>
+                Crear Subtítulos
+            </h2>
+            
+            <div class="upload-area" id="upload-area">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <h3>Arrastra un archivo MP3 o MP4 aquí</h3>
+                <p>o haz clic para seleccionar</p>
+                <input type="file" id="file-input" accept=".mp3,.mp4,audio/*,video/*">
+            </div>
+            
+            <div class="file-info" id="file-info"></div>
+            
+            <button id="start-btn" class="btn btn-primary" disabled>
+                Generar Subtítulos
+            </button>
+            
+            <div id="status" class="status"></div>
+        </div>
+        
+        <div id="result-container" class="result-container">
+            <div class="result-header">
+                <span>Resultados</span>
+                <div class="controls">
+                    <button id="edit-btn" class="control-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="result-content">
+                <h3>Previsualización del audio/video original</h3>
+                <div class="preview-container">
+                    <video id="original-media" class="subtitle-video" controls></video>
+                </div>
+                
+                <h3>Subtítulos generados</h3>
+                <textarea id="subtitle-text" class="subtitle-result" placeholder="Los subtítulos aparecerán aquí..."></textarea>
+                
+                <div class="result-actions">
+                    <div class="recording-indicator" id="processing-indicator">
+                        <div class="dot"></div>
+                        <span>Procesando subtítulos...</span>
+                    </div>
+                    <div class="btn-group">
+                        <button id="download-text-btn" class="btn btn-primary">Descargar Solo Texto</button>
+                        <button id="generate-video-btn" class="btn btn-success">Generar Video con Subtítulos</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="video-result-container" class="result-container">
+            <div class="result-header">
+                <span>Video con Subtítulos</span>
+            </div>
+            
+            <div class="result-content">
+                <video id="subtitle-video" class="subtitle-video" controls></video>
+                
+                <div class="result-actions">
+                    <button id="download-video-btn" class="btn btn-success">Descargar Video</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            © 2025 Generador Automático de Subtítulos | Powered by API Karl
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Variables para Web Audio API y Speech Recognition
+            let audioContext;
+            let audioElement;
+            let videoElement;
+            let mediaSource;
+            let mediaFile;
+            let fileType;
+            let recognizing = false;
+            let subtitles = [];
+            let currentSubtitleIndex = 0;
+            let subtitleText = "";
+            
+            // Speech Recognition
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let recognition;
+            
+            // Verifica si el navegador soporta reconocimiento de voz
+            const browserSupportsRecognition = !!SpeechRecognition;
+            
+            // Elementos del DOM
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const fileInfo = document.getElementById('file-info');
+            const startBtn = document.getElementById('start-btn');
+            const statusDiv = document.getElementById('status');
+            const resultContainer = document.getElementById('result-container');
+            const videoResultContainer = document.getElementById('video-result-container');
+            const originalMedia = document.getElementById('original-media');
+            const subtitleTextarea = document.getElementById('subtitle-text');
+            const downloadTextBtn = document.getElementById('download-text-btn');
+            const generateVideoBtn = document.getElementById('generate-video-btn');
+            const downloadVideoBtn = document.getElementById('download-video-btn');
+            const subtitleVideo = document.getElementById('subtitle-video');
+            const processingIndicator = document.getElementById('processing-indicator');
+            const editBtn = document.getElementById('edit-btn');
+            
+            // Eventos para arrastrar y soltar
+            uploadArea.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelect();
+                }
+            });
+            
+            // Manejar selección de archivo
+            function handleFileSelect() {
+                if (!fileInput.files.length) return;
+                
+                mediaFile = fileInput.files[0];
+                
+                // Verificar tipo de archivo
+                if (!mediaFile.type.includes('audio') && !mediaFile.type.includes('video')) {
+                    showStatus('Solo se permiten archivos de audio (MP3) o video (MP4)', 'error');
+                    return;
+                }
+                
+                fileType = mediaFile.type.includes('audio') ? 'audio' : 'video';
+                
+                fileInfo.textContent = `${mediaFile.name} (${(mediaFile.size / 1024 / 1024).toFixed(2)} MB)`;
+                fileInfo.classList.add('active');
+                startBtn.disabled = false;
+                hideStatus();
+                
+                // Previsualizar el archivo
+                const fileURL = URL.createObjectURL(mediaFile);
+                originalMedia.src = fileURL;
+                
+                // Reajustar para mostrar video u ocultar si es audio
+                if (fileType === 'audio') {
+                    originalMedia.style.height = '60px';
+                } else {
+                    originalMedia.style.height = 'auto';
+                }
+            }
+            
+            // Mostrar mensajes de estado
+            function showStatus(message, type) {
+                statusDiv.innerHTML = '';
+                
+                if (type === 'info') {
+                    const spinner = document.createElement('div');
+                    spinner.className = 'spinner';
+                    statusDiv.appendChild(spinner);
+                }
+                
+                const messageEl = document.createElement('span');
+                messageEl.textContent = message;
+                statusDiv.appendChild(messageEl);
+                
+                statusDiv.className = `status ${type}`;
+            }
+            
+            function hideStatus() {
+                statusDiv.className = 'status';
+            }
+            
+            // Iniciar generación de subtítulos
+            startBtn.addEventListener('click', startSubtitleGeneration);
+            
+            function startSubtitleGeneration() {
+                if (!mediaFile) {
+                    showStatus('Selecciona un archivo de audio o video primero', 'error');
+                    return;
+                }
+                
+                if (!browserSupportsRecognition) {
+                    showStatus('Tu navegador no soporta reconocimiento de voz. Por favor utiliza Chrome, Edge u Opera.', 'error');
+                    return;
+                }
+                
+                // Resetear variables
+                subtitles = [];
+                currentSubtitleIndex = 0;
+                subtitleText = "";
+                subtitleTextarea.value = "";
+                
+                // Mostrar contenedor de resultados
+                resultContainer.classList.add('active');
+                processingIndicator.classList.add('active');
+                showStatus('Procesando audio para generar subtítulos...', 'info');
+                
+                // Configurar reconocimiento de voz
+                setupRecognition();
+                
+                // Preparar y reproducir el archivo para iniciar el reconocimiento
+                originalMedia.currentTime = 0;
+                originalMedia.onplay = function() {
+                    if (!recognizing) {
+                        recognition.start();
+                        recognizing = true;
+                    }
+                };
+                
+                originalMedia.onpause = function() {
+                    if (recognizing) {
+                        recognition.stop();
+                        recognizing = false;
+                    }
+                };
+                
+                originalMedia.onended = function() {
+                    if (recognizing) {
+                        recognition.stop();
+                        recognizing = false;
+                        processingIndicator.classList.remove('active');
+                        showStatus('¡Subtítulos generados correctamente!', 'success');
+                    }
+                };
+                
+                // Iniciar reproducción
+                originalMedia.play().catch(error => {
+                    console.error('Error al reproducir el archivo:', error);
+                    showStatus(`Error al reproducir el archivo: ${error.message}`, 'error');
+                });
+                
+                // Desplazarse al contenedor de resultados
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Configurar el reconocimiento de voz
+            function setupRecognition() {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'es-ES'; // Reconocimiento en español
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                
+                recognition.onstart = function() {
+                    recognizing = true;
+                };
+                
+                recognition.onresult = function(event) {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+                    
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            finalTranscript += event.results[i][0].transcript;
+                            // Guardar subtítulo con timestamp
+                            addSubtitle(finalTranscript, originalMedia.currentTime);
+                        } else {
+                            interimTranscript += event.results[i][0].transcript;
+                        }
+                    }
+                    
+                    // Mostrar resultados en tiempo real
+                    if (finalTranscript !== '') {
+                        updateSubtitleDisplay();
+                    }
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Error en reconocimiento de voz:', event.error);
+                    if (event.error === 'no-speech') {
+                        // Intentar reiniciar si no se detecta voz
+                        if (recognizing) {
+                            recognition.stop();
+                            setTimeout(() => {
+                                recognition.start();
+                            }, 100);
+                        }
+                    } else {
+                        showStatus(`Error en reconocimiento de voz: ${event.error}`, 'error');
+                        processingIndicator.classList.remove('active');
+                    }
+                };
+                
+                recognition.onend = function() {
+                    recognizing = false;
+                    
+                    // Si el audio sigue reproduciéndose, reiniciar el reconocimiento
+                    if (!originalMedia.paused && !originalMedia.ended) {
+                        recognition.start();
+                    } else {
+                        // Finalizar y mostrar resultado completo
+                        updateSubtitleDisplay();
+                        processingIndicator.classList.remove('active');
+                        showStatus('¡Subtítulos generados correctamente!', 'success');
+                    }
+                };
+            }
+            
+            // Añadir subtítulo con timestamp
+            function addSubtitle(text, time) {
+                subtitles.push({
+                    text: text,
+                    startTime: time,
+                    endTime: time + 5 // Por defecto, 5 segundos de duración
+                });
+                
+                // Actualizar texto completo
+                subtitleText += text + '\n';
+                subtitleTextarea.value = subtitleText;
+            }
+            
+            // Actualizar visualización de subtítulos
+            function updateSubtitleDisplay() {
+                subtitleTextarea.value = subtitleText;
+            }
+            
+            // Descargar solo texto
+            downloadTextBtn.addEventListener('click', function() {
+                if (!subtitleText) {
+                    showStatus('No hay subtítulos para descargar', 'error');
+                    return;
+                }
+                
+                const blob = new Blob([subtitleText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `subtitulos_${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showStatus('Texto descargado correctamente', 'success');
+            });
+            
+            // Generar video con subtítulos
+            generateVideoBtn.addEventListener('click', function() {
+                if (!subtitleText) {
+                    showStatus('No hay subtítulos para generar video', 'error');
+                    return;
+                }
+                
+                showStatus('Generando video con subtítulos...', 'info');
+                
+                // Crear un canvas para generar el video
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 1280;
+                canvas.height = 720;
+                
+                // Configurar el texto
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Dividir texto en líneas
+                const lines = subtitleText.split('\n').filter(line => line.trim() !== '');
+                
+                // Crear un stream del canvas
+                const stream = canvas.captureStream(30);
+                const mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'video/webm;codecs=vp9'
+                });
+                
+                const chunks = [];
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) {
+                        chunks.push(e.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/mp4' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    // Mostrar el video generado
+                    subtitleVideo.src = url;
+                    videoResultContainer.classList.add('active');
+                    videoResultContainer.scrollIntoView({ behavior: 'smooth' });
+                    
+                    // Configurar botón de descarga
+                    downloadVideoBtn.onclick = () => {
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `video_subtitulos_${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        showStatus('Video descargado correctamente', 'success');
+                    };
+                    
+                    showStatus('Video generado correctamente', 'success');
+                };
+                
+                // Iniciar grabación
+                mediaRecorder.start();
+                
+                // Función para renderizar texto animado
+                let currentLine = 0;
+                const linesPerFrame = 3; // Número de líneas visibles a la vez
+                const frameRate = 30;
+                const duration = 5; // Segundos por línea
+                const totalFrames = lines.length * duration * frameRate;
+                let currentFrame = 0;
+                
+                function drawFrame() {
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Calcular línea actual basada en el tiempo
+                    currentLine = Math.floor(currentFrame / (duration * frameRate));
+                    
+                    // Dibujar líneas actuales
+                    ctx.font = 'bold 36px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = 'white';
+                    
+                    for (let i = 0; i < linesPerFrame; i++) {
+                        const lineIndex = currentLine + i;
+                        if (lineIndex < lines.length) {
+                            // Añadir sombra para mejorar legibilidad
+                            ctx.shadowColor = 'black';
+                            ctx.shadowBlur = 4;
+                            ctx.shadowOffsetX = 2;
+                            ctx.shadowOffsetY = 2;
+                            
+                            // Dibujar texto centrado
+                            const y = canvas.height / 2 - ((linesPerFrame - 1) * 50 / 2) + (i * 50);
+                            ctx.fillText(lines[lineIndex], canvas.width / 2, y);
+                        }
+                    }
+                    
+                    currentFrame++;
+                    
+                    if (currentFrame < totalFrames) {
+                        requestAnimationFrame(drawFrame);
+                    } else {
+                        mediaRecorder.stop();
+                    }
+                }
+                
+                // Iniciar animación
+                drawFrame();
+            });
+            
+            // Permitir edición de subtítulos
+            editBtn.addEventListener('click', function() {
+                subtitleTextarea.readOnly = !subtitleTextarea.readOnly;
+                if (subtitleTextarea.readOnly) {
+                    editBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
+                    showStatus('Modo de edición desactivado', 'info');
+                } else {
+                    editBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>';
+                    showStatus('Modo de edición activado - Puedes modificar los subtítulos', 'info');
+                }
+                
+                subtitleTextarea.focus();
+                subtitleText = subtitleTextarea.value;
+            });
+        });
+    </script>
+</body>
+</html>
