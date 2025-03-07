@@ -39,9 +39,9 @@ router.post("/", express.raw({
         }
 
         // Obtener parámetros de la visualización
-        const type = req.query.type || 'waves'; // Predeterminado: waves
-        const color = req.query.color || 'ff0000'; // Color predeterminado: rojo
-        const bgColor = req.query.bgColor || '000000'; // Fondo predeterminado: negro
+        const type = req.query.type || 'waves';
+        const color = req.query.color || 'ff0000';
+        const bgColor = req.query.bgColor || '000000';
 
         console.log(`Procesando visualización tipo: ${type}, color: ${color}, fondo: ${bgColor}`);
 
@@ -59,7 +59,7 @@ router.post("/", express.raw({
             console.log(`Video guardado en: ${tempVideoPath}`);
             
             // Extraer audio del video
-            const extractCommand = `${ffmpegPath} -i "${tempVideoPath}" -vn -acodec copy "${inputPath}"`;
+            const extractCommand = `${ffmpegPath} -i "${tempVideoPath}" -vn -acodec libmp3lame -q:a 2 "${inputPath}"`;
             await new Promise((resolve, reject) => {
                 exec(extractCommand, (error, stdout, stderr) => {
                     if (error) {
@@ -82,23 +82,18 @@ router.post("/", express.raw({
         switch (type) {
             case 'waves':
                 // Visualización de ondas con color de fondo personalizado
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=640x360:c=#${bgColor}[bg];[0:a]showwaves=s=640x360:mode=line:rate=25:colors=#${color}:scale=sqrt[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest "${outputPath}"`;
-                break;
-                
-            case 'circle':
-                // Visualización en bola con barras radiales (como en la imagen)
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=640x360:c=#${bgColor}[bg];[0:a]showcqt=fps=30:size=640x360:count=5:bar_g=2:sono_g=4:bar_v=9:sono_v=17:sono_h=0:axis_h=0:tc=#${color}:tlength=lin:tlist=0-11.5k:bar_h=100:sono=off:bar=1:csp=bt709:count=8:sono=0:bar=1:sono_v=0:format=yuv420p[vis];[bg][vis]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=line:rate=25:colors=#${color}:scale=sqrt[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
                 break;
                 
             case 'sunburst':
-                // Nueva visualización tipo sol/bola con barras (más cercana a la imagen)
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=640x360:c=#${bgColor}[bg];[0:a]showcqt=fps=30:size=600x600:count=5:bar_g=2:sono_g=4:bar_v=9:sono_v=17:sono_h=0:axis_h=0:tc=#${color}:tlength=lin:tlist=0-11.5k:sono=off:mode=polar:bar=1:csp=bt709:count=6:format=yuv420p[vis];[bg][vis]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                // Visualización tipo sol/bola con barras radiales
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showcqt=fps=30:size=1200x1200:count=5:bar_g=2:sono_g=4:bar_v=9:sono_v=17:sono_h=0:axis_h=0:tc=#${color}:tlength=lin:tlist=0-11.5k:sono=off:mode=polar:bar=1:csp=bt709:count=6:format=yuv420p[vis];[bg][vis]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
                 break;
                 
             case 'bars':
             default:
-                // Visualización de barras con fondo personalizado
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=640x360:c=#${bgColor}[bg];[0:a]avectorscope=s=640x360:mode=lissajous:rate=25:zoom=1.5:draw=line:scale=sqrt:mirror=x:rf=0.${color.substring(0,2)}:gf=0.${color.substring(2,4)}:bf=0.${color.substring(4,6)}[scope];[bg][scope]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest "${outputPath}"`;
+                // Visualización de barras de ecualizador vertical
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showspectrum=s=1200x400:mode=combined:slide=scroll:scale=log:color=intensity:gain=5:fscale=lin:overlap=1:saturation=1:legend=0:orientation=v:colors=#${color}[eq];[bg][eq]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
                 break;
         }
         
@@ -110,7 +105,7 @@ router.post("/", express.raw({
                 console.error("Detalles:", stderr);
                 
                 // Intentar un método de respaldo más simple
-                const fallbackCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=640x360:c=#${bgColor}[bg];[0:a]showwaves=s=640x360:mode=cline:colors=#${color}[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                const fallbackCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=cline:colors=#${color}[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
                 
                 console.log("Intentando comando alternativo:", fallbackCommand);
                 
