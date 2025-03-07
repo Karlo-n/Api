@@ -73,11 +73,6 @@
             transition: transform 0.3s, box-shadow 0.3s;
         }
         
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        
         .card-title {
             font-size: 20px;
             font-weight: 600;
@@ -181,14 +176,6 @@
         .vis-option.selected {
             border-color: var(--primary);
             background-color: rgba(94, 114, 228, 0.05);
-        }
-        
-        .vis-option img {
-            width: 100%;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 10px;
         }
         
         .vis-option h4 {
@@ -324,16 +311,111 @@
             padding: 20px;
             font-weight: 600;
             font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        .video-wrapper {
+        .result-header .controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            transition: background 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .visualizer-wrapper {
             width: 100%;
             background-color: black;
+            position: relative;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
         }
         
-        video {
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            display: block;
+            height: 100%;
+        }
+        
+        .audio-controls {
+            display: flex;
+            padding: 15px;
+            align-items: center;
+            border-top: 1px solid #eee;
+        }
+        
+        .play-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-right: 15px;
+            transition: all 0.3s;
+        }
+        
+        .play-btn:hover {
+            background-color: #4c5ed3;
+        }
+        
+        .time-display {
+            font-size: 14px;
+            color: #666;
+            margin-right: 15px;
+            min-width: 80px;
+        }
+        
+        .progress-container {
+            flex: 1;
+            height: 8px;
+            background-color: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.1s;
+        }
+        
+        .volume-container {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+        }
+        
+        .volume-icon {
+            margin-right: 8px;
+        }
+        
+        .volume-slider {
+            width: 80px;
         }
         
         .result-actions {
@@ -356,7 +438,6 @@
             font-size: 14px;
         }
         
-        /* Responsive */
         @media screen and (max-width: 768px) {
             .header h1 {
                 font-size: 28px;
@@ -374,6 +455,20 @@
             .card {
                 padding: 20px;
             }
+            
+            .audio-controls {
+                flex-wrap: wrap;
+            }
+            
+            .volume-container {
+                margin-top: 10px;
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .volume-slider {
+                width: 100%;
+            }
         }
         
         @media screen and (max-width: 480px) {
@@ -389,14 +484,19 @@
                 width: 40px;
                 height: 40px;
             }
+            
+            .time-display {
+                min-width: 60px;
+                font-size: 12px;
+            }
         }
-     </style>
+    </style>
 </head>
 <body>
     <div class="header">
         <div class="container">
             <h1>Visualizador de Audio</h1>
-            <p>Convierte tus archivos MP3 y MP4 en increíbles visualizaciones</p>
+            <p>Visualiza tus archivos MP3 y MP4 en tiempo real</p>
         </div>
     </div>
     
@@ -419,7 +519,7 @@
                 </svg>
                 <h3>Arrastra un archivo MP3 o MP4 aquí</h3>
                 <p>o haz clic para seleccionar</p>
-                <input type="file" id="file-input" accept=".mp3,.mp4">
+                <input type="file" id="file-input" accept=".mp3,.mp4,audio/*,video/*">
             </div>
             
             <div class="file-info" id="file-info"></div>
@@ -457,7 +557,7 @@
                     </div>
 
                     <!-- Para el Círculo con Barras -->
-                    <div class="vis-option" data-type="sunburst">
+                    <div class="vis-option" data-type="circle">
                         <div style="height: 60px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border-radius: 8px; overflow: hidden;">
                             <div style="position: relative; width: 54px; height: 54px;">
                                 <!-- Círculo central -->
@@ -491,7 +591,7 @@
                 </div>
             </div>
             
-            <button id="process-btn" class="btn btn-primary" disabled>
+            <button id="start-btn" class="btn btn-primary" disabled>
                 Generar Visualización
             </button>
             
@@ -499,12 +599,46 @@
         </div>
         
         <div id="result-container" class="result-container">
-            <div class="result-header">Tu Visualización</div>
-            <div class="video-wrapper">
-                <video id="player" controls></video>
+            <div class="result-header">
+                <span>Tu Visualización</span>
+                <div class="controls">
+                    <button id="fullscreen-btn" class="control-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="visualizer-wrapper">
+                <canvas id="visualizer-canvas"></canvas>
+            </div>
+            <div class="audio-controls">
+                <button id="play-btn" class="play-btn">
+                    <svg id="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <svg id="pause-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                </button>
+                <div class="time-display" id="time-display">0:00 / 0:00</div>
+                <div class="progress-container" id="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <div class="volume-container">
+                    <div class="volume-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                        </svg>
+                    </div>
+                    <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.01" value="1">
+                </div>
             </div>
             <div class="result-actions">
-                <button id="download-btn" class="btn btn-success">Descargar</button>
+                <button id="download-btn" class="btn btn-success">Descargar Audio</button>
             </div>
         </div>
         
@@ -514,24 +648,52 @@
     </div>
     
     <script>
-        // Elementos DOM
+        // Variables para Web Audio API
+        let audioContext;
+        let analyser;
+        let source;
+        let audioElement;
+        let audioBuffer;
+        let isPlaying = false;
+        let animationId;
+        let currentVisType = 'waves';
+        let visColor = '#ff0000';
+        let bgColor = '#000000';
+        let dataArray;
+        let bufferLength;
+        
+        // Elementos del DOM
         const uploadArea = document.getElementById('upload-area');
         const fileInput = document.getElementById('file-input');
         const fileInfo = document.getElementById('file-info');
-        const processBtn = document.getElementById('process-btn');
+        const startBtn = document.getElementById('start-btn');
         const statusDiv = document.getElementById('status');
         const resultContainer = document.getElementById('result-container');
-        const player = document.getElementById('player');
-        const downloadBtn = document.getElementById('download-btn');
-        const visColor = document.getElementById('vis-color');
-        const bgColor = document.getElementById('bg-color');
+        const canvas = document.getElementById('visualizer-canvas');
+        const ctx = canvas.getContext('2d');
         const visOptions = document.querySelectorAll('.vis-option');
+        const visColorPicker = document.getElementById('vis-color');
+        const bgColorPicker = document.getElementById('bg-color');
         
-        // Variables
-        let currentFile = null;
-        let processingTimeout = null;
-        let currentVisType = 'waves';
-        let currentVideoUrl = null;
+        // Controles de audio
+        const playBtn = document.getElementById('play-btn');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const timeDisplay = document.getElementById('time-display');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const volumeSlider = document.getElementById('volume-slider');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        
+        // Inicializar el tamaño del canvas
+        function resizeCanvas() {
+            const wrapper = canvas.parentElement;
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
         
         // Selección de tipo de visualización
         visOptions.forEach(option => {
@@ -539,6 +701,10 @@
                 visOptions.forEach(o => o.classList.remove('selected'));
                 option.classList.add('selected');
                 currentVisType = option.dataset.type;
+                
+                if (analyser) {
+                    drawVisualization();
+                }
             });
         });
         
@@ -578,10 +744,9 @@
                 return;
             }
             
-            currentFile = file;
             fileInfo.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
             fileInfo.classList.add('active');
-            processBtn.disabled = false;
+            startBtn.disabled = false;
             hideStatus();
         }
         
@@ -606,157 +771,321 @@
             statusDiv.className = 'status';
         }
         
-        // Procesar el archivo
-        processBtn.addEventListener('click', processFile);
+        // Actualizar colores
+        visColorPicker.addEventListener('input', () => {
+            visColor = visColorPicker.value;
+            if (analyser) {
+                drawVisualization();
+            }
+        });
         
-        async function processFile() {
-            if (!currentFile) return;
-            
-            processBtn.disabled = true;
-            showStatus('Procesando archivo...', 'info');
-            resultContainer.classList.remove('active');
-            
-            // Establecer timeout para mostrar error después de 60 segundos
-            clearTimeout(processingTimeout);
-            processingTimeout = setTimeout(() => {
-                showStatus('El procesamiento está tomando demasiado tiempo. Intente con un archivo más pequeño.', 'error');
-                processBtn.disabled = false;
-            }, 60000);
+        bgColorPicker.addEventListener('input', () => {
+            bgColor = bgColorPicker.value;
+            if (analyser) {
+                drawVisualization();
+            }
+        });
+        
+        // Iniciar visualización
+        startBtn.addEventListener('click', startVisualization);
+        
+        async function startVisualization() {
+            if (!fileInput.files.length) return;
             
             try {
-                // Preparar parámetros
-                const type = currentVisType;
-                const color = visColor.value.substring(1); // quitar #
-                const bgColorVal = bgColor.value.substring(1); // quitar #
+                showStatus('Preparando visualización...', 'info');
                 
-                // Mostrar detalles de la solicitud
-                console.log(`Enviando: tipo=${type}, color=${color}, bgColor=${bgColorVal}, archivo=${currentFile.name}`);
-                
-                // Enviar el archivo
-                const queryParams = `type=${type}&color=${color}&bgColor=${bgColorVal}`;
-                const response = await fetch(`/api/fun/audiovisualizer?${queryParams}`, {
-                    method: 'POST',
-                    body: currentFile,
-                    headers: {
-                        'Content-Type': currentFile.type
-                    }
-                });
-                
-                // Verificar si la respuesta es JSON válido
-                let data;
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    data = await response.json();
-                    console.log("Respuesta del servidor:", data);
-                } else {
-                    const text = await response.text();
-                    console.error("Respuesta no JSON:", text);
-                    throw new Error("El servidor no respondió con JSON válido");
+                // Crear contexto de audio si no existe
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 }
                 
-                // Limpiar timeout
-                clearTimeout(processingTimeout);
-                
-                if (!data.success) {
-                    throw new Error(data.error || 'Error desconocido');
+                // Detener visualización anterior si existe
+                if (source) {
+                    source.disconnect();
+                    source = null;
                 }
                 
-                // Guardar URL del video
-                currentVideoUrl = data.videoUrl;
+                if (audioElement) {
+                    audioElement.pause();
+                    audioElement.src = '';
+                }
                 
-                // Añadir marca de tiempo para evitar caché
-                const timestamp = new Date().getTime();
-                const videoUrlWithTimestamp = currentVideoUrl.includes('?') 
-                    ? `${currentVideoUrl}&_t=${timestamp}` 
-                    : `${currentVideoUrl}?_t=${timestamp}`;
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                }
                 
-                // Mostrar el video
-                player.src = videoUrlWithTimestamp.startsWith('http') 
-                    ? videoUrlWithTimestamp 
-                    : window.location.origin + videoUrlWithTimestamp;
+                // Configurar el analizador
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
                 
-                console.log("URL del video:", player.src);
+                // Crear elemento de audio
+                audioElement = new Audio();
+                audioElement.src = URL.createObjectURL(fileInput.files[0]);
+                source = audioContext.createMediaElementSource(audioElement);
                 
-                // Cargar el video
-                player.load();
+                // Conectar nodos
+                source.connect(analyser);
+                analyser.connect(audioContext.destination);
                 
-                // Configurar botón de descarga correctamente
-                setupDownload(data.videoUrl, `visualizacion-${currentVisType}-${Date.now()}.mp4`);
+                // Configurar controladores de eventos
+                setupAudioControls();
                 
-                // Mostrar resultado
+                // Mostrar el contenedor de resultado
                 resultContainer.classList.add('active');
                 showStatus('Visualización generada correctamente', 'success');
                 
-                // Scroll al resultado
+                // Configurar el canvas
+                resizeCanvas();
+                
+                // Iniciar la visualización
+                isPlaying = true;
+                audioElement.play().catch(e => {
+                    console.warn('Error al reproducir:', e);
+                    isPlaying = false;
+                    updatePlayPauseButton();
+                });
+                
+                drawVisualization();
+                
+                // Configurar botón de descarga
+                downloadBtn.onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(fileInput.files[0]);
+                    a.download = fileInput.files[0].name;
+                    a.click();
+                };
+                
+                // Desplazarse al contenedor de resultado
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
                 
-                // Intentar reproducir después de cargar
-                player.onloadeddata = () => {
-                    console.log("Video cargado, intentando reproducir");
-                    player.play().catch(e => {
-                        console.warn("Error al reproducir:", e);
-                        showStatus("Haz clic en el video para reproducir", "info");
-                    });
-                };
-                
-                // Si hay error al cargar el video
-                player.onerror = (e) => {
-                    console.error("Error cargando video:", e);
-                    showStatus("Error al cargar el video. Intenta descargar directamente.", "error");
-                };
-                
             } catch (error) {
-                clearTimeout(processingTimeout);
                 console.error('Error:', error);
                 showStatus(`Error: ${error.message}`, 'error');
-            } finally {
-                processBtn.disabled = false;
             }
         }
         
-        // Configurar descarga correctamente
-        function setupDownload(videoUrl, filename) {
-            // Método 1: Configurar el botón de descarga para crear enlace temporal
-            downloadBtn.onclick = () => {
-                // URL completa
-                const fullUrl = videoUrl.startsWith('http') 
-                    ? videoUrl 
-                    : window.location.origin + videoUrl;
-                
-                console.log("Iniciando descarga desde:", fullUrl);
-                
-                // Crear enlace temporal
-                const a = document.createElement('a');
-                a.href = fullUrl;
-                a.download = filename; // Esto sugiere un nombre de archivo
-                a.target = '_blank'; // Abrir en nueva pestaña por si acaso
-                document.body.appendChild(a);
-                a.click();
-                
-                // Limpiar
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                }, 100);
-                
-                return false; // Evitar comportamiento predeterminado
-            };
+        // Dibujar visualización según el tipo seleccionado
+        function drawVisualization() {
+            // Limpiar el canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Método alternativo para intentar descargar
-            downloadBtn.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                window.open(videoUrl, '_blank');
-                return false;
+            // Obtener datos de audio
+            analyser.getByteTimeDomainData(dataArray);
+            
+            // Dibujar según el tipo de visualización
+            switch (currentVisType) {
+                case 'waves':
+                    drawWaveform();
+                    break;
+                case 'bars':
+                    drawBars();
+                    break;
+                case 'circle':
+                    drawCircle();
+                    break;
+            }
+            
+            // Continuar la animación
+            animationId = requestAnimationFrame(drawVisualization);
+        }
+        
+        // Dibujar forma de onda (ondas horizontales)
+        function drawWaveform() {
+            analyser.getByteTimeDomainData(dataArray);
+            
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = visColor;
+            ctx.beginPath();
+            
+            const sliceWidth = canvas.width / bufferLength;
+            let x = 0;
+            
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * canvas.height / 2;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                
+                x += sliceWidth;
+            }
+            
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+        }
+        
+        // Dibujar barras verticales
+        function drawBars() {
+            analyser.getByteFrequencyData(dataArray);
+            
+            const barWidth = (canvas.width / bufferLength) * 2.5;
+            let x = 0;
+            
+            for (let i = 0; i < bufferLength; i++) {
+                const barHeight = (dataArray[i] / 255) * canvas.height;
+                
+                ctx.fillStyle = visColor;
+                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                
+                x += barWidth + 1;
+                
+                if (x > canvas.width) break;
+            }
+        }
+        
+        // Dibujar visualización circular
+        function drawCircle() {
+            analyser.getByteFrequencyData(dataArray);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 20;
+            
+            // Dibujar círculo central
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = visColor;
+            ctx.fill();
+            
+            // Dibujar barras alrededor del círculo
+            const barCount = 180;
+            const step = Math.PI * 2 / barCount;
+            
+            for (let i = 0; i < barCount; i++) {
+                const freqIndex = Math.floor(i * bufferLength / barCount);
+                const amplitude = dataArray[freqIndex] / 255;
+                const barHeight = amplitude * radius;
+                
+                const angle = i * step;
+                
+                const startX = centerX + Math.cos(angle) * 10;
+                const startY = centerY + Math.sin(angle) * 10;
+                
+                const endX = centerX + Math.cos(angle) * (10 + barHeight);
+                const endY = centerY + Math.sin(angle) * (10 + barHeight);
+                
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.strokeStyle = visColor;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+        
+        // Configurar controles de audio
+        function setupAudioControls() {
+            // Botón de reproducir/pausar
+            playBtn.onclick = togglePlayPause;
+            
+            // Actualizar barra de progreso
+            audioElement.addEventListener('timeupdate', updateProgress);
+            
+            // Permitir clic en la barra de progreso
+            progressContainer.addEventListener('click', setProgress);
+            
+            // Control de volumen
+            volumeSlider.addEventListener('input', () => {
+                audioElement.volume = volumeSlider.value;
+            });
+            
+            // Pantalla completa
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            
+            // Actualizar estado al finalizar
+            audioElement.addEventListener('ended', () => {
+                isPlaying = false;
+                updatePlayPauseButton();
             });
         }
         
-        // Permitir hacer clic en el video para reproducir
-        player.addEventListener('click', () => {
-            if (player.paused) {
-                player.play().catch(e => console.warn("Error al reproducir:", e));
+        // Alternar reproducción/pausa
+        function togglePlayPause() {
+            if (isPlaying) {
+                audioElement.pause();
             } else {
-                player.pause();
+                audioElement.play().catch(e => console.warn('Error al reproducir:', e));
             }
-        });
+            
+            isPlaying = !isPlaying;
+            updatePlayPauseButton();
+        }
+        
+        // Actualizar botón de reproducir/pausar
+        function updatePlayPauseButton() {
+            if (isPlaying) {
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'block';
+            } else {
+                playIcon.style.display = 'block';
+                pauseIcon.style.display = 'none';
+            }
+        }
+        
+        // Actualizar barra de progreso
+        function updateProgress() {
+            const duration = audioElement.duration || 1;
+            const currentTime = audioElement.currentTime || 0;
+            
+            const progressPercent = (currentTime / duration) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            
+            // Actualizar tiempo
+            timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+        }
+        
+        // Formatear tiempo en minutos:segundos
+        function formatTime(seconds) {
+            seconds = Math.floor(seconds);
+            const minutes = Math.floor(seconds / 60);
+            seconds = seconds % 60;
+            
+            return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+        
+        // Establecer progreso al hacer clic
+        function setProgress(e) {
+            const width = this.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audioElement.duration;
+            
+            audioElement.currentTime = (clickX / width) * duration;
+        }
+        
+        // Alternar pantalla completa
+        function toggleFullscreen() {
+            const container = document.querySelector('.visualizer-wrapper');
+            
+            if (!document.fullscreenElement) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.mozRequestFullScreen) {
+                    container.mozRequestFullScreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
     </script>
 </body>
 </html>
