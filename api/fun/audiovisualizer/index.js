@@ -86,8 +86,8 @@ router.post("/", express.raw({
                 break;
                 
             case 'sunburst':
-                // Visualización de círculo con explosión radial - mucho más dramática
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showcqt=fps=60:size=1280x720:count=12:gamma=7:bar_g=5:sono_g=8:bar_v=25:sono_v=40:sono_h=0:axis_h=0:tc=#${color}:tlength=lin:tlist=0-20k:sono=off:bar=1:csp=bt709:mode=polar:fontcolor=#${color}[vis];[bg][vis]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -r 60 -pix_fmt yuv420p -preset ultrafast "${outputPath}"`;
+                // Visualización circular completamente rediseñada y simplificada para garantizar que funcione
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]avectorscope=s=1080x1080:mode=polar:rate=60:zoom=1.5:rc=0:gc=0:bc=0:rf=1:gf=0:bf=0:draw=line:scale=lin[scope];[scope]colorkey=black:0.01:0.1[ck];[ck]colorize=h=220:s=1:intensity=8:enable='between(t,0,999999)'[colored];[colored]drawgrid=width=64:height=64:color=#${color}@0.3[grid];[grid]rotate=PI/4:c=black@0:ow=1280:oh=720[rotated];[bg][rotated]overlay=(W-w)/2:(H-h)/2:format=auto:shortest=1,drawtext=text='':fontcolor=#${color}:fontsize=20:x=100:y=100:enable=0[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -r 60 -pix_fmt yuv420p -tune fastdecode -preset ultrafast "${outputPath}"`;
                 break;
                 
             case 'bars':
@@ -104,8 +104,17 @@ router.post("/", express.raw({
                 console.error("Error ejecutando FFmpeg:", error);
                 console.error("Detalles:", stderr);
                 
-                // Intentar un método de respaldo más simple pero mejorado
-                const fallbackCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=p2p:n=200:colors=#${color}:draw=full:scale=sqrt[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p -preset ultrafast "${outputPath}"`;
+                // Intentar un método de respaldo completamente diferente
+                let fallbackCommand;
+                
+                if (type === 'waves') {
+                    fallbackCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showfreqs=size=1280x720:mode=line:ascale=log:fscale=log:win_size=256:win_func=hann:overlap=1:averaging=1:colors=#${color}[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -r 60 -pix_fmt yuv420p -preset ultrafast "${outputPath}"`;
+                } else if (type === 'sunburst') {
+                    // Método alternativo simplificado para el círculo, usando una forma vectorial básica pero efectiva
+                    fallbackCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]avectorscope=s=720x720:mode=polar:rate=60:mirror=x:draw=dot:scale=log[scope];[scope]format=rgba,colorbalance=rs=.5:gs=.5:bs=.5,colorchannelmixer=rr=2:gg=0:bb=0:aa=1[colored];[bg][colored]overlay=(W-w)/2:(H-h)/2:format=auto:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -r 60 -pix_fmt yuv420p -preset ultrafast "${outputPath}"`;
+                } else {
+                    fallbackCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=p2p:n=100:rate=60:colors=#${color}:filter=lowpass:scale=cbrt[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -r 60 -pix_fmt yuv420p -preset ultrafast "${outputPath}"`;
+                }
                 
                 console.log("Intentando comando alternativo:", fallbackCommand);
                 
@@ -113,8 +122,8 @@ router.post("/", express.raw({
                     if (err2) {
                         console.error("Error en segundo intento:", err2);
                         
-                        // Tercer intento con una configuración aún más simple
-                        const lastResortCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=cline:colors=#${color}[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -preset ultrafast -crf 28 -c:a aac -b:a 128k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                        // Tercer intento con una configuración extremadamente simple pero funcional
+                        const lastResortCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=cline:rate=60:colors=#${color}[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -preset ultrafast -crf 28 -c:a aac -b:a 128k -shortest -r 60 -pix_fmt yuv420p "${outputPath}"`;
                         
                         console.log("Intentando último comando de emergencia:", lastResortCommand);
                         
