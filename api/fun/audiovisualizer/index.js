@@ -81,19 +81,19 @@ router.post("/", express.raw({
         
         switch (type) {
             case 'waves':
-                // Visualización de ondas con color de fondo personalizado
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=line:rate=25:colors=#${color}:scale=sqrt[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                // Visualización de ondas mejorada con color de fondo personalizado
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=line:rate=30:colors=#${color}:scale=sqrt:draw=full:slide=scroll:n=160:filter=lowpass[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p -preset fast "${outputPath}"`;
                 break;
                 
             case 'sunburst':
-                // Visualización tipo sol/bola con barras radiales
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showcqt=fps=30:size=1200x1200:count=5:bar_g=2:sono_g=4:bar_v=9:sono_v=17:sono_h=0:axis_h=0:tc=#${color}:tlength=lin:tlist=0-11.5k:sono=off:mode=polar:bar=1:csp=bt709:count=6:format=yuv420p[vis];[bg][vis]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                // Visualización tipo sol/bola con barras radiales mejorada
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showcqt=fps=30:size=1280x720:count=8:gamma=5:bar_g=3:sono_g=4:bar_v=15:sono_v=20:sono_h=0:axis_h=0:tc=#${color}:tlength=lin:tlist=0-12k:sono=off:bar=1:csp=bt709:mode=polar:fontcolor=#${color}[vis];[bg][vis]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p -preset fast "${outputPath}"`;
                 break;
                 
             case 'bars':
             default:
-                // Visualización de barras de ecualizador vertical
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showspectrum=s=1200x400:mode=combined:slide=scroll:scale=log:color=intensity:gain=5:fscale=lin:overlap=1:saturation=1:legend=0:orientation=v:colors=#${color}[eq];[bg][eq]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                // Visualización de barras de ecualizador vertical mejorada
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showspectrum=s=1200x400:mode=combined:slide=scroll:scale=log:color=intensity:fscale=lin:overlap=1:saturation=3:gain=4:orientation=v:legend=0:draw=scale:n=120:colors=#${color}[eq];[bg][eq]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p -preset fast "${outputPath}"`;
                 break;
         }
         
@@ -104,18 +104,44 @@ router.post("/", express.raw({
                 console.error("Error ejecutando FFmpeg:", error);
                 console.error("Detalles:", stderr);
                 
-                // Intentar un método de respaldo más simple
-                const fallbackCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=cline:colors=#${color}[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                // Intentar un método de respaldo más simple pero mejorado
+                const fallbackCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=p2p:n=200:colors=#${color}:draw=full:scale=sqrt[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p -preset ultrafast "${outputPath}"`;
                 
                 console.log("Intentando comando alternativo:", fallbackCommand);
                 
                 exec(fallbackCommand, (err2, stdout2, stderr2) => {
                     if (err2) {
                         console.error("Error en segundo intento:", err2);
-                        return res.status(500).json({ 
-                            error: "Error procesando archivo",
-                            details: err2.message
+                        
+                        // Tercer intento con una configuración aún más simple
+                        const lastResortCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=cline:colors=#${color}[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -preset ultrafast -crf 28 -c:a aac -b:a 128k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                        
+                        console.log("Intentando último comando de emergencia:", lastResortCommand);
+                        
+                        exec(lastResortCommand, (err3, stdout3, stderr3) => {
+                            if (err3) {
+                                console.error("Error en tercer intento:", err3);
+                                return res.status(500).json({ 
+                                    error: "Error procesando archivo",
+                                    details: err3.message
+                                });
+                            }
+                            
+                            // Tercer intento exitoso
+                            console.log("Visualización generada con método de emergencia");
+                            
+                            // Limpiar archivos temporales
+                            cleanupFiles(inputPath, tempVideoPath);
+                            
+                            // Responder con éxito
+                            res.json({
+                                success: true,
+                                message: "Visualización generada (modo básico)",
+                                videoUrl: publicUrl,
+                                jobId: jobId
+                            });
                         });
+                        return;
                     }
                     
                     // Segundo intento exitoso
