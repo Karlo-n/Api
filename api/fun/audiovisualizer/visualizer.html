@@ -534,6 +534,17 @@
             transform: translateY(-2px);
         }
         
+        .btn-danger {
+            background: linear-gradient(90deg, #f5365c 0%, #f56036 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(245, 54, 92, 0.3);
+        }
+        
+        .btn-danger:hover {
+            box-shadow: 0 7px 14px rgba(245, 54, 92, 0.4);
+            transform: translateY(-2px);
+        }
+        
         .status {
             padding: 18px;
             border-radius: var(--border-radius);
@@ -738,13 +749,50 @@
             padding: 22px;
             display: flex;
             gap: 15px;
-            justify-content: flex-end;
+            justify-content: space-between;
             background-color: #fafafa;
             border-top: 1px solid #eee;
         }
         
         .result-actions .btn {
             width: auto;
+        }
+        
+        .recording-indicator {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background-color: rgba(245, 54, 92, 0.1);
+            color: var(--danger);
+            border-radius: 20px;
+            font-weight: 500;
+            margin-top: 15px;
+            font-size: 14px;
+            animation: pulse 1.5s infinite;
+            display: none;
+        }
+        
+        .recording-indicator.active {
+            display: flex;
+        }
+        
+        .recording-indicator .dot {
+            width: 12px;
+            height: 12px;
+            background-color: var(--danger);
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
         }
         
         .footer {
@@ -835,6 +883,15 @@
             .volume-slider {
                 width: 100%;
             }
+            
+            .result-actions {
+                flex-direction: column;
+            }
+            
+            .result-actions .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
         }
         
         @media screen and (max-width: 576px) {
@@ -858,14 +915,6 @@
             .time-display {
                 min-width: 60px;
                 font-size: 12px;
-            }
-            
-            .result-actions {
-                flex-direction: column;
-            }
-            
-            .result-actions .btn {
-                width: 100%;
             }
         }
     </style>
@@ -1090,7 +1139,14 @@
                 </div>
             </div>
             <div class="result-actions">
-                <button id="download-btn" class="btn btn-success">Descargar VIDEO</button>
+                <div class="recording-indicator" id="recording-indicator">
+                    <div class="dot"></div>
+                    <span>Grabando video...</span>
+                </div>
+                <div class="action-buttons">
+                    <button id="record-btn" class="btn btn-primary">Grabar Video</button>
+                    <button id="download-btn" class="btn btn-success">Descargar VIDEO</button>
+                </div>
             </div>
         </div>
         
@@ -1100,716 +1156,863 @@
     </div>
     
     <script>
-        // Variables para Web Audio API
-        let audioContext;
-        let analyser;
-        let source;
-        let audioElement;
-        let audioBuffer;
-        let isPlaying = false;
-        let animationId;
-        let currentVisType = 'waves';
-        let visColor = '#ff0000';
-        let bgColor = '#000000';
-        let dataArray;
-        let bufferLength;
-        
-        // Variables para grabación de video
-        let mediaRecorder;
-        let recordedChunks = [];
-        let isRecording = false;
-        let recordingStartTime = 0;
-        
-        // Variables para randomización de colores
-        let isRandomizing = false;
-        let randomColors = [];
-        let currentColorIndex = 0;
-        let colorInterval;
-        let randomizeSpeed = 500; // ms
-        
-        // Elementos del DOM
-        const uploadArea = document.getElementById('upload-area');
-        const fileInput = document.getElementById('file-input');
-        const fileInfo = document.getElementById('file-info');
-        const startBtn = document.getElementById('start-btn');
-        const statusDiv = document.getElementById('status');
-        const resultContainer = document.getElementById('result-container');
-        const canvas = document.getElementById('visualizer-canvas');
-        const ctx = canvas.getContext('2d');
-        const visOptions = document.querySelectorAll('.vis-option');
-        const visColorPicker = document.getElementById('vis-color');
-        const bgColorPicker = document.getElementById('bg-color');
-        
-        // Elementos de randomización
-        const randomizeToggle = document.getElementById('randomize-toggle');
-        const colorPalette = document.getElementById('color-palette');
-        const randomizeSpeedContainer = document.getElementById('randomize-speed');
-        const randomizeSpeedSlider = document.getElementById('randomize-speed-slider');
-        
-        // Funciones para randomización de colores
-        randomizeToggle.addEventListener('change', function() {
-            if (this.checked) {
-                colorPalette.classList.add('active');
-                randomizeSpeedContainer.classList.add('active');
+        // Asegurarse que el DOM está completamente cargado antes de ejecutar el script
+        document.addEventListener('DOMContentLoaded', function() {
+            // Variables para Web Audio API
+            let audioContext;
+            let analyser;
+            let source;
+            let audioElement;
+            let audioBuffer;
+            let isPlaying = false;
+            let animationId;
+            let currentVisType = 'waves';
+            let visColor = '#ff0000';
+            let bgColor = '#000000';
+            let dataArray;
+            let bufferLength;
+            
+            // Variables para grabación de video
+            let mediaRecorder;
+            let recordedChunks = [];
+            let isRecording = false;
+            let recordingStartTime = 0;
+            
+            // Variables para randomización de colores
+            let isRandomizing = false;
+            let randomColors = [];
+            let currentColorIndex = 0;
+            let colorInterval;
+            let randomizeSpeed = 500; // ms
+            
+            // Elementos del DOM
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const fileInfo = document.getElementById('file-info');
+            const startBtn = document.getElementById('start-btn');
+            const statusDiv = document.getElementById('status');
+            const resultContainer = document.getElementById('result-container');
+            const canvas = document.getElementById('visualizer-canvas');
+            const ctx = canvas.getContext('2d');
+            const visOptions = document.querySelectorAll('.vis-option');
+            const visColorPicker = document.getElementById('vis-color');
+            const bgColorPicker = document.getElementById('bg-color');
+            
+            // Controles de audio
+            const playBtn = document.getElementById('play-btn');
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            const timeDisplay = document.getElementById('time-display');
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const volumeSlider = document.getElementById('volume-slider');
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const recordBtn = document.getElementById('record-btn');
+            const recordingIndicator = document.getElementById('recording-indicator');
+            
+            // Elementos de randomización
+            const randomizeToggle = document.getElementById('randomize-toggle');
+            const colorPalette = document.getElementById('color-palette');
+            const randomizeSpeedContainer = document.getElementById('randomize-speed');
+            const randomizeSpeedSlider = document.getElementById('randomize-speed-slider');
+            
+            // Funciones para randomización de colores
+            randomizeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    colorPalette.classList.add('active');
+                    randomizeSpeedContainer.classList.add('active');
+                    
+                    // Recoger los colores de los inputs
+                    collectRandomColors();
+                    
+                    // Activar randomización si hay visualización
+                    if (analyser) {
+                        isRandomizing = true;
+                        startColorRandomization();
+                    }
+                } else {
+                    colorPalette.classList.remove('active');
+                    randomizeSpeedContainer.classList.remove('active');
+                    
+                    // Desactivar randomización
+                    isRandomizing = false;
+                    if (colorInterval) {
+                        clearInterval(colorInterval);
+                    }
+                    
+                    // Restaurar el color original
+                    visColor = visColorPicker.value;
+                    if (analyser) {
+                        drawVisualization();
+                    }
+                }
+            });
+            
+            // Recoger los colores de randomización
+            function collectRandomColors() {
+                randomColors = [];
+                for (let i = 1; i <= 10; i++) {
+                    const colorInput = document.getElementById(`random-color-${i}`);
+                    if (colorInput) {
+                        randomColors.push(colorInput.value);
+                    }
+                }
+            }
+            
+            // Escuchar cambios en los selectores de color random
+            for (let i = 1; i <= 10; i++) {
+                const colorInput = document.getElementById(`random-color-${i}`);
+                if (colorInput) {
+                    colorInput.addEventListener('change', collectRandomColors);
+                }
+            }
+            
+            // Actualizar velocidad de randomización
+            randomizeSpeedSlider.addEventListener('input', function() {
+                randomizeSpeed = parseInt(this.value);
                 
-                // Recoger los colores de los inputs
-                collectRandomColors();
-                
-                // Activar randomización si hay visualización
-                if (analyser) {
-                    isRandomizing = true;
+                // Reiniciar el intervalo si está activo
+                if (isRandomizing && colorInterval) {
+                    clearInterval(colorInterval);
                     startColorRandomization();
                 }
-            } else {
-                colorPalette.classList.remove('active');
-                randomizeSpeedContainer.classList.remove('active');
-                
-                // Desactivar randomización
-                isRandomizing = false;
+            });
+            
+            // Función para iniciar la randomización de colores
+            function startColorRandomization() {
                 if (colorInterval) {
                     clearInterval(colorInterval);
                 }
                 
-                // Restaurar el color original
+                colorInterval = setInterval(() => {
+                    currentColorIndex = (currentColorIndex + 1) % randomColors.length;
+                    visColor = randomColors[currentColorIndex];
+                    
+                    // No necesitamos actualizar el color picker, solo el color usado
+                    if (analyser) {
+                        // No necesitamos llamar a drawVisualization() porque ya se está llamando continuamente
+                    }
+                }, randomizeSpeed);
+            }
+            
+            // Inicializar el tamaño del canvas
+            function resizeCanvas() {
+                const wrapper = canvas.parentElement;
+                canvas.width = wrapper.clientWidth;
+                canvas.height = wrapper.clientHeight;
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Selección de tipo de visualización
+            visOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    visOptions.forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    currentVisType = option.dataset.type;
+                    
+                    if (analyser) {
+                        drawVisualization();
+                    }
+                });
+            });
+            
+            // Eventos para arrastrar y soltar
+            uploadArea.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelect();
+                }
+            });
+            
+            // Manejar selección de archivo
+            function handleFileSelect() {
+                if (!fileInput.files.length) return;
+                
+                const file = fileInput.files[0];
+                
+                // Verificar tipo de archivo
+                if (!file.type.includes('audio') && !file.type.includes('video')) {
+                    showStatus('Solo se permiten archivos de audio (MP3) o video (MP4)', 'error');
+                    return;
+                }
+                
+                fileInfo.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                fileInfo.classList.add('active');
+                startBtn.disabled = false;
+                hideStatus();
+            }
+            
+            // Mostrar mensajes de estado
+            function showStatus(message, type) {
+                statusDiv.innerHTML = '';
+                
+                if (type === 'info') {
+                    const spinner = document.createElement('div');
+                    spinner.className = 'spinner';
+                    statusDiv.appendChild(spinner);
+                }
+                
+                const messageEl = document.createElement('span');
+                messageEl.textContent = message;
+                statusDiv.appendChild(messageEl);
+                
+                statusDiv.className = `status ${type}`;
+            }
+            
+            function hideStatus() {
+                statusDiv.className = 'status';
+            }
+            
+            // Actualizar colores
+            visColorPicker.addEventListener('input', () => {
                 visColor = visColorPicker.value;
                 if (analyser) {
                     drawVisualization();
                 }
-            }
-        });
-        
-        // Recoger los colores de randomización
-        function collectRandomColors() {
-            randomColors = [];
-            for (let i = 1; i <= 10; i++) {
-                const colorInput = document.getElementById(`random-color-${i}`);
-                if (colorInput) {
-                    randomColors.push(colorInput.value);
-                }
-            }
-        }
-        
-        // Escuchar cambios en los selectores de color random
-        for (let i = 1; i <= 10; i++) {
-            const colorInput = document.getElementById(`random-color-${i}`);
-            if (colorInput) {
-                colorInput.addEventListener('change', collectRandomColors);
-            }
-        }
-        
-        // Actualizar velocidad de randomización
-        randomizeSpeedSlider.addEventListener('input', function() {
-            randomizeSpeed = parseInt(this.value);
+            });
             
-            // Reiniciar el intervalo si está activo
-            if (isRandomizing && colorInterval) {
-                clearInterval(colorInterval);
-                startColorRandomization();
-            }
-        });
-        
-        // Función para iniciar la randomización de colores
-        function startColorRandomization() {
-            if (colorInterval) {
-                clearInterval(colorInterval);
-            }
-            
-            colorInterval = setInterval(() => {
-                currentColorIndex = (currentColorIndex + 1) % randomColors.length;
-                visColor = randomColors[currentColorIndex];
-                
-                // No necesitamos actualizar el color picker, solo el color usado
-                if (analyser) {
-                    // No necesitamos llamar a drawVisualization() porque ya se está llamando continuamente
-                }
-            }, randomizeSpeed);
-        }
-        
-        // Inicializar el tamaño del canvas
-        function resizeCanvas() {
-            const wrapper = canvas.parentElement;
-            canvas.width = wrapper.clientWidth;
-            canvas.height = wrapper.clientHeight;
-        }
-        
-        window.addEventListener('resize', resizeCanvas);
-        
-        // Selección de tipo de visualización
-        visOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                visOptions.forEach(o => o.classList.remove('selected'));
-                option.classList.add('selected');
-                currentVisType = option.dataset.type;
-                
+            bgColorPicker.addEventListener('input', () => {
+                bgColor = bgColorPicker.value;
                 if (analyser) {
                     drawVisualization();
                 }
             });
-        });
-        
-        // Eventos para arrastrar y soltar
-        uploadArea.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', handleFileSelect);
-        
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-        
-        uploadArea.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-        });
-        
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
             
-            if (e.dataTransfer.files.length) {
-                fileInput.files = e.dataTransfer.files;
-                handleFileSelect();
-            }
-        });
-        
-        // Manejar selección de archivo
-        function handleFileSelect() {
-            if (!fileInput.files.length) return;
+            // Grabar video
+            recordBtn.addEventListener('click', toggleRecording);
             
-            const file = fileInput.files[0];
-            
-            // Verificar tipo de archivo
-            if (!file.type.includes('audio') && !file.type.includes('video')) {
-                showStatus('Solo se permiten archivos de audio (MP3) o video (MP4)', 'error');
-                return;
+            function toggleRecording() {
+                if (isRecording) {
+                    stopRecording();
+                    recordBtn.textContent = 'Grabar Video';
+                    recordBtn.classList.remove('btn-danger');
+                    recordBtn.classList.add('btn-primary');
+                    recordingIndicator.classList.remove('active');
+                } else {
+                    startRecording();
+                    recordBtn.textContent = 'Detener Grabación';
+                    recordBtn.classList.remove('btn-primary');
+                    recordBtn.classList.add('btn-danger');
+                    recordingIndicator.classList.add('active');
+                }
             }
             
-            fileInfo.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-            fileInfo.classList.add('active');
-            startBtn.disabled = false;
-            hideStatus();
-        }
-        
-        // Mostrar mensajes de estado
-        function showStatus(message, type) {
-            statusDiv.innerHTML = '';
-            
-            if (type === 'info') {
-                const spinner = document.createElement('div');
-                spinner.className = 'spinner';
-                statusDiv.appendChild(spinner);
-            }
-            
-            const messageEl = document.createElement('span');
-            messageEl.textContent = message;
-            statusDiv.appendChild(messageEl);
-            
-            statusDiv.className = `status ${type}`;
-        }
-        
-        function hideStatus() {
-            statusDiv.className = 'status';
-        }
-        
-        // Actualizar colores
-        visColorPicker.addEventListener('input', () => {
-            visColor = visColorPicker.value;
-            if (analyser) {
-                drawVisualization();
-            }
-        });
-        
-        bgColorPicker.addEventListener('input', () => {
-            bgColor = bgColorPicker.value;
-            if (analyser) {
-                drawVisualization();
-            }
-        });
-        
-        // Iniciar visualización
-        startBtn.addEventListener('click', startVisualization);
-        
-        async function startVisualization() {
-            if (!fileInput.files.length) return;
-            
-            try {
-                showStatus('Preparando visualización...', 'info');
+            function startRecording() {
+                if (!audioElement || isRecording) return;
                 
-                // Crear contexto de audio si no existe
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                try {
+                    // Crear stream del canvas
+                    const canvasStream = canvas.captureStream(30); // 30 FPS
+                    
+                    // Crear un nuevo contexto de audio para evitar conflictos
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const audioSource = audioCtx.createMediaElementSource(audioElement.cloneNode());
+                    const destination = audioCtx.createMediaStreamDestination();
+                    audioSource.connect(destination);
+                    
+                    // Combinar streams de video y audio
+                    const combinedStream = new MediaStream([
+                        ...canvasStream.getVideoTracks(),
+                        ...destination.stream.getAudioTracks()
+                    ]);
+                    
+                    // Configurar MediaRecorder
+                    const options = {
+                        mimeType: 'video/webm;codecs=vp9',
+                        videoBitsPerSecond: 5000000 // 5 Mbps para calidad alta
+                    };
+                    
+                    mediaRecorder = new MediaRecorder(combinedStream, options);
+                    recordedChunks = [];
+                    
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) {
+                            recordedChunks.push(e.data);
+                        }
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        // Crear blob y descargar
+                        const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        const fileName = `visualizador_${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
+                        a.href = url;
+                        a.download = fileName;
+                        a.click();
+                        
+                        URL.revokeObjectURL(url);
+                        showStatus('Video grabado y guardado con éxito!', 'success');
+                        isRecording = false;
+                    };
+                    
+                    // Iniciar grabación
+                    mediaRecorder.start(100); // Capturar en chunks de 100ms
+                    recordingStartTime = Date.now();
+                    isRecording = true;
+                    
+                } catch (error) {
+                    console.error('Error al grabar video:', error);
+                    showStatus(`Error al grabar: ${error.message}`, 'error');
+                }
+            }
+            
+            function stopRecording() {
+                if (!isRecording || !mediaRecorder) return;
+                mediaRecorder.stop();
+                isRecording = false;
+            }
+            
+            // Iniciar visualización
+            startBtn.addEventListener('click', startVisualization);
+            
+            async function startVisualization() {
+                if (!fileInput.files.length) return;
+                
+                try {
+                    showStatus('Preparando visualización...', 'info');
+                    
+                    // Crear contexto de audio si no existe
+                    if (!audioContext) {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    
+                    // Detener visualización anterior si existe
+                    if (source) {
+                        source.disconnect();
+                        source = null;
+                    }
+                    
+                    if (audioElement) {
+                        audioElement.pause();
+                        audioElement.src = '';
+                    }
+                    
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                    }
+                    
+                    // Configurar el analizador
+                    analyser = audioContext.createAnalyser();
+                    analyser.fftSize = 2048;
+                    bufferLength = analyser.frequencyBinCount;
+                    dataArray = new Uint8Array(bufferLength);
+                    
+                    // Crear elemento de audio
+                    audioElement = new Audio();
+                    audioElement.src = URL.createObjectURL(fileInput.files[0]);
+                    source = audioContext.createMediaElementSource(audioElement);
+                    
+                    // Conectar nodos
+                    source.connect(analyser);
+                    analyser.connect(audioContext.destination);
+                    
+                    // Configurar controladores de eventos
+                    setupAudioControls();
+                    
+                    // Mostrar el contenedor de resultado
+                    resultContainer.classList.add('active');
+                    showStatus('Visualización generada correctamente', 'success');
+                    
+                    // Configurar el canvas
+                    resizeCanvas();
+                    
+                    // Iniciar la visualización
+                    isPlaying = true;
+                    audioElement.play().catch(e => {
+                        console.warn('Error al reproducir:', e);
+                        isPlaying = false;
+                        updatePlayPauseButton();
+                    });
+                    
+                    // Activar randomización si está habilitada
+                    if (randomizeToggle.checked) {
+                        isRandomizing = true;
+                        collectRandomColors();
+                        startColorRandomization();
+                    }
+                    
+                    drawVisualization();
+                    
+                    // Configurar botón de descarga para crear un verdadero video
+                    downloadBtn.onclick = () => {
+                        if (isRecording) {
+                            showStatus('Ya hay una grabación en progreso. Detén la grabación actual primero.', 'info');
+                            return;
+                        }
+                        
+                        // Iniciar grabación rápida de 5 segundos
+                        showStatus('Generando video de 5 segundos...', 'info');
+                        recordingIndicator.classList.add('active');
+                        
+                        // Crear stream del canvas
+                        const canvasStream = canvas.captureStream(30);
+                        
+                        // Crear un nuevo contexto de audio para evitar conflictos
+                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        const audioSource = audioCtx.createMediaElementSource(audioElement.cloneNode());
+                        const destination = audioCtx.createMediaStreamDestination();
+                        audioSource.connect(destination);
+                        
+                        // Combinar streams
+                        const combinedStream = new MediaStream([
+                            ...canvasStream.getVideoTracks(),
+                            ...destination.stream.getAudioTracks()
+                        ]);
+                        
+                        // Configurar grabación
+                        const options = {
+                            mimeType: 'video/webm;codecs=vp9',
+                            videoBitsPerSecond: 5000000
+                        };
+                        
+                        const tempRecorder = new MediaRecorder(combinedStream, options);
+                        const tempChunks = [];
+                        
+                        tempRecorder.ondataavailable = (e) => {
+                            if (e.data.size > 0) {
+                                tempChunks.push(e.data);
+                            }
+                        };
+                        
+                        tempRecorder.onstop = () => {
+                            const blob = new Blob(tempChunks, { type: 'video/mp4' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            const fileName = `visualizador_rapido_${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
+                            a.href = url;
+                            a.download = fileName;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            
+                            URL.revokeObjectURL(url);
+                            recordingIndicator.classList.remove('active');
+                            showStatus('Video descargado correctamente!', 'success');
+                        };
+                        
+                        // Iniciar grabación por 5 segundos
+                        tempRecorder.start();
+                        setTimeout(() => {
+                            if (tempRecorder.state === 'recording') {
+                                tempRecorder.stop();
+                            }
+                        }, 5000);
+                    };
+                    
+                    // Desplazarse al contenedor de resultado
+                    resultContainer.scrollIntoView({ behavior: 'smooth' });
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    showStatus(`Error: ${error.message}`, 'error');
+                }
+            }
+            
+            // Dibujar visualización según el tipo seleccionado
+            function drawVisualization() {
+                // Limpiar el canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Obtener datos de audio
+                analyser.getByteTimeDomainData(dataArray);
+                
+                // Usar el color actual (puede ser el randomizado o el fijo)
+                const currentVisColor = isRandomizing ? visColor : visColorPicker.value;
+                
+                // Dibujar según el tipo de visualización
+                switch (currentVisType) {
+                    case 'waves':
+                        drawWaveform(currentVisColor);
+                        break;
+                    case 'bars':
+                        drawBars(currentVisColor);
+                        break;
+                    case 'circle':
+                        drawCircle(currentVisColor);
+                        break;
                 }
                 
-                // Detener visualización anterior si existe
-                if (source) {
-                    source.disconnect();
-                    source = null;
+                // Continuar la animación
+                animationId = requestAnimationFrame(drawVisualization);
+            }
+            
+            // Dibujar forma de onda (ondas horizontales)
+            function drawWaveform(color) {
+                analyser.getByteTimeDomainData(dataArray);
+                
+                // Ajustar para que llegue a los bordes completos
+                const canvasWidth = canvas.width;
+                const canvasHeight = canvas.height;
+                
+                // Crear efecto de reflejo
+                const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+                gradient.addColorStop(0.4, 'rgba(0,0,0,0)');
+                gradient.addColorStop(0.5, color);
+                gradient.addColorStop(0.6, 'rgba(0,0,0,0)');
+                
+                // Línea principal gruesa
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = color;
+                ctx.beginPath();
+                
+                const sliceWidth = canvasWidth / bufferLength;
+                let x = 0;
+                
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = v * canvasHeight / 2;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                    
+                    x += sliceWidth;
                 }
                 
-                if (audioElement) {
-                    audioElement.pause();
-                    audioElement.src = '';
+                ctx.stroke();
+                
+                // Línea brillante superpuesta
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ffffff';
+                ctx.globalAlpha = 0.2;
+                ctx.beginPath();
+                
+                x = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = v * canvasHeight / 2;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                    
+                    x += sliceWidth;
                 }
                 
-                if (animationId) {
-                    cancelAnimationFrame(animationId);
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
+                
+                // Agregar puntos de destaque en picos
+                x = 0;
+                for (let i = 0; i < bufferLength; i += 16) {
+                    const v = dataArray[i] / 128.0;
+                    const y = v * canvasHeight / 2;
+                    
+                    // Detectar picos
+                    if (Math.abs(v - 1) > 0.3) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 2, 0, Math.PI * 2);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fill();
+                    }
+                    
+                    x += sliceWidth * 16;
                 }
                 
-                // Configurar el analizador
-                analyser = audioContext.createAnalyser();
-                analyser.fftSize = 2048;
-                bufferLength = analyser.frequencyBinCount;
-                dataArray = new Uint8Array(bufferLength);
+                // Línea de área bajo la onda
+                ctx.beginPath();
+                ctx.moveTo(0, canvasHeight/2);
                 
-                // Crear elemento de audio
-                audioElement = new Audio();
-                audioElement.src = URL.createObjectURL(fileInput.files[0]);
-                source = audioContext.createMediaElementSource(audioElement);
+                x = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = v * canvasHeight / 2;
+                    ctx.lineTo(x, y);
+                    x += sliceWidth;
+                }
                 
-                // Conectar nodos
-                source.connect(analyser);
-                analyser.connect(audioContext.destination);
+                ctx.lineTo(canvasWidth, canvasHeight/2);
+                ctx.closePath();
+                ctx.fillStyle = color + '15'; // Muy transparente
+                ctx.fill();
+            }
+            
+            // Dibujar barras verticales
+            function drawBars(color) {
+                analyser.getByteFrequencyData(dataArray);
                 
-                // Configurar controladores de eventos
-                setupAudioControls();
+                // Usamos menos barras para un mejor efecto visual
+                const totalBars = 96;
+                const barSpacing = 2;
+                const barWidth = (canvas.width / totalBars) - barSpacing;
+                const step = Math.floor(bufferLength / totalBars);
                 
-                // Mostrar el contenedor de resultado
-                resultContainer.classList.add('active');
-                showStatus('Visualización generada correctamente', 'success');
+                // Para efecto de espejo
+                const mirrorEffect = true;
                 
-                // Configurar el canvas
-                resizeCanvas();
+                for (let i = 0; i < totalBars; i++) {
+                    // Tomar un promedio de varios valores para suavizar
+                    let sum = 0;
+                    for (let j = 0; j < step; j++) {
+                        sum += dataArray[i * step + j];
+                    }
+                    const value = sum / step;
+                    
+                    // Altura de la barra - que llegue completamente al borde
+                    const barHeight = Math.max(4, (value / 255) * canvas.height);
+                    
+                    // Posición horizontal
+                    const x = i * (barWidth + barSpacing);
+                    
+                    // Crear un gradiente más atractivo
+                    const gradient = ctx.createLinearGradient(x, canvas.height - barHeight, x, canvas.height);
+                    gradient.addColorStop(0, '#ffffff');  // Brillo en la parte superior
+                    gradient.addColorStop(0.1, color);    // Color principal
+                    gradient.addColorStop(1, color + '10'); // Transparente hacia abajo
+                    
+                    // Dibujar barra principal con esquinas redondeadas
+                    ctx.beginPath();
+                    // Borde superior redondeado
+                    ctx.moveTo(x, canvas.height - barHeight + barWidth/2);
+                    ctx.arc(x + barWidth/2, canvas.height - barHeight + barWidth/2, barWidth/2, Math.PI, 0, true);
+                    ctx.lineTo(x + barWidth, canvas.height);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.closePath();
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                    
+                    // Efecto de brillo en la parte superior
+                    ctx.beginPath();
+                    ctx.arc(x + barWidth/2, canvas.height - barHeight + barWidth/2, barWidth/2, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.globalAlpha = 0.3 * (value / 255);
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                    
+                    // Añadir espejo si está activado
+                    if (mirrorEffect) {
+                        // Espejo con menos opacidad
+                        const mirrorGradient = ctx.createLinearGradient(x, 0, x, barHeight);
+                        mirrorGradient.addColorStop(0, color + '05');  // Casi transparente
+                        mirrorGradient.addColorStop(0.9, color + '20'); // Algo más visible
+                        mirrorGradient.addColorStop(1, color + '40');  // Más visible en la unión
+                        
+                        ctx.fillStyle = mirrorGradient;
+                        
+                        // Dibujar el reflejo
+                        ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x + barWidth, 0);
+                        ctx.lineTo(x + barWidth, barHeight * 0.5);
+                        ctx.arc(x + barWidth/2, barHeight * 0.5, barWidth/2, 0, Math.PI, false);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            // Dibujar visualización circular
+            function drawCircle(color) {
+                analyser.getByteFrequencyData(dataArray);
                 
-                // Iniciar la visualización
-                isPlaying = true;
-                audioElement.play().catch(e => {
-                    console.warn('Error al reproducir:', e);
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                // Calcular el radio para que llegue hasta los bordes
+                // Usamos el menor entre width y height para mantener un círculo dentro del canvas
+                const maxRadius = Math.min(centerX, centerY);
+                
+                // Dibujar círculo central con brillo
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+                ctx.fillStyle = color;
+                ctx.fill();
+                
+                // Añadir halo alrededor del círculo central
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 12, 0, 2 * Math.PI);
+                ctx.strokeStyle = color + '80';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Dibujar anillo exterior pulsante
+                const avgFrequency = Array.from(dataArray).reduce((sum, value) => sum + value, 0) / dataArray.length;
+                const pulseRadius = maxRadius * (0.8 + (avgFrequency / 255) * 0.2);
+                
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, pulseRadius, 0, 2 * Math.PI);
+                ctx.strokeStyle = color + '60';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Dibujar barras alrededor del círculo
+                const barCount = 120; // Reducido para mejor rendimiento
+                const step = Math.PI * 2 / barCount;
+                
+                for (let i = 0; i < barCount; i++) {
+                    const freqIndex = Math.floor(i * bufferLength / barCount);
+                    const amplitude = dataArray[freqIndex] / 255;
+                    
+                    // Las barras ahora llegarán hasta el borde máximo del canvas
+                    const barHeight = amplitude * maxRadius;
+                    
+                    const angle = i * step;
+                    
+                    // Punto de inicio cerca del centro
+                    const startX = centerX + Math.cos(angle) * 15;
+                    const startY = centerY + Math.sin(angle) * 15;
+                    
+                    // Punto final que puede llegar hasta el borde
+                    const endX = centerX + Math.cos(angle) * (15 + barHeight);
+                    const endY = centerY + Math.sin(angle) * (15 + barHeight);
+                    
+                    // Crear un gradiente para cada barra
+                    const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+                    gradient.addColorStop(0, color); // Color base en el centro
+                    gradient.addColorStop(0.7, color); // Mantener el color
+                    gradient.addColorStop(1, '#ffffff'); // Brillo al final
+                    
+                    // Dibujar la línea principal
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(endX, endY);
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = "round";
+                    ctx.stroke();
+                    
+                    // Añadir efecto de brillo en la punta para las barras más altas
+                    if (amplitude > 0.5) {
+                        ctx.beginPath();
+                        ctx.arc(endX, endY, 3, 0, Math.PI * 2);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            // Configurar controles de audio
+            function setupAudioControls() {
+                // Botón de reproducir/pausar
+                playBtn.onclick = togglePlayPause;
+                
+                // Actualizar barra de progreso
+                audioElement.addEventListener('timeupdate', updateProgress);
+                
+                // Permitir clic en la barra de progreso
+                progressContainer.addEventListener('click', setProgress);
+                
+                // Control de volumen
+                volumeSlider.addEventListener('input', () => {
+                    audioElement.volume = volumeSlider.value;
+                });
+                
+                // Pantalla completa
+                fullscreenBtn.addEventListener('click', toggleFullscreen);
+                
+                // Actualizar estado al finalizar
+                audioElement.addEventListener('ended', () => {
                     isPlaying = false;
                     updatePlayPauseButton();
                 });
-                
-                // Activar randomización si está habilitada
-                if (randomizeToggle.checked) {
-                    isRandomizing = true;
-                    collectRandomColors();
-                    startColorRandomization();
-                }
-                
-                drawVisualization();
-                
-                // Configurar botón de descarga siempre como MP4
-                downloadBtn.onclick = () => {
-                    const file = fileInput.files[0];
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(file);
-                    
-                    // Asegurar que la extensión sea .mp4
-                    let fileName = file.name;
-                    if (!fileName.toLowerCase().endsWith('.mp4')) {
-                        // Si no es .mp4, cambiar la extensión
-                        fileName = fileName.split('.').slice(0, -1).join('.') + '.mp4';
-                    }
-                    
-                    a.download = fileName;
-                    a.click();
-                    
-                    // Mostrar mensaje informativo
-                    showStatus('Video descargado en formato MP4', 'success');
-                };
-                
-                // Desplazarse al contenedor de resultado
-                resultContainer.scrollIntoView({ behavior: 'smooth' });
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showStatus(`Error: ${error.message}`, 'error');
-            }
-        }
-        
-        // Dibujar visualización según el tipo seleccionado
-        function drawVisualization() {
-            // Limpiar el canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = bgColor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Obtener datos de audio
-            analyser.getByteTimeDomainData(dataArray);
-            
-            // Usar el color actual (puede ser el randomizado o el fijo)
-            const currentVisColor = isRandomizing ? visColor : visColorPicker.value;
-            
-            // Dibujar según el tipo de visualización
-            switch (currentVisType) {
-                case 'waves':
-                    drawWaveform(currentVisColor);
-                    break;
-                case 'bars':
-                    drawBars(currentVisColor);
-                    break;
-                case 'circle':
-                    drawCircle(currentVisColor);
-                    break;
             }
             
-            // Continuar la animación
-            animationId = requestAnimationFrame(drawVisualization);
-        }
-        
-        // Dibujar forma de onda (ondas horizontales)
-        function drawWaveform(color) {
-            analyser.getByteTimeDomainData(dataArray);
-            
-            // Ajustar para que llegue a los bordes completos
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
-            
-            // Crear efecto de reflejo
-            const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-            gradient.addColorStop(0.4, 'rgba(0,0,0,0)');
-            gradient.addColorStop(0.5, color);
-            gradient.addColorStop(0.6, 'rgba(0,0,0,0)');
-            
-            // Línea principal gruesa
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = color;
-            ctx.beginPath();
-            
-            const sliceWidth = canvasWidth / bufferLength;
-            let x = 0;
-            
-            for (let i = 0; i < bufferLength; i++) {
-                const v = dataArray[i] / 128.0;
-                const y = v * canvasHeight / 2;
-                
-                if (i === 0) {
-                    ctx.moveTo(x, y);
+            // Alternar reproducción/pausa
+            function togglePlayPause() {
+                if (isPlaying) {
+                    audioElement.pause();
                 } else {
-                    ctx.lineTo(x, y);
+                    audioElement.play().catch(e => console.warn('Error al reproducir:', e));
                 }
                 
-                x += sliceWidth;
+                isPlaying = !isPlaying;
+                updatePlayPauseButton();
             }
             
-            ctx.stroke();
-            
-            // Línea brillante superpuesta
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#ffffff';
-            ctx.globalAlpha = 0.2;
-            ctx.beginPath();
-            
-            x = 0;
-            for (let i = 0; i < bufferLength; i++) {
-                const v = dataArray[i] / 128.0;
-                const y = v * canvasHeight / 2;
-                
-                if (i === 0) {
-                    ctx.moveTo(x, y);
+            // Actualizar botón de reproducir/pausar
+            function updatePlayPauseButton() {
+                if (isPlaying) {
+                    playIcon.style.display = 'none';
+                    pauseIcon.style.display = 'block';
                 } else {
-                    ctx.lineTo(x, y);
-                }
-                
-                x += sliceWidth;
-            }
-            
-            ctx.stroke();
-            ctx.globalAlpha = 1.0;
-            
-            // Agregar puntos de destaque en picos
-            x = 0;
-            for (let i = 0; i < bufferLength; i += 16) {
-                const v = dataArray[i] / 128.0;
-                const y = v * canvasHeight / 2;
-                
-                // Detectar picos
-                if (Math.abs(v - 1) > 0.3) {
-                    ctx.beginPath();
-                    ctx.arc(x, y, 2, 0, Math.PI * 2);
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fill();
-                }
-                
-                x += sliceWidth * 16;
-            }
-            
-            // Línea de área bajo la onda
-            ctx.beginPath();
-            ctx.moveTo(0, canvasHeight/2);
-            
-            x = 0;
-            for (let i = 0; i < bufferLength; i++) {
-                const v = dataArray[i] / 128.0;
-                const y = v * canvasHeight / 2;
-                ctx.lineTo(x, y);
-                x += sliceWidth;
-            }
-            
-            ctx.lineTo(canvasWidth, canvasHeight/2);
-            ctx.closePath();
-            ctx.fillStyle = color + '15'; // Muy transparente
-            ctx.fill();
-        }
-        
-        // Dibujar barras verticales
-        function drawBars(color) {
-            analyser.getByteFrequencyData(dataArray);
-            
-            // Usamos menos barras para un mejor efecto visual
-            const totalBars = 96;
-            const barSpacing = 2;
-            const barWidth = (canvas.width / totalBars) - barSpacing;
-            const step = Math.floor(bufferLength / totalBars);
-            
-            // Para efecto de espejo
-            const mirrorEffect = true;
-            
-            for (let i = 0; i < totalBars; i++) {
-                // Tomar un promedio de varios valores para suavizar
-                let sum = 0;
-                for (let j = 0; j < step; j++) {
-                    sum += dataArray[i * step + j];
-                }
-                const value = sum / step;
-                
-                // Altura de la barra - que llegue completamente al borde
-                const barHeight = Math.max(4, (value / 255) * canvas.height);
-                
-                // Posición horizontal
-                const x = i * (barWidth + barSpacing);
-                
-                // Crear un gradiente más atractivo
-                const gradient = ctx.createLinearGradient(x, canvas.height - barHeight, x, canvas.height);
-                gradient.addColorStop(0, '#ffffff');  // Brillo en la parte superior
-                gradient.addColorStop(0.1, color);    // Color principal
-                gradient.addColorStop(1, color + '10'); // Transparente hacia abajo
-                
-                // Dibujar barra principal con esquinas redondeadas
-                ctx.beginPath();
-                // Borde superior redondeado
-                ctx.moveTo(x, canvas.height - barHeight + barWidth/2);
-                ctx.arc(x + barWidth/2, canvas.height - barHeight + barWidth/2, barWidth/2, Math.PI, 0, true);
-                ctx.lineTo(x + barWidth, canvas.height);
-                ctx.lineTo(x, canvas.height);
-                ctx.closePath();
-                
-                ctx.fillStyle = gradient;
-                ctx.fill();
-                
-                // Efecto de brillo en la parte superior
-                ctx.beginPath();
-                ctx.arc(x + barWidth/2, canvas.height - barHeight + barWidth/2, barWidth/2, 0, Math.PI * 2);
-                ctx.fillStyle = '#ffffff';
-                ctx.globalAlpha = 0.3 * (value / 255);
-                ctx.fill();
-                ctx.globalAlpha = 1.0;
-                
-                // Añadir espejo si está activado
-                if (mirrorEffect) {
-                    // Espejo con menos opacidad
-                    const mirrorGradient = ctx.createLinearGradient(x, 0, x, barHeight);
-                    mirrorGradient.addColorStop(0, color + '05');  // Casi transparente
-                    mirrorGradient.addColorStop(0.9, color + '20'); // Algo más visible
-                    mirrorGradient.addColorStop(1, color + '40');  // Más visible en la unión
-                    
-                    ctx.fillStyle = mirrorGradient;
-                    
-                    // Dibujar el reflejo
-                    ctx.beginPath();
-                    ctx.moveTo(x, 0);
-                    ctx.lineTo(x + barWidth, 0);
-                    ctx.lineTo(x + barWidth, barHeight * 0.5);
-                    ctx.arc(x + barWidth/2, barHeight * 0.5, barWidth/2, 0, Math.PI, false);
-                    ctx.closePath();
-                    ctx.fill();
+                    playIcon.style.display = 'block';
+                    pauseIcon.style.display = 'none';
                 }
             }
-        }
-        
-        // Dibujar visualización circular
-        function drawCircle(color) {
-            analyser.getByteFrequencyData(dataArray);
-            
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            
-            // Calcular el radio para que llegue hasta los bordes
-            // Usamos el menor entre width y height para mantener un círculo dentro del canvas
-            const maxRadius = Math.min(centerX, centerY);
-            
-            // Dibujar círculo central con brillo
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
-            ctx.fillStyle = color;
-            ctx.fill();
-            
-            // Añadir halo alrededor del círculo central
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 12, 0, 2 * Math.PI);
-            ctx.strokeStyle = color + '80';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Dibujar anillo exterior pulsante
-            const avgFrequency = Array.from(dataArray).reduce((sum, value) => sum + value, 0) / dataArray.length;
-            const pulseRadius = maxRadius * (0.8 + (avgFrequency / 255) * 0.2);
-            
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, pulseRadius, 0, 2 * Math.PI);
-            ctx.strokeStyle = color + '60';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Dibujar barras alrededor del círculo
-            const barCount = 120; // Reducido para mejor rendimiento
-            const step = Math.PI * 2 / barCount;
-            
-            for (let i = 0; i < barCount; i++) {
-                const freqIndex = Math.floor(i * bufferLength / barCount);
-                const amplitude = dataArray[freqIndex] / 255;
-                
-                // Las barras ahora llegarán hasta el borde máximo del canvas
-                const barHeight = amplitude * maxRadius;
-                
-                const angle = i * step;
-                
-                // Punto de inicio cerca del centro
-                const startX = centerX + Math.cos(angle) * 15;
-                const startY = centerY + Math.sin(angle) * 15;
-                
-                // Punto final que puede llegar hasta el borde
-                const endX = centerX + Math.cos(angle) * (15 + barHeight);
-                const endY = centerY + Math.sin(angle) * (15 + barHeight);
-                
-                // Crear un gradiente para cada barra
-                const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
-                gradient.addColorStop(0, color); // Color base en el centro
-                gradient.addColorStop(0.7, color); // Mantener el color
-                gradient.addColorStop(1, '#ffffff'); // Brillo al final
-                
-                // Dibujar la línea principal
-                ctx.beginPath();
-                ctx.moveTo(startX, startY);
-                ctx.lineTo(endX, endY);
-                ctx.strokeStyle = gradient;
-                ctx.lineWidth = 3;
-                ctx.lineCap = "round";
-                ctx.stroke();
-                
-                // Añadir efecto de brillo en la punta para las barras más altas
-                if (amplitude > 0.5) {
-                    ctx.beginPath();
-                    ctx.arc(endX, endY, 3, 0, Math.PI * 2);
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fill();
-                }
-            }
-        }
-        
-        // Configurar controles de audio
-        function setupAudioControls() {
-            // Botón de reproducir/pausar
-            playBtn.onclick = togglePlayPause;
             
             // Actualizar barra de progreso
-            audioElement.addEventListener('timeupdate', updateProgress);
-            
-            // Permitir clic en la barra de progreso
-            progressContainer.addEventListener('click', setProgress);
-            
-            // Control de volumen
-            volumeSlider.addEventListener('input', () => {
-                audioElement.volume = volumeSlider.value;
-            });
-            
-            // Pantalla completa
-            fullscreenBtn.addEventListener('click', toggleFullscreen);
-            
-            // Actualizar estado al finalizar
-            audioElement.addEventListener('ended', () => {
-                isPlaying = false;
-                updatePlayPauseButton();
-            });
-        }
-        
-        // Alternar reproducción/pausa
-        function togglePlayPause() {
-            if (isPlaying) {
-                audioElement.pause();
-            } else {
-                audioElement.play().catch(e => console.warn('Error al reproducir:', e));
+            function updateProgress() {
+                const duration = audioElement.duration || 1;
+                const currentTime = audioElement.currentTime || 0;
+                
+                const progressPercent = (currentTime / duration) * 100;
+                progressBar.style.width = `${progressPercent}%`;
+                
+                // Actualizar tiempo
+                timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
             }
             
-            isPlaying = !isPlaying;
-            updatePlayPauseButton();
-        }
-        
-        // Actualizar botón de reproducir/pausar
-        function updatePlayPauseButton() {
-            if (isPlaying) {
-                playIcon.style.display = 'none';
-                pauseIcon.style.display = 'block';
-            } else {
-                playIcon.style.display = 'block';
-                pauseIcon.style.display = 'none';
+            // Formatear tiempo en minutos:segundos
+            function formatTime(seconds) {
+                seconds = Math.floor(seconds);
+                const minutes = Math.floor(seconds / 60);
+                seconds = seconds % 60;
+                
+                return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
             }
-        }
-        
-        // Actualizar barra de progreso
-        function updateProgress() {
-            const duration = audioElement.duration || 1;
-            const currentTime = audioElement.currentTime || 0;
             
-            const progressPercent = (currentTime / duration) * 100;
-            progressBar.style.width = `${progressPercent}%`;
+            // Establecer progreso al hacer clic
+            function setProgress(e) {
+                const width = this.clientWidth;
+                const clickX = e.offsetX;
+                const duration = audioElement.duration;
+                
+                audioElement.currentTime = (clickX / width) * duration;
+            }
             
-            // Actualizar tiempo
-            timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
-        }
-        
-        // Formatear tiempo en minutos:segundos
-        function formatTime(seconds) {
-            seconds = Math.floor(seconds);
-            const minutes = Math.floor(seconds / 60);
-            seconds = seconds % 60;
-            
-            return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-        }
-        
-        // Establecer progreso al hacer clic
-        function setProgress(e) {
-            const width = this.clientWidth;
-            const clickX = e.offsetX;
-            const duration = audioElement.duration;
-            
-            audioElement.currentTime = (clickX / width) * duration;
-        }
-        
-        // Alternar pantalla completa
-        function toggleFullscreen() {
-            const container = document.querySelector('.visualizer-wrapper');
-            
-            if (!document.fullscreenElement) {
-                if (container.requestFullscreen) {
-                    container.requestFullscreen();
-                } else if (container.mozRequestFullScreen) {
-                    container.mozRequestFullScreen();
-                } else if (container.webkitRequestFullscreen) {
-                    container.webkitRequestFullscreen();
-                } else if (container.msRequestFullscreen) {
-                    container.msRequestFullscreen();
-                }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
+            // Alternar pantalla completa
+            function toggleFullscreen() {
+                const container = document.querySelector('.visualizer-wrapper');
+                
+                if (!document.fullscreenElement) {
+                    if (container.requestFullscreen) {
+                        container.requestFullscreen();
+                    } else if (container.mozRequestFullScreen) {
+                        container.mozRequestFullScreen();
+                    } else if (container.webkitRequestFullscreen) {
+                        container.webkitRequestFullscreen();
+                    } else if (container.msRequestFullscreen) {
+                        container.msRequestFullscreen();
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
                 }
             }
-        }
+        });
     </script>
 </body>
 </html>
