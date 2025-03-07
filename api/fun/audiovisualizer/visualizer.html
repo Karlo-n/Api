@@ -8,6 +8,7 @@
     <style>
         :root {
             --primary: #5e72e4;
+            --primary-gradient: linear-gradient(90deg, #5e72e4 0%, #825ee4 100%);
             --secondary: #f7fafc;
             --success: #2dce89;
             --info: #11cdef;
@@ -15,8 +16,10 @@
             --danger: #f5365c;
             --light: #f8f9fe;
             --dark: #172b4d;
-            --border-radius: 12px;
+            --border-radius: 16px;
             --shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.07);
+            --shadow-lg: 0 10px 30px 0 rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
         }
         
         * {
@@ -36,87 +39,152 @@
         }
         
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
         
         .header {
-            background: linear-gradient(90deg, var(--primary) 0%, #825ee4 100%);
+            background: var(--primary-gradient);
             color: white;
-            padding: 30px 0;
+            padding: 40px 0;
             text-align: center;
             margin-bottom: 40px;
             border-radius: 0 0 30px 30px;
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -10%;
+            left: -10%;
+            width: 120%;
+            height: 120%;
+            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTExIDExaDE5djE5SDExem0zMCAwaDI2djI2SDQxem0zNyAwaDExdjExSDc4ek0xMSA0MWgxMXYxMUgxMXptMTkgMGgxMXYxMUgzMHptMTkgMGgxOXYxOUg0OXptMzAgMGgxMXYxMUg3OHptLTY3IDE5aDE5djE5SDExem0zMCAwaDExdjExSDQxem0xOSAwaDExdjExSDYwem0xOSAwaDExdjExSDc5eiIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIuMSIgZmlsbC1ydWxlPSJldmVub2RkIi8+PC9zdmc+') repeat;
+            opacity: 0.1;
+            z-index: 0;
         }
         
         .header h1 {
-            font-size: 36px;
+            font-size: 42px;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         
         .header p {
-            font-size: 16px;
-            opacity: 0.9;
-            max-width: 600px;
+            font-size: 18px;
+            opacity: 0.95;
+            max-width: 700px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
         
         .card {
             background-color: white;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
-            padding: 30px;
-            margin-bottom: 30px;
-            transition: transform 0.3s, box-shadow 0.3s;
+            padding: 35px;
+            margin-bottom: 40px;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.025);
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
         }
         
         .card-title {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             color: var(--primary);
             display: flex;
             align-items: center;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .card-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--primary-gradient);
+            border-radius: 10px;
         }
         
         .card-title svg {
-            margin-right: 10px;
+            margin-right: 15px;
         }
         
         .upload-area {
             border: 2px dashed #e2e8f0;
             border-radius: var(--border-radius);
-            padding: 40px 20px;
+            padding: 50px 25px;
             text-align: center;
             cursor: pointer;
-            margin-bottom: 25px;
-            transition: all 0.3s;
+            margin-bottom: 30px;
+            transition: var(--transition);
             background-color: #f8fafc;
+            position: relative;
+            overflow: hidden;
         }
         
         .upload-area:hover, .upload-area.dragover {
             border-color: var(--primary);
             background-color: rgba(94, 114, 228, 0.05);
+            transform: scale(1.01);
+        }
+        
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(-45deg, rgba(94, 114, 228, 0.05) 25%, transparent 25%, transparent 50%, rgba(94, 114, 228, 0.05) 50%, rgba(94, 114, 228, 0.05) 75%, transparent 75%, transparent);
+            background-size: 20px 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .upload-area:hover::before {
+            opacity: 1;
         }
         
         .upload-area svg {
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             color: var(--primary);
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+        
+        .upload-area:hover svg {
+            transform: translateY(-5px);
         }
         
         .upload-area h3 {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 600;
             margin-bottom: 10px;
+            color: var(--dark);
         }
         
         .upload-area p {
-            font-size: 14px;
+            font-size: 15px;
             color: #8392ab;
         }
         
@@ -128,49 +196,56 @@
         }
         
         .file-info {
-            padding: 10px 15px;
+            padding: 15px 20px;
             background-color: #f8fafc;
             border-radius: var(--border-radius);
-            font-size: 14px;
-            margin-bottom: 25px;
+            font-size: 15px;
+            margin-bottom: 30px;
             display: none;
+            border-left: 4px solid var(--primary);
+            font-weight: 500;
         }
         
         .file-info.active {
             display: block;
+            animation: fadeIn 0.5s;
         }
         
-        .form-group {
-            margin-bottom: 20px;
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
         }
         
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            font-size: 14px;
+        .section-title svg {
+            margin-right: 10px;
         }
         
         .vis-options {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 20px;
+            margin-bottom: 30px;
         }
         
         .vis-option {
             border: 2px solid #e2e8f0;
             border-radius: var(--border-radius);
-            padding: 15px;
+            padding: 20px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
             position: relative;
             overflow: hidden;
         }
         
         .vis-option:hover {
             border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1);
         }
         
         .vis-option.selected {
@@ -178,16 +253,32 @@
             background-color: rgba(94, 114, 228, 0.05);
         }
         
+        .vis-option::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: var(--primary-gradient);
+            transition: var(--transition);
+        }
+        
+        .vis-option:hover::after,
+        .vis-option.selected::after {
+            width: 100%;
+        }
+        
         .vis-option h4 {
-            font-size: 14px;
-            margin: 0;
+            font-size: 16px;
+            margin: 10px 0 0;
         }
         
         .color-pickers {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-bottom: 25px;
+            gap: 25px;
+            margin-bottom: 30px;
         }
         
         .color-picker {
@@ -196,100 +287,292 @@
         
         .color-picker label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-weight: 500;
-            font-size: 14px;
+            font-size: 15px;
+            color: var(--dark);
         }
         
         .color-picker input[type="color"] {
             width: 100%;
-            height: 50px;
+            height: 60px;
             border: 2px solid #e2e8f0;
             border-radius: var(--border-radius);
             background-color: transparent;
             cursor: pointer;
             padding: 5px;
-            transition: border-color 0.3s;
+            transition: var(--transition);
         }
         
         .color-picker input[type="color"]:hover {
             border-color: var(--primary);
         }
         
+        /* Estilos para el randomizador de colores */
+        .randomizer-container {
+            margin-bottom: 30px;
+            padding: 25px;
+            background-color: #f8fafc;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            transition: var(--transition);
+        }
+        
+        .randomizer-container:hover {
+            box-shadow: 0 5px 15px rgba(50, 50, 93, 0.1);
+        }
+        
+        .randomizer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .randomizer-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+        }
+        
+        .randomizer-title svg {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+        
+        .color-randomizer-toggle {
+            display: flex;
+            align-items: center;
+        }
+        
+        .color-randomizer-toggle label {
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+            transition: var(--transition);
+            height: 0;
+            overflow: hidden;
+            opacity: 0;
+        }
+        
+        .color-palette.active {
+            height: auto;
+            opacity: 1;
+            margin-top: 20px;
+        }
+        
+        .color-item {
+            position: relative;
+        }
+        
+        .color-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .color-item input[type="color"] {
+            width: 100%;
+            height: 45px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            background-color: transparent;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .color-item input[type="color"]:hover {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+        
+        .randomize-speed {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            height: 0;
+            overflow: hidden;
+            opacity: 0;
+        }
+        
+        .randomize-speed.active {
+            height: auto;
+            opacity: 1;
+        }
+        
+        .randomize-speed label {
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .randomize-speed input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 10px;
+            outline: none;
+            opacity: 0.7;
+            transition: var(--transition);
+        }
+        
+        .randomize-speed input[type="range"]:hover {
+            opacity: 1;
+        }
+        
         .btn {
             display: inline-block;
             font-weight: 600;
             text-align: center;
-            padding: 12px 24px;
+            padding: 14px 28px;
             border-radius: var(--border-radius);
             border: none;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
             font-size: 16px;
             width: 100%;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+            z-index: -1;
+        }
+        
+        .btn:hover::before {
+            left: 0;
         }
         
         .btn-primary {
-            background-color: var(--primary);
+            background: var(--primary-gradient);
             color: white;
+            box-shadow: 0 4px 12px rgba(94, 114, 228, 0.3);
         }
         
         .btn-primary:hover {
-            background-color: #4c5ed3;
-            box-shadow: 0 5px 15px rgba(94, 114, 228, 0.4);
+            box-shadow: 0 7px 14px rgba(94, 114, 228, 0.4);
+            transform: translateY(-2px);
         }
         
         .btn-primary:disabled {
-            background-color: #a3acdf;
+            background: linear-gradient(90deg, #a3acdf 0%, #b5a6df 100%);
             cursor: not-allowed;
             box-shadow: none;
+            transform: none;
         }
         
         .btn-success {
-            background-color: var(--success);
+            background: linear-gradient(90deg, #2dce89 0%, #2dceb3 100%);
             color: white;
+            box-shadow: 0 4px 12px rgba(45, 206, 137, 0.3);
         }
         
         .btn-success:hover {
-            background-color: #26af74;
-            box-shadow: 0 5px 15px rgba(45, 206, 137, 0.4);
+            box-shadow: 0 7px 14px rgba(45, 206, 137, 0.4);
+            transform: translateY(-2px);
         }
         
         .status {
-            padding: 15px;
+            padding: 18px;
             border-radius: var(--border-radius);
-            margin-top: 20px;
+            margin-top: 25px;
             display: none;
-            font-size: 14px;
+            font-size: 15px;
             align-items: center;
+            font-weight: 500;
         }
         
         .status.success {
             background-color: rgba(45, 206, 137, 0.1);
             color: var(--success);
             display: flex;
+            animation: fadeIn 0.5s;
         }
         
         .status.error {
             background-color: rgba(245, 54, 92, 0.1);
             color: var(--danger);
             display: flex;
+            animation: fadeIn 0.5s;
         }
         
         .status.info {
             background-color: rgba(17, 205, 239, 0.1);
             color: var(--info);
             display: flex;
+            animation: fadeIn 0.5s;
         }
         
         .spinner {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border: 3px solid rgba(94, 114, 228, 0.3);
             border-top: 3px solid var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-right: 10px;
+            margin-right: 12px;
         }
         
         .result-container {
@@ -297,18 +580,21 @@
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             overflow: hidden;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             display: none;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.025);
         }
         
         .result-container.active {
             display: block;
+            animation: fadeIn 0.7s;
         }
         
         .result-header {
-            background-color: var(--primary);
+            background: var(--primary-gradient);
             color: white;
-            padding: 20px;
+            padding: 22px;
             font-weight: 600;
             font-size: 18px;
             display: flex;
@@ -318,25 +604,26 @@
         
         .result-header .controls {
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
         
         .control-btn {
             background: rgba(255, 255, 255, 0.2);
             border: none;
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             color: white;
-            transition: background 0.3s;
+            transition: var(--transition);
         }
         
         .control-btn:hover {
             background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
         }
         
         .visualizer-wrapper {
@@ -345,6 +632,7 @@
             position: relative;
             height: 0;
             padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            overflow: hidden;
         }
         
         canvas {
@@ -357,72 +645,133 @@
         
         .audio-controls {
             display: flex;
-            padding: 15px;
+            padding: 18px 22px;
             align-items: center;
             border-top: 1px solid #eee;
+            background-color: #fafafa;
         }
         
         .play-btn {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            background-color: var(--primary);
+            background: var(--primary-gradient);
             color: white;
             border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            margin-right: 15px;
-            transition: all 0.3s;
+            margin-right: 18px;
+            transition: var(--transition);
+            box-shadow: 0 4px 8px rgba(94, 114, 228, 0.2);
         }
         
         .play-btn:hover {
-            background-color: #4c5ed3;
+            box-shadow: 0 7px 14px rgba(94, 114, 228, 0.3);
+            transform: scale(1.05);
         }
         
         .time-display {
-            font-size: 14px;
-            color: #666;
-            margin-right: 15px;
-            min-width: 80px;
+            font-size: 15px;
+            color: #555;
+            margin-right: 18px;
+            min-width: 85px;
+            font-weight: 500;
         }
         
         .progress-container {
             flex: 1;
             height: 8px;
             background-color: #eee;
-            border-radius: 4px;
+            border-radius: 10px;
             overflow: hidden;
             cursor: pointer;
+            position: relative;
+        }
+        
+        .progress-container:hover .progress-bar {
+            height: 10px;
+            margin-top: -1px;
+            box-shadow: 0 1px 5px rgba(94, 114, 228, 0.3);
         }
         
         .progress-bar {
             height: 100%;
-            background-color: var(--primary);
+            background: var(--primary-gradient);
             width: 0%;
-            transition: width 0.1s;
+            transition: all 0.2s;
         }
         
         .volume-container {
             display: flex;
             align-items: center;
-            margin-left: 15px;
+            margin-left: 18px;
+            background-color: #f2f2f2;
+            padding: 7px 12px;
+            border-radius: 20px;
+            transition: var(--transition);
+        }
+        
+        .volume-container:hover {
+            background-color: #ebebeb;
         }
         
         .volume-icon {
-            margin-right: 8px;
+            margin-right: 10px;
+            color: #555;
         }
         
         .volume-slider {
-            width: 80px;
+            width: 85px;
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+            transition: var(--transition);
+        }
+        
+        .volume-slider:hover {
+            opacity: 0.9;
         }
         
         .result-actions {
-            padding: 20px;
+            padding: 22px;
             display: flex;
             gap: 15px;
             justify-content: flex-end;
+            background-color: #fafafa;
+            border-top: 1px solid #eee;
+        }
+        
+        .result-actions .btn {
+            width: auto;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 70px;
+            padding: 25px;
+            color: #7d8fb3;
+            font-size: 15px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            background-color: #fafafa;
+        }
+        
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         @keyframes spin {
@@ -430,17 +779,32 @@
             100% { transform: rotate(360deg); }
         }
         
-        .footer {
-            text-align: center;
-            margin-top: 60px;
-            padding: 20px;
-            color: #8392ab;
-            font-size: 14px;
+        /* Estilos responsive */
+        @media screen and (max-width: 992px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .card {
+                padding: 25px;
+            }
+            
+            .vis-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
         
         @media screen and (max-width: 768px) {
             .header h1 {
-                font-size: 28px;
+                font-size: 32px;
+            }
+            
+            .header p {
+                font-size: 16px;
+            }
+            
+            .card-title {
+                font-size: 20px;
             }
             
             .vis-options {
@@ -452,18 +816,20 @@
                 gap: 15px;
             }
             
-            .card {
-                padding: 20px;
+            .color-palette {
+                grid-template-columns: repeat(3, 1fr);
             }
             
             .audio-controls {
                 flex-wrap: wrap;
+                gap: 15px;
             }
             
             .volume-container {
                 margin-top: 10px;
                 margin-left: 0;
                 width: 100%;
+                justify-content: center;
             }
             
             .volume-slider {
@@ -471,23 +837,35 @@
             }
         }
         
-        @media screen and (max-width: 480px) {
+        @media screen and (max-width: 576px) {
             .vis-options {
                 grid-template-columns: 1fr;
             }
             
+            .color-palette {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
             .upload-area {
-                padding: 20px 15px;
+                padding: 25px 15px;
             }
             
             .upload-area svg {
-                width: 40px;
-                height: 40px;
+                width: 50px;
+                height: 50px;
             }
             
             .time-display {
                 min-width: 60px;
                 font-size: 12px;
+            }
+            
+            .result-actions {
+                flex-direction: column;
+            }
+            
+            .result-actions .btn {
+                width: 100%;
             }
         }
     </style>
@@ -496,14 +874,14 @@
     <div class="header">
         <div class="container">
             <h1>Visualizador de Audio</h1>
-            <p>Visualiza tus archivos MP3 y MP4 en tiempo real</p>
+            <p>Visualiza tus archivos MP3 y MP4 en tiempo real con efectos personalizados</p>
         </div>
     </div>
     
     <div class="container">
         <div class="card">
             <h2 class="card-title">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 18V5l12-2v13"></path>
                     <circle cx="6" cy="18" r="3"></circle>
                     <circle cx="18" cy="16" r="3"></circle>
@@ -525,14 +903,21 @@
             <div class="file-info" id="file-info"></div>
             
             <div class="form-group">
-                <label>Tipo de Visualización</label>
+                <h3 class="section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                        <line x1="8" y1="2" x2="8" y2="18"></line>
+                        <line x1="16" y1="6" x2="16" y2="22"></line>
+                    </svg>
+                    Tipo de Visualización
+                </h3>
                 <div class="vis-options">
                     <!-- Para las Ondas -->
                     <div class="vis-option selected" data-type="waves">
-                        <div style="height: 60px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border-radius: 8px; overflow: hidden;">
-                            <svg width="220" height="60" viewBox="0 0 220 60">
-                                <path d="M10,30 Q25,10 40,30 Q55,50 70,30 Q85,10 100,30 Q115,50 130,30 Q145,10 160,30 Q175,50 190,30 Q205,10 220,30" stroke="#ff0000" fill="none" stroke-width="3"/>
-                                <path d="M0,30 Q15,40 30,30 Q45,20 60,30 Q75,40 90,30 Q105,20 120,30 Q135,40 150,30 Q165,20 180,30 Q195,40 210,30" stroke="#ff0000" stroke-opacity="0.5" fill="none" stroke-width="2"/>
+                        <div style="height: 80px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            <svg width="220" height="80" viewBox="0 0 220 80">
+                                <path d="M10,40 Q25,15 40,40 Q55,65 70,40 Q85,15 100,40 Q115,65 130,40 Q145,15 160,40 Q175,65 190,40 Q205,15 220,40" stroke="#ff0000" fill="none" stroke-width="4" stroke-linecap="round"/>
+                                <path d="M0,40 Q15,55 30,40 Q45,25 60,40 Q75,55 90,40 Q105,25 120,40 Q135,55 150,40 Q165,25 180,40 Q195,55 210,40" stroke="#ff0000" stroke-opacity="0.5" fill="none" stroke-width="2.5" stroke-linecap="round"/>
                             </svg>
                         </div>
                         <h4>Ondas</h4>
@@ -540,39 +925,39 @@
 
                     <!-- Para las Barras -->
                     <div class="vis-option" data-type="bars">
-                        <div style="height: 60px; background-color: #000; display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 10px; border-radius: 8px; padding: 5px 2px;">
-                            <div style="width: 8px; height: 25px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 40px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 15px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 35px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 10px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 30px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 45px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 20px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 35px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 15px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 25px; background-color: #ff0000; margin: 0 1px;"></div>
+                        <div style="height: 80px; background-color: #000; display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 15px; border-radius: 12px; padding: 8px 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            <div style="width: 10px; height: 35px; background-color: #ff0000; margin: 0 1px; border-radius: 2px 2px 0 0;"></div>
+                            <div style="width: 10px; height: 55px; background-color: #ff0000; margin: 0 1px; border-radius: 2px 2px 0 0;"></div>
+                            <div style="width: 10px; height: 25px; background-color: #ff0000; margin: 0 1px; border-radius: 2px 2px 0 0;"></div>
+                            <div style="width: 10px; height: 45px; background-color: #ff0000; margin: 0 1px; border-radius: 2px 2px 0 0;"></div>
+                            <div style="width: 10px; height: 15px; background-color: #ff0000; margin: 0 1px; border-radius: 2px 2px 0 0;"></div>
+                            <div style="width: 10px; height: 35px; background-color: #ff0000; margin: 0 1px; border-radius: 2px 2px 0 0;"></div>
+                            <div style="width: 10px; height: 65px; background-color: #ff0000; margin: 0 1px; border-radius: 2px 2px 0 0;"></div>
+                            <div style="width: 10px; height: 30px; background-color: #ff0000; margin: 0 1px; border-radius: 2px 2px 0 0;"></div>
+                            <div style="width: 10px; height: 45px; background-color: #ff0000; margin: 0 1px; border-radius: 2px 2px 0 0;"></div>
+                            <div style="width: 10px; height: 20px; background-color: #ff0000; margin: 0 1px; border-radius: 2px 2px 0 0;"></div>
+                            <div style="width: 10px; height: 35px; background-color: #ff0000; margin: 0 1px; border-radius: 2px 2px 0 0;"></div>
                         </div>
                         <h4>Barras</h4>
                     </div>
 
                     <!-- Para el Círculo con Barras -->
                     <div class="vis-option" data-type="circle">
-                        <div style="height: 60px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border-radius: 8px; overflow: hidden;">
-                            <div style="position: relative; width: 54px; height: 54px;">
+                        <div style="height: 80px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            <div style="position: relative; width: 70px; height: 70px;">
                                 <!-- Círculo central -->
-                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; background-color: #ff0000; border-radius: 50%;"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; background-color: #ff0000; border-radius: 50%; box-shadow: 0 0 10px #ff0000;"></div>
                                 
                                 <!-- Rayos -->
-                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(0deg);"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(30deg);"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(60deg);"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(90deg);"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(120deg);"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(150deg);"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 70px; height: 3px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(0deg); border-radius: 3px;"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 60px; height: 3px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(30deg); border-radius: 3px;"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 50px; height: 3px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(60deg); border-radius: 3px;"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 65px; height: 3px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(90deg); border-radius: 3px;"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 45px; height: 3px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(120deg); border-radius: 3px;"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 55px; height: 3px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(150deg); border-radius: 3px;"></div>
                                 
                                 <!-- Anillo exterior -->
-                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px solid #ff0000; border-radius: 50%; opacity: 0.7;"></div>
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 3px solid #ff0000; border-radius: 50%; opacity: 0.7; box-shadow: 0 0 15px rgba(255,0,0,0.3);"></div>
                             </div>
                         </div>
                         <h4>Círculo con Barras</h4>
@@ -588,6 +973,73 @@
                 <div class="color-picker">
                     <label>Color de Fondo</label>
                     <input type="color" id="bg-color" value="#000000">
+                </div>
+            </div>
+            
+            <!-- Randomizador de colores -->
+            <div class="randomizer-container">
+                <div class="randomizer-header">
+                    <div class="randomizer-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                        </svg>
+                        Randomizar Colores
+                    </div>
+                    <div class="color-randomizer-toggle">
+                        <label>Activar</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="randomize-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="color-palette" id="color-palette">
+                    <div class="color-item">
+                        <label>Color 1</label>
+                        <input type="color" id="random-color-1" value="#ff0000">
+                    </div>
+                    <div class="color-item">
+                        <label>Color 2</label>
+                        <input type="color" id="random-color-2" value="#ff7700">
+                    </div>
+                    <div class="color-item">
+                        <label>Color 3</label>
+                        <input type="color" id="random-color-3" value="#ffff00">
+                    </div>
+                    <div class="color-item">
+                        <label>Color 4</label>
+                        <input type="color" id="random-color-4" value="#00ff00">
+                    </div>
+                    <div class="color-item">
+                        <label>Color 5</label>
+                        <input type="color" id="random-color-5" value="#00ffff">
+                    </div>
+                    <div class="color-item">
+                        <label>Color 6</label>
+                        <input type="color" id="random-color-6" value="#0000ff">
+                    </div>
+                    <div class="color-item">
+                        <label>Color 7</label>
+                        <input type="color" id="random-color-7" value="#8a2be2">
+                    </div>
+                    <div class="color-item">
+                        <label>Color 8</label>
+                        <input type="color" id="random-color-8" value="#ff00ff">
+                    </div>
+                    <div class="color-item">
+                        <label>Color 9</label>
+                        <input type="color" id="random-color-9" value="#ff69b4">
+                    </div>
+                    <div class="color-item">
+                        <label>Color 10</label>
+                        <input type="color" id="random-color-10" value="#ffffff">
+                    </div>
+                </div>
+                
+                <div class="randomize-speed" id="randomize-speed">
+                    <label>Velocidad de cambio (ms)</label>
+                    <input type="range" id="randomize-speed-slider" min="100" max="2000" step="100" value="500">
                 </div>
             </div>
             
@@ -638,7 +1090,7 @@
                 </div>
             </div>
             <div class="result-actions">
-                <button id="download-btn" class="btn btn-success">Descargar Audio</button>
+                <button id="download-btn" class="btn btn-success">Descargar VIDEO</button>
             </div>
         </div>
         
@@ -661,6 +1113,13 @@
         let bgColor = '#000000';
         let dataArray;
         let bufferLength;
+        
+        // Variables para randomización de colores
+        let isRandomizing = false;
+        let randomColors = [];
+        let currentColorIndex = 0;
+        let colorInterval;
+        let randomizeSpeed = 500; // ms
         
         // Elementos del DOM
         const uploadArea = document.getElementById('upload-area');
@@ -685,6 +1144,91 @@
         const volumeSlider = document.getElementById('volume-slider');
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         const downloadBtn = document.getElementById('download-btn');
+        
+        // Elementos de randomización
+        const randomizeToggle = document.getElementById('randomize-toggle');
+        const colorPalette = document.getElementById('color-palette');
+        const randomizeSpeedContainer = document.getElementById('randomize-speed');
+        const randomizeSpeedSlider = document.getElementById('randomize-speed-slider');
+        
+        // Funciones para randomización de colores
+        randomizeToggle.addEventListener('change', function() {
+            if (this.checked) {
+                colorPalette.classList.add('active');
+                randomizeSpeedContainer.classList.add('active');
+                
+                // Recoger los colores de los inputs
+                collectRandomColors();
+                
+                // Activar randomización si hay visualización
+                if (analyser) {
+                    isRandomizing = true;
+                    startColorRandomization();
+                }
+            } else {
+                colorPalette.classList.remove('active');
+                randomizeSpeedContainer.classList.remove('active');
+                
+                // Desactivar randomización
+                isRandomizing = false;
+                if (colorInterval) {
+                    clearInterval(colorInterval);
+                }
+                
+                // Restaurar el color original
+                visColor = visColorPicker.value;
+                if (analyser) {
+                    drawVisualization();
+                }
+            }
+        });
+        
+        // Recoger los colores de randomización
+        function collectRandomColors() {
+            randomColors = [];
+            for (let i = 1; i <= 10; i++) {
+                const colorInput = document.getElementById(`random-color-${i}`);
+                if (colorInput) {
+                    randomColors.push(colorInput.value);
+                }
+            }
+        }
+        
+        // Escuchar cambios en los selectores de color random
+        for (let i = 1; i <= 10; i++) {
+            const colorInput = document.getElementById(`random-color-${i}`);
+            if (colorInput) {
+                colorInput.addEventListener('change', collectRandomColors);
+            }
+        }
+        
+        // Actualizar velocidad de randomización
+        randomizeSpeedSlider.addEventListener('input', function() {
+            randomizeSpeed = parseInt(this.value);
+            
+            // Reiniciar el intervalo si está activo
+            if (isRandomizing && colorInterval) {
+                clearInterval(colorInterval);
+                startColorRandomization();
+            }
+        });
+        
+        // Función para iniciar la randomización de colores
+        function startColorRandomization() {
+            if (colorInterval) {
+                clearInterval(colorInterval);
+            }
+            
+            colorInterval = setInterval(() => {
+                currentColorIndex = (currentColorIndex + 1) % randomColors.length;
+                visColor = randomColors[currentColorIndex];
+                
+                // No necesitamos actualizar el color picker, solo el color usado
+                if (analyser) {
+                    // No necesitamos llamar a drawVisualization() porque ya se está llamando continuamente
+                }
+            }, randomizeSpeed);
+        }
         
         // Inicializar el tamaño del canvas
         function resizeCanvas() {
@@ -848,6 +1392,13 @@
                     updatePlayPauseButton();
                 });
                 
+                // Activar randomización si está habilitada
+                if (randomizeToggle.checked) {
+                    isRandomizing = true;
+                    collectRandomColors();
+                    startColorRandomization();
+                }
+                
                 drawVisualization();
                 
                 // Configurar botón de descarga
@@ -877,16 +1428,19 @@
             // Obtener datos de audio
             analyser.getByteTimeDomainData(dataArray);
             
+            // Usar el color actual (puede ser el randomizado o el fijo)
+            const currentVisColor = isRandomizing ? visColor : visColorPicker.value;
+            
             // Dibujar según el tipo de visualización
             switch (currentVisType) {
                 case 'waves':
-                    drawWaveform();
+                    drawWaveform(currentVisColor);
                     break;
                 case 'bars':
-                    drawBars();
+                    drawBars(currentVisColor);
                     break;
                 case 'circle':
-                    drawCircle();
+                    drawCircle(currentVisColor);
                     break;
             }
             
@@ -895,11 +1449,11 @@
         }
         
         // Dibujar forma de onda (ondas horizontales)
-        function drawWaveform() {
+        function drawWaveform(color) {
             analyser.getByteTimeDomainData(dataArray);
             
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = visColor;
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = color;
             ctx.beginPath();
             
             const sliceWidth = canvas.width / bufferLength;
@@ -920,10 +1474,32 @@
             
             ctx.lineTo(canvas.width, canvas.height / 2);
             ctx.stroke();
+            
+            // Añadir efecto de sombra/brillo
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = color + '80'; // 50% de opacidad
+            ctx.beginPath();
+            
+            x = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * canvas.height / 2;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                
+                x += sliceWidth;
+            }
+            
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
         }
         
         // Dibujar barras verticales
-        function drawBars() {
+        function drawBars(color) {
             analyser.getByteFrequencyData(dataArray);
             
             const barWidth = (canvas.width / bufferLength) * 2.5;
@@ -932,8 +1508,20 @@
             for (let i = 0; i < bufferLength; i++) {
                 const barHeight = (dataArray[i] / 255) * canvas.height;
                 
-                ctx.fillStyle = visColor;
+                // Crear un gradiente para cada barra
+                const gradient = ctx.createLinearGradient(x, canvas.height - barHeight, x, canvas.height);
+                gradient.addColorStop(0, color);
+                gradient.addColorStop(1, color + '30'); // 30% de opacidad
+                
+                ctx.fillStyle = gradient;
                 ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                
+                // Añadir un borde superior redondeado con brillo
+                ctx.beginPath();
+                ctx.arc(x + barWidth / 2, canvas.height - barHeight, barWidth / 2, 0, Math.PI, true);
+                ctx.closePath();
+                ctx.fillStyle = color;
+                ctx.fill();
                 
                 x += barWidth + 1;
                 
@@ -942,18 +1530,35 @@
         }
         
         // Dibujar visualización circular
-        function drawCircle() {
+        function drawCircle(color) {
             analyser.getByteFrequencyData(dataArray);
             
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const radius = Math.min(centerX, centerY) - 20;
+            const radius = Math.min(centerX, centerY) - 30;
+            
+            // Sombra para efecto de brillo
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = color;
             
             // Dibujar círculo central
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI);
-            ctx.fillStyle = visColor;
+            ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
             ctx.fill();
+            
+            // Quitar sombra para el resto
+            ctx.shadowBlur = 0;
+            
+            // Dibujar anillo exterior pulsante
+            const intensity = analyser.getByteFrequencyData(new Uint8Array(1))[0] / 255;
+            const pulseRadius = radius * (0.9 + intensity * 0.2);
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, pulseRadius, 0, 2 * Math.PI);
+            ctx.strokeStyle = color + '40'; // 40% opacidad
+            ctx.lineWidth = 2;
+            ctx.stroke();
             
             // Dibujar barras alrededor del círculo
             const barCount = 180;
@@ -966,17 +1571,23 @@
                 
                 const angle = i * step;
                 
-                const startX = centerX + Math.cos(angle) * 10;
-                const startY = centerY + Math.sin(angle) * 10;
+                const startX = centerX + Math.cos(angle) * 15;
+                const startY = centerY + Math.sin(angle) * 15;
                 
-                const endX = centerX + Math.cos(angle) * (10 + barHeight);
-                const endY = centerY + Math.sin(angle) * (10 + barHeight);
+                const endX = centerX + Math.cos(angle) * (15 + barHeight);
+                const endY = centerY + Math.sin(angle) * (15 + barHeight);
+                
+                // Crear gradiente para las barras
+                const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+                gradient.addColorStop(0, color);
+                gradient.addColorStop(1, color + '20'); // 20% opacidad
                 
                 ctx.beginPath();
                 ctx.moveTo(startX, startY);
                 ctx.lineTo(endX, endY);
-                ctx.strokeStyle = visColor;
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 3;
+                ctx.lineCap = "round";
                 ctx.stroke();
             }
         }
