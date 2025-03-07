@@ -372,247 +372,325 @@
     </div>
 
     <script>
-        // Elementos del DOM
-        const fileInput = document.getElementById('file-input');
-        const fileInfo = document.getElementById('file-info');
-        const generateBtn = document.getElementById('generate-btn');
-        const uploadArea = document.getElementById('upload-area');
-        const statusEl = document.getElementById('status');
-        const loaderEl = document.getElementById('loader');
-        const visualizerContainer = document.getElementById('visualizer-container');
-        const videoPlayer = document.getElementById('video-player');
-        const downloadBtn = document.getElementById('download-btn');
-        const shareBtn = document.getElementById('share-btn');
-        const visualizerType = document.getElementById('visualizer-type');
-        const visualizerColor = document.getElementById('visualizer-color');
-        const backgroundColor = document.getElementById('background-color');
-        
         // Variables globales
-        let currentFile = null;
-        let currentJobId = null;
-        let statusCheckInterval = null;
+let currentFile = null;
+let currentJobId = null;
+let statusCheckInterval = null;
+let processingTimeout = null;
+let retryCount = 0;
+const MAX_RETRIES = 3;
+const MAX_PROCESSING_TIME = 60000; // 60 segundos máximo de espera
+
+// Elementos del DOM
+const fileInput = document.getElementById('file-input');
+const fileInfo = document.getElementById('file-info');
+const generateBtn = document.getElementById('generate-btn');
+const uploadArea = document.getElementById('upload-area');
+const statusEl = document.getElementById('status');
+const loaderEl = document.getElementById('loader');
+const visualizerContainer = document.getElementById('visualizer-container');
+const videoPlayer = document.getElementById('video-player');
+const downloadBtn = document.getElementById('download-btn');
+const shareBtn = document.getElementById('share-btn');
+const visualizerType = document.getElementById('visualizer-type');
+const visualizerColor = document.getElementById('visualizer-color');
+const backgroundColor = document.getElementById('background-color');
+
+// Funciones auxiliares
+function showStatus(message, type) {
+    statusEl.textContent = message;
+    statusEl.className = `status ${type}`;
+    statusEl.style.display = 'block';
+}
+
+function hideStatus() {
+    statusEl.style.display = 'none';
+}
+
+function showLoader() {
+    loaderEl.style.display = 'block';
+}
+
+function hideLoader() {
+    loaderEl.style.display = 'none';
+}
+
+// Eventos de arrastrar y soltar
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, e => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, false);
+});
+
+['dragenter', 'dragover'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, () => {
+        uploadArea.classList.add('dragover');
+    }, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, () => {
+        uploadArea.classList.remove('dragover');
+    }, false);
+});
+
+uploadArea.addEventListener('drop', e => {
+    const files = e.dataTransfer.files;
+    if (files.length) {
+        fileInput.files = files;
+        handleFileSelect();
+    }
+}, false);
+
+// Manejar la selección de archivos
+fileInput.addEventListener('change', handleFileSelect);
+
+function handleFileSelect() {
+    if (fileInput.files.length === 0) return;
+    
+    const file = fileInput.files[0];
+    
+    // Verificar que sea un archivo de audio o video
+    if (!file.type.match('audio.*') && !file.type.match('video.*')) {
+        showStatus('Solo se permiten archivos MP3 y MP4', 'error');
+        return;
+    }
+    
+    currentFile = file;
+    
+    // Mostrar información del archivo
+    const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+    fileInfo.textContent = `${file.name} (${fileSize} MB)`;
+    
+    // Habilitar botón de generación
+    generateBtn.disabled = false;
+    
+    hideStatus();
+}
+
+// Generar la visualización - Versión mejorada
+generateBtn.addEventListener('click', generateVisualization);
+
+async function generateVisualization() {
+    if (!currentFile) return;
+    
+    // Reiniciar contadores y estados
+    retryCount = 0;
+    clearTimeout(processingTimeout);
+    clearInterval(statusCheckInterval);
+    
+    // Mostrar indicadores de carga
+    showLoader();
+    hideStatus();
+    showStatus('Subiendo archivo...', 'success');
+    
+    // Desactivar botón mientras procesa
+    generateBtn.disabled = true;
+    
+    try {
+        // Preparar datos - Usar FormData para mejor compatibilidad
+        const formData = new FormData();
+        formData.append('file', currentFile);
         
-        // Funciones auxiliares
-        function showStatus(message, type) {
-            statusEl.textContent = message;
-            statusEl.className = `status ${type}`;
-            statusEl.style.display = 'block';
-        }
+        // Obtener configuración
+        const type = visualizerType.value || 'bars'; // Usar 'bars' por defecto (más estable)
+        const color = visualizerColor.value.substring(1);
+        const bgColor = backgroundColor.value.substring(1);
         
-        function hideStatus() {
-            statusEl.style.display = 'none';
-        }
+        // Forzar duración más corta para acelerar procesamiento
+        const maxDuration = Math.min(30, currentFile.size > 10000000 ? 15 : 30); // Máximo 30 seg, 15 para archivos grandes
         
-        function showLoader() {
-            loaderEl.style.display = 'block';
-        }
+        // Realizar la solicitud
+        showStatus('Procesando archivo...', 'success');
         
-        function hideLoader() {
-            loaderEl.style.display = 'none';
-        }
-        
-        // Manejo de eventos para la zona de arrastrar y soltar
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, preventDefaults, false);
-        });
-        
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        
-        ['dragenter', 'dragover'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, highlight, false);
-        });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, unhighlight, false);
-        });
-        
-        function highlight() {
-            uploadArea.classList.add('dragover');
-        }
-        
-        function unhighlight() {
-            uploadArea.classList.remove('dragover');
-        }
-        
-        uploadArea.addEventListener('drop', handleDrop, false);
-        
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
+        // Versión simplificada de la solicitud con mejor manejo de errores
+        let response;
+        try {
+            response = await fetch(`/api/fun/audiovisualizer?type=${type}&color=${color}&bgColor=${bgColor}&duration=${maxDuration}`, {
+                method: 'POST',
+                body: currentFile,
+                headers: {
+                    'Content-Type': currentFile.type
+                },
+                timeout: 30000 // 30 segundos máximo para la subida
+            });
+        } catch (uploadError) {
+            // Intentar con un enfoque alternativo - FormData
+            console.warn('Error en la subida directa, intentando con FormData:', uploadError);
             
-            if (files.length) {
-                fileInput.files = files;
-                handleFileSelect();
-            }
-        }
-        
-        // Manejar la selección de archivos
-        fileInput.addEventListener('change', handleFileSelect);
-        
-        function handleFileSelect() {
-            if (fileInput.files.length === 0) return;
+            const formData = new FormData();
+            formData.append('audioFile', currentFile);
             
-            const file = fileInput.files[0];
-            
-            // Verificar que sea un archivo de audio o video
-            if (!file.type.match('audio.*') && !file.type.match('video.*')) {
-                showStatus('Solo se permiten archivos MP3 y MP4', 'error');
-                return;
-            }
-            
-            currentFile = file;
-            
-            // Mostrar información del archivo
-            const fileSize = (file.size / (1024 * 1024)).toFixed(2);
-            fileInfo.textContent = `${file.name} (${fileSize} MB)`;
-            
-            // Habilitar botón de generación
-            generateBtn.disabled = false;
-            
-            hideStatus();
-        }
-        
-        // Generar la visualización
-        generateBtn.addEventListener('click', generateVisualization);
-        
-        async function generateVisualization() {
-            if (!currentFile) return;
-            
-            showLoader();
-            hideStatus();
-            
-            try {
-                // Preparar datos para enviar al servidor
-                const formData = new FormData();
-                formData.append('file', currentFile);
-                
-                // Obtener tipo de visualización y colores
-                const type = visualizerType.value;
-                const color = visualizerColor.value.substring(1); // Quitar #
-                const bgColor = backgroundColor.value.substring(1); // Quitar #
-                
-                // Crear objeto para enviar el archivo directamente
-                const response = await fetch(`/api/fun/audiovisualizer?type=${type}&color=${color}&bgColor=${bgColor}`, {
-                    method: 'POST',
-                    body: currentFile, // Enviar el archivo directamente
-                    headers: {
-                        'Content-Type': currentFile.type
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Error en el servidor: ${response.status} ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                
-                if (!data.success) {
-                    throw new Error(data.error || 'Error desconocido al generar la visualización');
-                }
-                
-                // Guardar el ID del trabajo
-                currentJobId = data.jobId;
-                
-                // Mostrar estado inicial
-                showStatus('Visualización en proceso...', 'success');
-                
-                // Iniciar verificación de estado
-                checkVisualizationStatus();
-                
-            } catch (error) {
-                console.error('Error generando visualización:', error);
-                showStatus(`Error: ${error.message}`, 'error');
-                hideLoader();
-            }
-        }
-        
-        // Verificar estado de la visualización
-        function checkVisualizationStatus() {
-            if (!currentJobId) return;
-            
-            // Limpiar intervalo anterior si existe
-            if (statusCheckInterval) {
-                clearInterval(statusCheckInterval);
-            }
-            
-            // Comprobar estado cada 2 segundos
-            statusCheckInterval = setInterval(async () => {
-                try {
-                    const response = await fetch(`/api/fun/audiovisualizer/status/${currentJobId}`);
-                    const data = await response.json();
-                    
-                    if (data.status === 'completed') {
-                        // La visualización está lista
-                        clearInterval(statusCheckInterval);
-                        hideLoader();
-                        showStatus('Visualización generada correctamente', 'success');
-                        
-                        // Cargar y mostrar el video
-                        loadVideoPlayer(data.videoUrl);
-                    }
-                } catch (error) {
-                    console.error('Error comprobando estado:', error);
-                }
-            }, 2000);
-        }
-        
-        // Cargar y mostrar el video
-        function loadVideoPlayer(videoUrl) {
-            // Configurar el video con la URL completa (añadir dominio si es necesario)
-            const fullUrl = videoUrl.startsWith('http') ? videoUrl : window.location.origin + videoUrl;
-            
-            // Asignar la URL al reproductor
-            videoPlayer.src = fullUrl;
-            
-            // Configurar el botón de descarga
-            downloadBtn.href = fullUrl;
-            downloadBtn.download = `visualizacion_audio_${Date.now()}.mp4`;
-            
-            // Mostrar el contenedor del visualizador
-            visualizerContainer.style.display = 'block';
-            
-            // Desplazarse al visualizador
-            visualizerContainer.scrollIntoView({ behavior: 'smooth' });
-            
-            // Manejar errores de carga de video
-            videoPlayer.onerror = (e) => {
-                console.error('Error cargando video:', e);
-                showStatus('Error al cargar el video. Intente de nuevo.', 'error');
-            };
-            
-            // Cargar y reproducir
-            videoPlayer.load();
-            videoPlayer.play().catch(err => {
-                console.warn('Reproducción automática no permitida:', err);
-                // Esto es normal en algunos navegadores que bloquean la reproducción automática
+            response = await fetch(`/api/fun/audiovisualizer?type=${type}&color=${color}&bgColor=${bgColor}&duration=${maxDuration}`, {
+                method: 'POST',
+                body: formData
             });
         }
         
-        // Botón compartir
-        shareBtn.addEventListener('click', async () => {
-            if (!videoPlayer.src) return;
+        if (!response.ok) {
+            throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.error || 'Error desconocido al generar la visualización');
+        }
+        
+        // Guardar ID y comenzar a verificar estado
+        currentJobId = data.jobId;
+        
+        // Establecer timeout general
+        processingTimeout = setTimeout(() => {
+            clearInterval(statusCheckInterval);
+            hideLoader();
+            showStatus('El procesamiento está tomando demasiado tiempo. Intente con un archivo más pequeño o el tipo "barras".', 'error');
+            generateBtn.disabled = false;
+        }, MAX_PROCESSING_TIME);
+        
+        // Verificar estado con intervalo variable (más frecuente al inicio)
+        checkVisualizationStatus();
+        
+    } catch (error) {
+        console.error('Error generando visualización:', error);
+        showStatus(`Error: ${error.message}`, 'error');
+        hideLoader();
+        generateBtn.disabled = false;
+    }
+}
+
+// Verificar estado con mejor manejo de errores
+async function checkVisualizationStatus() {
+    if (!currentJobId) return;
+    
+    // Limpiar intervalo anterior
+    clearInterval(statusCheckInterval);
+    
+    // Intervalo de comprobación: más frecuente al inicio, luego más espaciado
+    const checkInterval = retryCount < 5 ? 1500 : 3000;
+    
+    statusCheckInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`/api/fun/audiovisualizer/status/${currentJobId}`);
             
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'Mi visualización de audio',
-                        text: 'Visualización generada con API Karl',
-                        url: videoPlayer.src
-                    });
-                } catch (err) {
-                    console.warn('Error compartiendo:', err);
-                    navigator.clipboard.writeText(videoPlayer.src);
-                    showStatus('URL copiada al portapapeles', 'success');
+            if (!response.ok) {
+                retryCount++;
+                if (retryCount > MAX_RETRIES) {
+                    clearInterval(statusCheckInterval);
+                    clearTimeout(processingTimeout);
+                    hideLoader();
+                    showStatus('No se pudo verificar el estado de la visualización.', 'error');
+                    generateBtn.disabled = false;
+                    return;
                 }
-            } else {
-                // Fallback para navegadores que no soportan Web Share API
-                navigator.clipboard.writeText(videoPlayer.src);
-                showStatus('URL copiada al portapapeles', 'success');
+                return; // Intentar en el siguiente intervalo
             }
-        });
+            
+            const data = await response.json();
+            
+            if (data.status === 'completed') {
+                // Éxito - visualización lista
+                clearInterval(statusCheckInterval);
+                clearTimeout(processingTimeout);
+                hideLoader();
+                showStatus('Visualización generada correctamente', 'success');
+                generateBtn.disabled = false;
+                
+                // Cargar el video
+                loadVideoPlayer(data.videoUrl);
+            } else if (data.status === 'error') {
+                // Error reportado por el servidor
+                clearInterval(statusCheckInterval);
+                clearTimeout(processingTimeout);
+                hideLoader();
+                showStatus(`Error: ${data.message || 'Error desconocido'}`, 'error');
+                generateBtn.disabled = false;
+            }
+            // Si está en processing, continuar esperando
+            
+        } catch (error) {
+            console.warn('Error verificando estado:', error);
+            // No mostrar error al usuario en cada intento fallido,
+            // solo incrementar contador de reintentos
+            retryCount++;
+        }
+    }, checkInterval);
+}
+
+// Función mejorada para cargar el video
+function loadVideoPlayer(videoUrl) {
+    // Asegurarse de que la URL sea absoluta
+    const fullUrl = videoUrl.startsWith('http') ? videoUrl : window.location.origin + videoUrl;
+    
+    console.log('Cargando video:', fullUrl);
+    
+    // Configurar el reproductor
+    videoPlayer.src = fullUrl;
+    
+    // Asegurarse de que el reproductor reinicia correctamente
+    videoPlayer.load();
+    
+    // Configurar botón de descarga
+    downloadBtn.href = fullUrl;
+    downloadBtn.download = `visualizacion_${Date.now()}.mp4`;
+    
+    // Mostrar contenedor
+    visualizerContainer.style.display = 'block';
+    
+    // Scroll a la visualización
+    visualizerContainer.scrollIntoView({ behavior: 'smooth' });
+    
+    // Manejar errores de carga
+    videoPlayer.onerror = (e) => {
+        console.error('Error cargando video:', e);
+        showStatus('Error cargando el video. Intente recargar la página.', 'error');
+    };
+    
+    // Intentar reproducción automática
+    videoPlayer.play().catch(err => {
+        console.warn('Reproducción automática bloqueada:', err);
+        // Esto es normal, muchos navegadores bloquean reproducción automática
+    });
+}
+
+// Compartir
+shareBtn.addEventListener('click', () => {
+    if (!videoPlayer.src) return;
+    
+    try {
+        if (navigator.share) {
+            navigator.share({
+                title: 'Visualización de Audio',
+                text: 'Mira esta visualización de audio que creé con API Karl',
+                url: videoPlayer.src
+            }).catch(() => {
+                // Fallback si falla el compartir
+                copyToClipboard(videoPlayer.src);
+            });
+        } else {
+            copyToClipboard(videoPlayer.src);
+        }
+    } catch (e) {
+        copyToClipboard(videoPlayer.src);
+    }
+});
+
+// Función auxiliar para copiar al portapapeles
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showStatus('URL copiada al portapapeles', 'success');
+    }).catch(() => {
+        // Fallback para navegadores antiguos
+        const input = document.createElement('input');
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        showStatus('URL copiada al portapapeles', 'success');
+    });
+}
     </script>
 </body>
 </html>
