@@ -79,24 +79,20 @@ router.post("/", express.raw({
         // Seleccionar comando basado en el tipo de visualización
         let command;
         
-        // Convertir colores a formato ffmpeg (0xRRGGBB)
-        const ffmpegColor = `0x${color}`;
-        const ffmpegBgColor = `0x${bgColor}`;
-        
         switch (type) {
             case 'waves':
                 // Visualización de ondas con color de fondo personalizado
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "[0:a]showwaves=s=640x360:mode=line:rate=25:colors=0x${color}:scale=sqrt,format=yuv420p,drawbox=width=iw:height=ih:color=0x${bgColor}@0.4:t=fill[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest "${outputPath}"`;
-                break;
-                
-            case 'spectrum':
-                // Visualización del espectro con fondo personalizado
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=640x360:c=#${bgColor}[bg];[0:a]showspectrum=s=640x360:mode=combined:color=intensity:slide=scroll:scale=log:gain=4:fscale=lin:saturation=1:color=0x${color}[spectrum];[bg][spectrum]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest "${outputPath}"`;
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=640x360:c=#${bgColor}[bg];[0:a]showwaves=s=640x360:mode=line:rate=25:colors=#${color}:scale=sqrt[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest "${outputPath}"`;
                 break;
                 
             case 'circle':
-                // Visualización circular (tipo bola)
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=640x360:c=#${bgColor}[bg];[0:a]showcqt=fps=25:size=640x360:count=5:csp=bt709:bar_g=2:sono_g=4:bar_v=9:sono_v=17:sono_h=0:bar_h=0:tc=#${color}:tlength=lin:tlist=0-11.5k:axis_h=0:count=1:cscheme=1|0|0.5|0|1|0.5[spectrum];[bg][spectrum]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest "${outputPath}"`;
+                // Visualización en bola con barras radiales (como en la imagen)
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=640x360:c=#${bgColor}[bg];[0:a]showcqt=fps=30:size=640x360:count=5:bar_g=2:sono_g=4:bar_v=9:sono_v=17:sono_h=0:axis_h=0:tc=#${color}:tlength=lin:tlist=0-11.5k:bar_h=100:sono=off:bar=1:csp=bt709:count=8:sono=0:bar=1:sono_v=0:format=yuv420p[vis];[bg][vis]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                break;
+                
+            case 'sunburst':
+                // Nueva visualización tipo sol/bola con barras (más cercana a la imagen)
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=640x360:c=#${bgColor}[bg];[0:a]showcqt=fps=30:size=600x600:count=5:bar_g=2:sono_g=4:bar_v=9:sono_v=17:sono_h=0:axis_h=0:tc=#${color}:tlength=lin:tlist=0-11.5k:sono=off:mode=polar:bar=1:csp=bt709:count=6:format=yuv420p[vis];[bg][vis]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
                 break;
                 
             case 'bars':
