@@ -89,6 +89,39 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .vis-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .vis-option {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .vis-option:hover {
+            border-color: #3498db;
+            background-color: #f0f8ff;
+        }
+        
+        .vis-option.selected {
+            border-color: #3498db;
+            background-color: #e1f0fa;
+        }
+        
+        .vis-option img {
+            width: 100%;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -108,8 +141,8 @@
             <select id="vis-type">
                 <option value="waves">Ondas</option>
                 <option value="bars">Barras</option>
-                <option value="spectrum">Espectro</option>
                 <option value="circle">Círculo</option>
+                <option value="sunburst">Bola con Barras</option>
             </select>
         </div>
         
