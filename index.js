@@ -13,6 +13,9 @@ const byn = require("./api/fun/byn");
 const invertir = require("./api/fun/invertir");
 const pixelArtRoutes = require('./api/fun/pixel');
 const comicFilter = require("./api/fun/comic");
+const blackjackRouter = require("./api/fun/blackjack");
+const audioVisualizerRouter = require("./api/fun/audiovisualizer");
+const subtitlesRouter = require("./api/fun/subtitles");
 const qrRouter = require("./api/utility/qr");
 const boostCardRouter = require("./api/utility/boostcard");
 const traductorRouter = require("./api/utility/traductor");
@@ -28,8 +31,6 @@ const binarioRouter = require("./api/utility/binario");
 const invertidoRouter = require("./api/utility/invertido");
 const obfuscarRouter = require("./api/utility/obfuscar");
 const captchaRouter = require("./api/utility/captcha");
-const blackjackRouter = require("./api/fun/blackjack");
-const audioVisualizerRouter = require("./api/fun/audiovisualizer");
 
 // Usar rutas
 app.use("/api/fun/ship", shipRouter);
@@ -39,6 +40,9 @@ app.use("/api/fun/byn", byn);
 app.use("/api/fun/invertir", invertir);
 app.use('/api/fun/pixel', pixelArtRoutes);
 app.use("/api/fun/comic", comicFilter);
+app.use("/api/fun/blackjack", blackjackRouter);
+app.use("/api/fun/audiovisualizer", audioVisualizerRouter);
+app.use("/api/fun/subtitles", subtitlesRouter);
 app.use("/api/utility/bienvenida", bienvenidaRouter);
 app.use("/api/utility/qr", qrRouter);
 app.use("/api/utility/boostcard", boostCardRouter);
@@ -54,8 +58,6 @@ app.use("/api/utility/binario", binarioRouter);
 app.use("/api/utility/invertido", invertidoRouter);
 app.use("/api/utility/obfuscar", obfuscarRouter);
 app.use("/api/utility/captcha", captchaRouter);
-app.use("/api/fun/blackjack", blackjackRouter);
-app.use("/api/fun/audiovisualizer", audioVisualizerRouter);
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
@@ -75,6 +77,7 @@ app.get("/", (req, res) => {
     "/api/fun/comic",
     "/api/fun/blackjack",
     "/api/fun/audiovisualizer",
+    "/api/fun/subtitles",
     "/api/utility/boostcard",
     "/api/utility/traductor",
     "/api/utility/bienvenida",
