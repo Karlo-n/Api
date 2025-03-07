@@ -1,93 +1,112 @@
 // api/fun/audiovisualizer/index.js
 const express = require("express");
 const router = express.Router();
-const { createCanvas } = require('canvas');
 const fs = require('fs');
 const path = require('path');
-const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
-const os = require('os');
-
-// Configurar FFmpeg con los binarios estáticos
+const { exec } = require('child_process');
 const ffmpegPath = require('ffmpeg-static');
-const ffmpeg = require('fluent-ffmpeg');
-ffmpeg.setFfmpegPath(ffmpegPath);
 
-// Configurar directorio para archivos temporales
-const TEMP_DIR = path.join(os.tmpdir(), 'audiovisualizer');
-if (!fs.existsSync(TEMP_DIR)) {
-    fs.mkdirSync(TEMP_DIR, { recursive: true });
-}
-
-// Directorio para guardar los videos generados
+// Rutas para directorios
+const TEMP_DIR = path.join(__dirname, 'temp');
 const OUTPUT_DIR = path.join(__dirname, '../../../public/visualizer');
-if (!fs.existsSync(OUTPUT_DIR)) {
-    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-}
+const HTML_PATH = path.join(__dirname, 'visualizer.html');
 
-// Ruta principal: Si no hay parámetros específicos de la API, servir el HTML
-router.get("/", async (req, res) => {
-    // Verificar si es una solicitud para la API o para el visualizador
-    const { audioUrl, type, color, bgColor, duration } = req.query;
-    
-    // Si no hay parámetros de API, servir el HTML
-    if (!audioUrl && !req.query.json) {
-        return res.sendFile(path.join(__dirname, "visualizer.html"));
+// Crear directorios si no existen
+if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
+if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+
+// Ruta principal - Sirve el HTML si no hay parámetros de API
+router.get("/", (req, res) => {
+    if (Object.keys(req.query).length === 0) {
+        return res.sendFile(HTML_PATH);
     }
     
-    // Si hay parámetros, continuar con la lógica de la API
+    // Procesar solicitud de API (como lo tenías antes)
+    res.status(400).json({
+        error: "Método GET no soportado para procesamiento. Usa POST para enviar archivos.",
+        ejemplo: "POST /api/fun/audiovisualizer con un archivo MP3/MP4 en el body"
+    });
+});
+
+// Ruta para procesar archivos de audio/video - Versión simplificada
+router.post("/", express.raw({
+    type: ['audio/mp3', 'audio/mpeg', 'video/mp4', 'audio/*', 'video/*'],
+    limit: '50mb'
+}), async (req, res) => {
     try {
-        // Validar parámetros
-        if (!audioUrl) {
-            return res.status(400).json({ 
-                error: "Debes proporcionar una URL de audio", 
-                ejemplo: "/api/fun/audiovisualizer?audioUrl=https://ejemplo.com/audio.mp3&type=bars&color=3498db"
-            });
+        // Verificar el archivo
+        if (!req.body || req.body.length === 0) {
+            return res.status(400).json({ error: "No se recibió ningún archivo" });
         }
 
-        // El resto del código de la API sigue igual...
-        // Verificar que la URL es válida
-        let url;
-        try {
-            url = new URL(audioUrl);
-        } catch (e) {
-            return res.status(400).json({ error: "La URL proporcionada no es válida" });
-        }
+        console.log("Procesando archivo de audio/video...");
 
-        // Generar nombres de archivos temporales únicos
+        // Generar IDs únicos para archivos
         const jobId = uuidv4();
-        const audioFilePath = path.join(TEMP_DIR, `${jobId}_audio.mp3`);
-        const visualizationPath = path.join(TEMP_DIR, `${jobId}_visualization`);
-        const outputVideoPath = path.join(OUTPUT_DIR, `${jobId}_output.mp4`);
-        const publicUrl = `/visualizer/${jobId}_output.mp4`;
+        const inputPath = path.join(TEMP_DIR, `input_${jobId}.mp3`);
+        const outputPath = path.join(OUTPUT_DIR, `output_${jobId}.mp4`);
+        const publicUrl = `/visualizer/output_${jobId}.mp4`;
 
-        // Código original para procesar URL de audio...
-        // [Aquí va el resto del código del endpoint GET original]
+        // Guardar el archivo recibido
+        fs.writeFileSync(inputPath, req.body);
+        console.log(`Archivo guardado en: ${inputPath} (${req.body.length} bytes)`);
 
+        // Crear un video simple (1 segundo) solo para probar
+        const command = `${ffmpegPath} -t 5 -f lavfi -i color=c=black:s=640x360 -i "${inputPath}" -c:v libx264 -tune stillimage -c:a aac -shortest "${outputPath}"`;
+        
+        console.log("Ejecutando comando:", command);
+        
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                console.error("Error ejecutando FFmpeg:", error);
+                console.error("Detalles:", stderr);
+                return res.status(500).json({ 
+                    error: "Error procesando archivo",
+                    details: error.message
+                });
+            }
+            
+            console.log("Video generado exitosamente:", outputPath);
+            
+            // Limpiar archivo temporal de entrada
+            fs.unlink(inputPath, (err) => {
+                if (err) console.error("Error eliminando archivo temporal:", err);
+            });
+            
+            // Responder con éxito
+            res.json({
+                success: true,
+                message: "Visualización generada",
+                videoUrl: publicUrl,
+                jobId: jobId
+            });
+        });
     } catch (error) {
-        console.error("Error en la API de Visualizador de Audio:", error);
-        res.status(500).json({ 
-            error: "Error al procesar la visualización de audio", 
-            detalle: error.message 
+        console.error("Error general:", error);
+        res.status(500).json({
+            error: "Error procesando la solicitud",
+            details: error.message
         });
     }
 });
 
-// El resto de los endpoints y funciones se mantienen igual
-// Endpoint POST para subir archivos
-router.post("/", express.raw({ 
-    type: ['audio/mp3', 'audio/mpeg', 'video/mp4'],
-    limit: '50mb'
-}), async (req, res) => {
-    // [Código original del endpoint POST]
-});
-
-// Endpoint para comprobar el estado
+// Endpoint de estado
 router.get("/status/:jobId", (req, res) => {
-    // [Código original del endpoint status]
+    const { jobId } = req.params;
+    const outputPath = path.join(OUTPUT_DIR, `output_${jobId}.mp4`);
+    
+    if (fs.existsSync(outputPath)) {
+        res.json({
+            status: "completed",
+            videoUrl: `/visualizer/output_${jobId}.mp4`
+        });
+    } else {
+        res.json({
+            status: "processing"
+        });
+    }
 });
-
-// [Resto de funciones auxiliares...]
 
 // Exportar el router
 module.exports = router;
