@@ -81,19 +81,19 @@ router.post("/", express.raw({
         
         switch (type) {
             case 'waves':
-                // Visualización de ondas mejorada con color de fondo personalizado
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=line:rate=30:colors=#${color}:scale=sqrt:draw=full:slide=scroll:n=160:filter=lowpass[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p -preset fast "${outputPath}"`;
+                // Visualización de ondas completamente rediseñada - movimiento fluido garantizado
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]avectorscope=s=1280x720:mode=lissajous:rate=60:zoom=1.5:rc=0:gc=0:bc=0:rf=0:gf=0:bf=0:draw=line:scale=sqrt:mirror=x:size=hd720[scope];[scope]drawgrid=width=50:height=50:color=#${color}@0.1[grid];[grid]format=yuva444p,colorchannelmixer=aa=0.8[trans];[bg][trans]overlay=format=auto:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -r 60 -pix_fmt yuv420p -preset ultrafast "${outputPath}"`;
                 break;
                 
             case 'sunburst':
-                // Visualización tipo sol/bola con barras radiales mejorada
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showcqt=fps=30:size=1280x720:count=8:gamma=5:bar_g=3:sono_g=4:bar_v=15:sono_v=20:sono_h=0:axis_h=0:tc=#${color}:tlength=lin:tlist=0-12k:sono=off:bar=1:csp=bt709:mode=polar:fontcolor=#${color}[vis];[bg][vis]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p -preset fast "${outputPath}"`;
+                // Visualización de círculo con explosión radial - mucho más dramática
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showcqt=fps=60:size=1280x720:count=12:gamma=7:bar_g=5:sono_g=8:bar_v=25:sono_v=40:sono_h=0:axis_h=0:tc=#${color}:tlength=lin:tlist=0-20k:sono=off:bar=1:csp=bt709:mode=polar:fontcolor=#${color}[vis];[bg][vis]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -r 60 -pix_fmt yuv420p -preset ultrafast "${outputPath}"`;
                 break;
                 
             case 'bars':
             default:
-                // Visualización de barras de ecualizador vertical mejorada
-                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showspectrum=s=1200x400:mode=combined:slide=scroll:scale=log:color=intensity:fscale=lin:overlap=1:saturation=3:gain=4:orientation=v:legend=0:draw=scale:n=120:colors=#${color}[eq];[bg][eq]overlay=x=(W-w)/2:y=(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p -preset fast "${outputPath}"`;
+                // Visualización de barras totalmente distinta - estilo ecualizador clásico
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showspectrum=s=1280x720:slide=replace:mode=separate:color=intensity:scale=cbrt:orientation=v:overlap=0:saturation=5:gain=5:legend=0:fps=60:fscale=log:win_func=blackman:count=40:draw=dot[eq];[bg][eq]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -r 60 -pix_fmt yuv420p -preset ultrafast "${outputPath}"`;
                 break;
         }
         
