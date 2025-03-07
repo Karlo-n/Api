@@ -52,8 +52,8 @@ router.post("/", express.raw({
         fs.writeFileSync(inputPath, req.body);
         console.log(`Archivo guardado en: ${inputPath} (${req.body.length} bytes)`);
 
-        // Crear un video simple (1 segundo) solo para probar
-        const command = `${ffmpegPath} -t 5 -f lavfi -i color=c=black:s=640x360 -i "${inputPath}" -c:v libx264 -tune stillimage -c:a aac -shortest "${outputPath}"`;
+        // COMANDO CORREGIDO: Asegurar que el audio se procesa correctamente
+        const command = `${ffmpegPath} -i "${inputPath}" -f lavfi -i color=c=blue:s=640x360:d=10 -filter_complex "[1:v][0:a]concat=n=1:v=1:a=1[outv][outa]" -map "[outv]" -map "[outa]" -c:v libx264 -c:a aac -b:a 192k -shortest "${outputPath}"`;
         
         console.log("Ejecutando comando:", command);
         
@@ -61,12 +61,42 @@ router.post("/", express.raw({
             if (error) {
                 console.error("Error ejecutando FFmpeg:", error);
                 console.error("Detalles:", stderr);
-                return res.status(500).json({ 
-                    error: "Error procesando archivo",
-                    details: error.message
+                
+                // Intentar un comando alternativo más simple si el primer intento falla
+                const simpleCommand = `${ffmpegPath} -i "${inputPath}" -f lavfi -i color=c=black:s=640x360:r=30:d=10 -c:a aac -shortest "${outputPath}"`;
+                
+                console.log("Intentando comando alternativo:", simpleCommand);
+                
+                exec(simpleCommand, (err2, stdout2, stderr2) => {
+                    if (err2) {
+                        console.error("Error en segundo intento:", err2);
+                        return res.status(500).json({ 
+                            error: "Error procesando archivo",
+                            details: err2.message
+                        });
+                    }
+                    
+                    // Segundo intento exitoso
+                    console.log("Video generado con método alternativo:", outputPath);
+                    
+                    // Limpiar archivo temporal
+                    fs.unlink(inputPath, (err) => {
+                        if (err) console.error("Error eliminando archivo temporal:", err);
+                    });
+                    
+                    // Responder con éxito
+                    res.json({
+                        success: true,
+                        message: "Visualización generada",
+                        videoUrl: publicUrl,
+                        jobId: jobId
+                    });
                 });
+                
+                return;
             }
             
+            // Primer intento exitoso
             console.log("Video generado exitosamente:", outputPath);
             
             // Limpiar archivo temporal de entrada
