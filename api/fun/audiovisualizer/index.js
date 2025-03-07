@@ -122,8 +122,16 @@ router.post("/", express.raw({
                     if (err2) {
                         console.error("Error en segundo intento:", err2);
                         
-                        // Tercer intento con una configuración extremadamente simple pero funcional
-                        const lastResortCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=cline:rate=60:colors=#${color}[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -preset ultrafast -crf 28 -c:a aac -b:a 128k -shortest -r 60 -pix_fmt yuv420p "${outputPath}"`;
+                        // Último método de respaldo basado en configuraciones comprobadas
+                        const lastResortCommands = {
+                            waves: `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=cline:colors=#${color}[waves];[bg][waves]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -preset ultrafast -crf 28 -c:a aac -b:a 128k -shortest "${outputPath}"`,
+                            
+                            bars: `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showspectrum=size=1280x720:orientation=v:slide=scroll:color=intensity:mode=combined:scale=lin:saturation=5:gain=5[eq];[bg][eq]overlay=shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -preset ultrafast -crf 28 -c:a aac -b:a 128k -shortest "${outputPath}"`,
+                            
+                            sunburst: `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]avectorscope=mode=polar:size=720x720:rate=30:draw=line[scope];[bg][scope]overlay=(W-w)/2:(H-h)/2:shortest=1[v]" -map "[v]" -map 0:a -c:v libx264 -preset ultrafast -crf 28 -c:a aac -b:a 128k -shortest "${outputPath}"`
+                        };
+                        
+                        const lastResortCommand = lastResortCommands[type] || lastResortCommands.waves;
                         
                         console.log("Intentando último comando de emergencia:", lastResortCommand);
                         
