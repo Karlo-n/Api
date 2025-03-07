@@ -982,91 +982,239 @@
                 // Dividir texto en líneas
                 const lines = subtitleText.split('\n').filter(line => line.trim() !== '');
                 
-                // Crear un stream del canvas
-                const stream = canvas.captureStream(30);
-                const mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: 'video/webm;codecs=vp9'
-                });
+                // Si no hay suficientes líneas, añadir algunas para demostración
+                if (lines.length < 3) {
+                    lines.push("Generador automático de subtítulos");
+                    lines.push("Puede personalizar estos textos");
+                    lines.push("API Karl - Generador de Subtítulos");
+                }
                 
-                const chunks = [];
-                mediaRecorder.ondataavailable = e => {
-                    if (e.data.size > 0) {
-                        chunks.push(e.data);
+                // Crear un elemento video para mostrar la previsualización mientras se genera
+                const previewVideo = document.createElement('video');
+                previewVideo.autoplay = true;
+                previewVideo.controls = false;
+                previewVideo.width = 640;
+                previewVideo.height = 360;
+                previewVideo.style.display = 'none';
+                document.body.appendChild(previewVideo);
+                
+                // Generar una duración mínima razonable para el video
+                const minDuration = Math.max(10, lines.length * 3); // Al menos 10 segundos o 3 por línea
+                
+                try {
+                    // Crear un stream del canvas
+                    const stream = canvas.captureStream(30);
+                    let mediaRecorder;
+                    
+                    try {
+                        mediaRecorder = new MediaRecorder(stream, {
+                            mimeType: 'video/webm;codecs=vp9'
+                        });
+                    } catch (e) {
+                        // Fallback a un formato compatible
+                        mediaRecorder = new MediaRecorder(stream, {
+                            mimeType: 'video/webm'
+                        });
                     }
-                };
-                
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'video/mp4' });
-                    const url = URL.createObjectURL(blob);
                     
-                    // Mostrar el video generado
-                    subtitleVideo.src = url;
-                    videoResultContainer.classList.add('active');
-                    videoResultContainer.scrollIntoView({ behavior: 'smooth' });
-                    
-                    // Configurar botón de descarga
-                    downloadVideoBtn.onclick = () => {
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `video_subtitulos_${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        showStatus('Video descargado correctamente', 'success');
+                    const chunks = [];
+                    mediaRecorder.ondataavailable = e => {
+                        if (e.data.size > 0) {
+                            chunks.push(e.data);
+                        }
                     };
                     
-                    showStatus('Video generado correctamente', 'success');
-                };
-                
-                // Iniciar grabación
-                mediaRecorder.start();
-                
-                // Función para renderizar texto animado
-                let currentLine = 0;
-                const linesPerFrame = 3; // Número de líneas visibles a la vez
-                const frameRate = 30;
-                const duration = 5; // Segundos por línea
-                const totalFrames = lines.length * duration * frameRate;
-                let currentFrame = 0;
-                
-                function drawFrame() {
-                    ctx.fillStyle = 'black';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    mediaRecorder.onstop = () => {
+                        // Ocultar la previsualización
+                        document.body.removeChild(previewVideo);
+                        
+                        // Crear el video final
+                        let blob;
+                        try {
+                            blob = new Blob(chunks, { type: 'video/mp4' });
+                        } catch (e) {
+                            blob = new Blob(chunks, { type: 'video/webm' });
+                        }
+                        
+                        const url = URL.createObjectURL(blob);
+                        
+                        // Mostrar el video generado
+                        subtitleVideo.src = url;
+                        videoResultContainer.classList.add('active');
+                        videoResultContainer.scrollIntoView({ behavior: 'smooth' });
+                        
+                        // Configurar botón de descarga
+                        downloadVideoBtn.onclick = () => {
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `video_subtitulos_${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            showStatus('Video descargado correctamente', 'success');
+                        };
+                        
+                        showStatus('Video generado correctamente', 'success');
+                    };
                     
-                    // Calcular línea actual basada en el tiempo
-                    currentLine = Math.floor(currentFrame / (duration * frameRate));
+                    // Iniciar grabación
+                    mediaRecorder.start(100); // Capturar en chunks de 100ms
                     
-                    // Dibujar líneas actuales
-                    ctx.font = 'bold 36px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillStyle = 'white';
+                    // Función para renderizar texto animado
+                    let currentLine = 0;
+                    const linesPerFrame = 3; // Número de líneas visibles a la vez
+                    const frameRate = 30;
+                    const duration = 3; // Segundos por línea
+                    const totalFrames = lines.length * duration * frameRate;
+                    let currentFrame = 0;
                     
-                    for (let i = 0; i < linesPerFrame; i++) {
-                        const lineIndex = currentLine + i;
-                        if (lineIndex < lines.length) {
-                            // Añadir sombra para mejorar legibilidad
-                            ctx.shadowColor = 'black';
-                            ctx.shadowBlur = 4;
-                            ctx.shadowOffsetX = 2;
-                            ctx.shadowOffsetY = 2;
+                    // Variables para fondo gradual
+                    const gradients = [
+                        'linear-gradient(45deg, #000428, #004e92)',
+                        'linear-gradient(45deg, #16222A, #3A6073)',
+                        'linear-gradient(45deg, #141E30, #243B55)'
+                    ];
+                    let currentGradient = 0;
+                    
+                    function drawGradientBackground(ctx, gradient) {
+                        const gradientObj = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                        
+                        if (gradient.includes('linear-gradient(45deg')) {
+                            // Extraer colores del gradiente
+                            const colors = gradient.match(/#[a-fA-F0-9]{6}/g);
+                            if (colors && colors.length >= 2) {
+                                gradientObj.addColorStop(0, colors[0]);
+                                gradientObj.addColorStop(1, colors[1]);
+                            } else {
+                                gradientObj.addColorStop(0, '#000428');
+                                gradientObj.addColorStop(1, '#004e92');
+                            }
+                        } else {
+                            gradientObj.addColorStop(0, '#000428');
+                            gradientObj.addColorStop(1, '#004e92');
+                        }
+                        
+                        ctx.fillStyle = gradientObj;
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+                    
+                    function wrapText(context, text, x, y, maxWidth, lineHeight) {
+                        const words = text.split(' ');
+                        let line = '';
+                        let lines = [];
+                        
+                        for (let n = 0; n < words.length; n++) {
+                            const testLine = line + words[n] + ' ';
+                            const metrics = context.measureText(testLine);
+                            const testWidth = metrics.width;
                             
-                            // Dibujar texto centrado
-                            const y = canvas.height / 2 - ((linesPerFrame - 1) * 50 / 2) + (i * 50);
-                            ctx.fillText(lines[lineIndex], canvas.width / 2, y);
+                            if (testWidth > maxWidth && n > 0) {
+                                lines.push(line);
+                                line = words[n] + ' ';
+                            } else {
+                                line = testLine;
+                            }
+                        }
+                        
+                        lines.push(line);
+                        
+                        for (let i = 0; i < lines.length; i++) {
+                            context.fillText(lines[i], x, y + (i * lineHeight));
+                        }
+                        
+                        return lines.length * lineHeight;
+                    }
+                    
+                    function drawFrame() {
+                        // Cambiar el fondo cada cierto número de frames
+                        if (currentFrame % (frameRate * 5) === 0) { // Cambiar cada 5 segundos
+                            currentGradient = (currentGradient + 1) % gradients.length;
+                        }
+                        
+                        // Dibujar fondo con gradiente
+                        drawGradientBackground(ctx, gradients[currentGradient]);
+                        
+                        // Añadir un efecto de viñeta
+                        const gradient = ctx.createRadialGradient(
+                            canvas.width / 2, canvas.height / 2, canvas.height / 3,
+                            canvas.width / 2, canvas.height / 2, canvas.height
+                        );
+                        gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                        gradient.addColorStop(1, 'rgba(0,0,0,0.5)');
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        
+                        // Calcular línea actual basada en el tiempo
+                        currentLine = Math.floor(currentFrame / (duration * frameRate)) % lines.length;
+                        
+                        // Dibujar líneas actuales con efecto de fade
+                        ctx.font = 'bold 42px Arial, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        
+                        // Añadir efecto de sombra para mejorar legibilidad
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+                        ctx.shadowBlur = 7;
+                        ctx.shadowOffsetX = 3;
+                        ctx.shadowOffsetY = 3;
+                        
+                        // Dibujar línea actual con más brillo
+                        let y = canvas.height / 2;
+                        ctx.fillStyle = 'white';
+                        
+                        // Usar la función de wrap text para textos largos
+                        const lineHeight = 50;
+                        const textMaxWidth = canvas.width * 0.8;
+                        const usedHeight = wrapText(ctx, lines[currentLine], canvas.width / 2, y, textMaxWidth, lineHeight);
+                        
+                        // Mostrar línea anterior y siguiente con menos opacidad si existen
+                        if (currentLine > 0) {
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                            ctx.font = 'bold 32px Arial, sans-serif';
+                            wrapText(ctx, lines[currentLine - 1], canvas.width / 2, y - usedHeight - 20, textMaxWidth, lineHeight);
+                        }
+                        
+                        if (currentLine < lines.length - 1) {
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                            ctx.font = 'bold 32px Arial, sans-serif';
+                            wrapText(ctx, lines[currentLine + 1], canvas.width / 2, y + usedHeight + 20, textMaxWidth, lineHeight);
+                        }
+                        
+                        // Añadir un logo o marca de agua
+                        ctx.font = 'bold 18px Arial, sans-serif';
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                        ctx.textAlign = 'right';
+                        ctx.fillText('API Karl - Generador de Subtítulos', canvas.width - 20, canvas.height - 20);
+                        
+                        // Mostrar tiempo de duración
+                        const timeText = `${Math.floor(currentFrame / frameRate)}s / ${Math.floor(totalFrames / frameRate)}s`;
+                        ctx.textAlign = 'left';
+                        ctx.fillText(timeText, 20, canvas.height - 20);
+                        
+                        currentFrame++;
+                        
+                        // Si estamos en modo previsualización, dirigir la salida al elemento video
+                        if (previewVideo && previewVideo.srcObject !== stream) {
+                            previewVideo.srcObject = stream;
+                        }
+                        
+                        if (currentFrame < totalFrames) {
+                            requestAnimationFrame(drawFrame);
+                        } else {
+                            // Agregar 2 segundos adicionales al final
+                            setTimeout(() => {
+                                mediaRecorder.stop();
+                            }, 2000);
                         }
                     }
                     
-                    currentFrame++;
+                    // Iniciar animación
+                    drawFrame();
                     
-                    if (currentFrame < totalFrames) {
-                        requestAnimationFrame(drawFrame);
-                    } else {
-                        mediaRecorder.stop();
-                    }
+                } catch (error) {
+                    console.error('Error al generar video:', error);
+                    showStatus(`Error al generar video: ${error.message}. Intente con otro navegador como Chrome.`, 'error');
                 }
-                
-                // Iniciar animación
-                drawFrame();
             });
             
             // Permitir edición de subtítulos
