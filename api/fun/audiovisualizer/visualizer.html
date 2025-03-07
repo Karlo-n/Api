@@ -106,15 +106,16 @@
         <div class="form-group">
             <label for="vis-type">Tipo de Visualización:</label>
             <select id="vis-type">
-                <option value="bars">Barras</option>
                 <option value="waves">Ondas</option>
+                <option value="bars">Barras</option>
                 <option value="spectrum">Espectro</option>
+                <option value="circle">Círculo</option>
             </select>
         </div>
         
         <div class="form-group">
             <label for="vis-color">Color de Visualización:</label>
-            <input type="color" id="vis-color" value="#3498db">
+            <input type="color" id="vis-color" value="#ff0000">
         </div>
         
         <div class="form-group">
@@ -227,15 +228,15 @@
             if (!currentFile) return;
             
             processBtn.disabled = true;
-            showStatusWithSpinner('Subiendo y procesando archivo...');
+            showStatusWithSpinner('Procesando archivo...');
             resultDiv.style.display = 'none';
             
-            // Establecer timeout para mostrar error después de 40 segundos
+            // Establecer timeout para mostrar error después de 60 segundos
             clearTimeout(processingTimeout);
             processingTimeout = setTimeout(() => {
                 showStatus('El procesamiento está tomando demasiado tiempo. Intente con un archivo más pequeño.', 'error');
                 processBtn.disabled = false;
-            }, 40000);
+            }, 60000);
             
             try {
                 // Preparar parámetros
@@ -281,6 +282,9 @@
                 
                 // Scroll al resultado
                 resultDiv.scrollIntoView({ behavior: 'smooth' });
+                
+                // Reproducir automáticamente
+                player.play().catch(e => console.log('Auto-reproducción bloqueada por el navegador'));
                 
             } catch (error) {
                 clearTimeout(processingTimeout);
