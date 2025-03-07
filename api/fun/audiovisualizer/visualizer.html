@@ -1401,12 +1401,24 @@
                 
                 drawVisualization();
                 
-                // Configurar botón de descarga
+                // Configurar botón de descarga siempre como MP4
                 downloadBtn.onclick = () => {
+                    const file = fileInput.files[0];
                     const a = document.createElement('a');
-                    a.href = URL.createObjectURL(fileInput.files[0]);
-                    a.download = fileInput.files[0].name;
+                    a.href = URL.createObjectURL(file);
+                    
+                    // Asegurar que la extensión sea .mp4
+                    let fileName = file.name;
+                    if (!fileName.toLowerCase().endsWith('.mp4')) {
+                        // Si no es .mp4, cambiar la extensión
+                        fileName = fileName.split('.').slice(0, -1).join('.') + '.mp4';
+                    }
+                    
+                    a.download = fileName;
                     a.click();
+                    
+                    // Mostrar mensaje informativo
+                    showStatus('Video descargado en formato MP4', 'success');
                 };
                 
                 // Desplazarse al contenedor de resultado
@@ -1452,7 +1464,14 @@
         function drawWaveform(color) {
             analyser.getByteTimeDomainData(dataArray);
             
-            ctx.lineWidth = 3;
+            // Crear efecto de reflejo
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0.4, 'rgba(0,0,0,0)');
+            gradient.addColorStop(0.5, color);
+            gradient.addColorStop(0.6, 'rgba(0,0,0,0)');
+            
+            // Línea principal gruesa
+            ctx.lineWidth = 4;
             ctx.strokeStyle = color;
             ctx.beginPath();
             
@@ -1472,12 +1491,12 @@
                 x += sliceWidth;
             }
             
-            ctx.lineTo(canvas.width, canvas.height / 2);
             ctx.stroke();
             
-            // Añadir efecto de sombra/brillo
-            ctx.lineWidth = 1.5;
-            ctx.strokeStyle = color + '80'; // 50% de opacidad
+            // Línea brillante superpuesta
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#ffffff';
+            ctx.globalAlpha = 0.2;
             ctx.beginPath();
             
             x = 0;
@@ -1494,38 +1513,116 @@
                 x += sliceWidth;
             }
             
-            ctx.lineTo(canvas.width, canvas.height / 2);
             ctx.stroke();
+            ctx.globalAlpha = 1.0;
+            
+            // Agregar puntos de destaque en picos
+            x = 0;
+            for (let i = 0; i < bufferLength; i += 16) {
+                const v = dataArray[i] / 128.0;
+                const y = v * canvas.height / 2;
+                
+                // Detectar picos
+                if (Math.abs(v - 1) > 0.3) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 2, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fill();
+                }
+                
+                x += sliceWidth * 16;
+            }
+            
+            // Línea de área bajo la onda
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height/2);
+            
+            x = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * canvas.height / 2;
+                ctx.lineTo(x, y);
+                x += sliceWidth;
+            }
+            
+            ctx.lineTo(canvas.width, canvas.height/2);
+            ctx.closePath();
+            ctx.fillStyle = color + '15'; // Muy transparente
+            ctx.fill();
         }
         
         // Dibujar barras verticales
         function drawBars(color) {
             analyser.getByteFrequencyData(dataArray);
             
-            const barWidth = (canvas.width / bufferLength) * 2.5;
-            let x = 0;
+            // Usamos menos barras para un mejor efecto visual
+            const totalBars = 96;
+            const barSpacing = 2;
+            const barWidth = (canvas.width / totalBars) - barSpacing;
+            const step = Math.floor(bufferLength / totalBars);
             
-            for (let i = 0; i < bufferLength; i++) {
-                const barHeight = (dataArray[i] / 255) * canvas.height;
+            // Para efecto de espejo
+            const mirrorEffect = true;
+            
+            for (let i = 0; i < totalBars; i++) {
+                // Tomar un promedio de varios valores para suavizar
+                let sum = 0;
+                for (let j = 0; j < step; j++) {
+                    sum += dataArray[i * step + j];
+                }
+                const value = sum / step;
                 
-                // Crear un gradiente para cada barra
+                // Altura de la barra con un pequeño mínimo para mejor estética
+                const barHeight = Math.max(4, (value / 255) * canvas.height * 0.8);
+                
+                // Posición horizontal
+                const x = i * (barWidth + barSpacing);
+                
+                // Crear un gradiente más atractivo
                 const gradient = ctx.createLinearGradient(x, canvas.height - barHeight, x, canvas.height);
-                gradient.addColorStop(0, color);
-                gradient.addColorStop(1, color + '30'); // 30% de opacidad
+                gradient.addColorStop(0, '#ffffff');  // Brillo en la parte superior
+                gradient.addColorStop(0.1, color);    // Color principal
+                gradient.addColorStop(1, color + '10'); // Transparente hacia abajo
+                
+                // Dibujar barra principal con esquinas redondeadas
+                ctx.beginPath();
+                // Borde superior redondeado
+                ctx.moveTo(x, canvas.height - barHeight + barWidth/2);
+                ctx.arc(x + barWidth/2, canvas.height - barHeight + barWidth/2, barWidth/2, Math.PI, 0, true);
+                ctx.lineTo(x + barWidth, canvas.height);
+                ctx.lineTo(x, canvas.height);
+                ctx.closePath();
                 
                 ctx.fillStyle = gradient;
-                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-                
-                // Añadir un borde superior redondeado con brillo
-                ctx.beginPath();
-                ctx.arc(x + barWidth / 2, canvas.height - barHeight, barWidth / 2, 0, Math.PI, true);
-                ctx.closePath();
-                ctx.fillStyle = color;
                 ctx.fill();
                 
-                x += barWidth + 1;
+                // Efecto de brillo en la parte superior
+                ctx.beginPath();
+                ctx.arc(x + barWidth/2, canvas.height - barHeight + barWidth/2, barWidth/2, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.globalAlpha = 0.3 * (value / 255);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
                 
-                if (x > canvas.width) break;
+                // Añadir espejo si está activado
+                if (mirrorEffect) {
+                    // Espejo con menos opacidad
+                    const mirrorGradient = ctx.createLinearGradient(x, 0, x, barHeight);
+                    mirrorGradient.addColorStop(0, color + '05');  // Casi transparente
+                    mirrorGradient.addColorStop(0.9, color + '20'); // Algo más visible
+                    mirrorGradient.addColorStop(1, color + '40');  // Más visible en la unión
+                    
+                    ctx.fillStyle = mirrorGradient;
+                    
+                    // Dibujar el reflejo
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x + barWidth, 0);
+                    ctx.lineTo(x + barWidth, barHeight * 0.5);
+                    ctx.arc(x + barWidth/2, barHeight * 0.5, barWidth/2, 0, Math.PI, false);
+                    ctx.closePath();
+                    ctx.fill();
+                }
             }
         }
         
@@ -1537,31 +1634,31 @@
             const centerY = canvas.height / 2;
             const radius = Math.min(centerX, centerY) - 30;
             
-            // Sombra para efecto de brillo
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = color;
-            
-            // Dibujar círculo central
+            // Dibujar círculo central con brillo
             ctx.beginPath();
             ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
             ctx.fillStyle = color;
             ctx.fill();
             
-            // Quitar sombra para el resto
-            ctx.shadowBlur = 0;
+            // Añadir halo alrededor del círculo central
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 12, 0, 2 * Math.PI);
+            ctx.strokeStyle = color + '80';
+            ctx.lineWidth = 2;
+            ctx.stroke();
             
             // Dibujar anillo exterior pulsante
-            const intensity = analyser.getByteFrequencyData(new Uint8Array(1))[0] / 255;
-            const pulseRadius = radius * (0.9 + intensity * 0.2);
+            const avgFrequency = Array.from(dataArray).reduce((sum, value) => sum + value, 0) / dataArray.length;
+            const pulseRadius = radius * (0.8 + (avgFrequency / 255) * 0.2);
             
             ctx.beginPath();
             ctx.arc(centerX, centerY, pulseRadius, 0, 2 * Math.PI);
-            ctx.strokeStyle = color + '40'; // 40% opacidad
+            ctx.strokeStyle = color + '60';
             ctx.lineWidth = 2;
             ctx.stroke();
             
             // Dibujar barras alrededor del círculo
-            const barCount = 180;
+            const barCount = 120; // Reducido para mejor rendimiento
             const step = Math.PI * 2 / barCount;
             
             for (let i = 0; i < barCount; i++) {
@@ -1571,24 +1668,28 @@
                 
                 const angle = i * step;
                 
-                const startX = centerX + Math.cos(angle) * 15;
-                const startY = centerY + Math.sin(angle) * 15;
+                const startX = centerX + Math.cos(angle) * 20;
+                const startY = centerY + Math.sin(angle) * 20;
                 
-                const endX = centerX + Math.cos(angle) * (15 + barHeight);
-                const endY = centerY + Math.sin(angle) * (15 + barHeight);
+                const endX = centerX + Math.cos(angle) * (20 + barHeight);
+                const endY = centerY + Math.sin(angle) * (20 + barHeight);
                 
-                // Crear gradiente para las barras
-                const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
-                gradient.addColorStop(0, color);
-                gradient.addColorStop(1, color + '20'); // 20% opacidad
-                
+                // Dibujar la línea principal
                 ctx.beginPath();
                 ctx.moveTo(startX, startY);
                 ctx.lineTo(endX, endY);
-                ctx.strokeStyle = gradient;
+                ctx.strokeStyle = color;
                 ctx.lineWidth = 3;
                 ctx.lineCap = "round";
                 ctx.stroke();
+                
+                // Añadir efecto de brillo en la punta
+                if (amplitude > 0.5) {
+                    ctx.beginPath();
+                    ctx.arc(endX, endY, 3, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fill();
+                }
             }
         }
         
