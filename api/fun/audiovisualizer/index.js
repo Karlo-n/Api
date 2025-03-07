@@ -1,5 +1,4 @@
 // api/fun/audiovisualizer/index.js
-// VERSIÓN SIMPLIFICADA PARA GARANTIZAR FUNCIONAMIENTO BÁSICO
 const express = require("express");
 const router = express.Router();
 const fs = require('fs');
@@ -95,12 +94,12 @@ router.post("/", express.raw({
             command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor},format=rgba[bg];[0:a]showwaves=s=1280x720:mode=line:colors=#${color}[waves];[bg][waves]overlay=format=auto:shortest=1" -c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a copy -y "${outputPath}"`;
         } 
         else if (type === 'bars') {
-            // BARRAS VERTICALES BÁSICAS
-            command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor},format=rgba[bg];[0:a]showspectrum=s=1280x720:mode=combined:color=intensity:scale=lin:slide=scroll:orientation=v[spectrum];[bg][spectrum]overlay=format=auto:shortest=1" -c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a copy -y "${outputPath}"`;
+            // BARRAS VERTICALES - Comando optimizado para mostrar barras verticales claramente diferenciadas
+            command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor},format=rgba[bg];[0:a]showspectrum=s=1280x720:mode=separate:slide=1:scale=log:color=intensity:orientation=v:fscale=lin:win_func=hamming:overlap=0:saturation=5:legend=0[spectrum];[bg][spectrum]overlay=format=auto:shortest=1" -c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a copy -y "${outputPath}"`;
         }
         else if (type === 'sunburst') {
-            // CÍRCULO BÁSICO
-            command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor},format=rgba[bg];[0:a]avectorscope=s=720x720:mode=polar:rate=25:zoom=1.5:draw=line[scope];[bg][scope]overlay=(W-w)/2:(H-h)/2:format=auto:shortest=1" -c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a copy -y "${outputPath}"`;
+            // CÍRCULO CON ONDAS - Comando garantizado para mostrar visualización circular
+            command = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor},format=rgba[bg];[0:a]avectorscope=s=640x640:zoom=1.5:draw=line:mode=polar:rate=25[scope];[bg][scope]overlay=(W-w)/2:(H-h)/2:format=auto:shortest=1" -c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a copy -y "${outputPath}"`;
         }
         
         console.log("Ejecutando comando FFmpeg:", command);
@@ -110,12 +109,22 @@ router.post("/", express.raw({
                 console.error("Error ejecutando FFmpeg:", error);
                 console.error("Salida de error:", stderr);
                 
-                // Comando ultra básico como último recurso (funciona en casi cualquier instalación de FFmpeg)
-                const ultraBasicCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=line:colors=white[waves];[bg][waves]overlay=shortest=1" -c:v libx264 -preset ultrafast -crf 30 -pix_fmt yuv420p -c:a aac -strict -2 -y "${outputPath}"`;
+                // Comando ultra básico como último recurso
+                let fallbackCommand;
                 
-                console.log("Intentando comando ultra básico:", ultraBasicCommand);
+                if (type === 'waves') {
+                    fallbackCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showwaves=s=1280x720:mode=line:colors=white[waves];[bg][waves]overlay=shortest=1" -c:v libx264 -preset ultrafast -crf 30 -pix_fmt yuv420p -c:a aac -strict -2 -y "${outputPath}"`;
+                } 
+                else if (type === 'bars') {
+                    fallbackCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]showspectrum=s=1280x720:slide=1:scale=log:orientation=v:mode=separate[eq];[bg][eq]overlay=shortest=1" -c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a aac -y "${outputPath}"`;
+                }
+                else if (type === 'sunburst') {
+                    fallbackCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "color=s=1280x720:c=#${bgColor}[bg];[0:a]avectorscope=s=640x640:mode=polar:rate=25:zoom=2[scope];[bg][scope]overlay=(W-w)/2:(H-h)/2:format=auto:shortest=1" -c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a aac -y "${outputPath}"`;
+                }
                 
-                exec(ultraBasicCommand, (err2, stdout2, stderr2) => {
+                console.log("Intentando comando ultra básico:", fallbackCommand);
+                
+                exec(fallbackCommand, (err2, stdout2, stderr2) => {
                     if (err2) {
                         console.error("Error en comando básico:", err2);
                         console.error("Detalles:", stderr2);
