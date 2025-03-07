@@ -427,34 +427,52 @@
             <div class="form-group">
                 <label>Tipo de Visualización</label>
                 <div class="vis-options">
+                    <!-- Para las Ondas -->
                     <div class="vis-option selected" data-type="waves">
-                        <div style="height: 60px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border-radius: 8px;">
-                            <svg width="180" height="40" viewBox="0 0 180 40">
-                                <path d="M0,20 Q15,5 30,20 Q45,35 60,20 Q75,5 90,20 Q105,35 120,20 Q135,5 150,20 Q165,35 180,20" stroke="#ff0000" fill="none" stroke-width="2"/>
+                        <div style="height: 60px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border-radius: 8px; overflow: hidden;">
+                            <svg width="220" height="60" viewBox="0 0 220 60">
+                                <path d="M10,30 Q25,10 40,30 Q55,50 70,30 Q85,10 100,30 Q115,50 130,30 Q145,10 160,30 Q175,50 190,30 Q205,10 220,30" stroke="#ff0000" fill="none" stroke-width="3"/>
+                                <path d="M0,30 Q15,40 30,30 Q45,20 60,30 Q75,40 90,30 Q105,20 120,30 Q135,40 150,30 Q165,20 180,30 Q195,40 210,30" stroke="#ff0000" stroke-opacity="0.5" fill="none" stroke-width="2"/>
                             </svg>
                         </div>
                         <h4>Ondas</h4>
                     </div>
+
+                    <!-- Para las Barras -->
                     <div class="vis-option" data-type="bars">
-                        <div style="height: 60px; background-color: #000; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px; border-radius: 8px; padding: 5px;">
-                            <div style="width: 10px; height: 20px; background-color: #ff0000; margin: 0 2px;"></div>
-                            <div style="width: 10px; height: 40px; background-color: #ff0000; margin: 0 2px;"></div>
-                            <div style="width: 10px; height: 15px; background-color: #ff0000; margin: 0 2px;"></div>
-                            <div style="width: 10px; height: 30px; background-color: #ff0000; margin: 0 2px;"></div>
-                            <div style="width: 10px; height: 10px; background-color: #ff0000; margin: 0 2px;"></div>
-                            <div style="width: 10px; height: 25px; background-color: #ff0000; margin: 0 2px;"></div>
-                            <div style="width: 10px; height: 35px; background-color: #ff0000; margin: 0 2px;"></div>
+                        <div style="height: 60px; background-color: #000; display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 10px; border-radius: 8px; padding: 5px 2px;">
+                            <div style="width: 8px; height: 25px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 40px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 15px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 35px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 10px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 30px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 45px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 20px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 35px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 15px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 25px; background-color: #ff0000; margin: 0 1px;"></div>
                         </div>
                         <h4>Barras</h4>
                     </div>
+
+                    <!-- Para el Círculo con Barras -->
                     <div class="vis-option" data-type="sunburst">
-                        <div style="height: 60px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border-radius: 8px;">
-                            <div style="width: 50px; height: 50px; border-radius: 50%; position: relative; overflow: hidden;">
-                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #ff0000 0%, transparent 70%)"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 60px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(0deg)"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 60px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(45deg)"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 60px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(90deg)"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 60px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(135deg)"></div>
+                        <div style="height: 60px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border-radius: 8px; overflow: hidden;">
+                            <div style="position: relative; width: 54px; height: 54px;">
+                                <!-- Círculo central -->
+                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; background-color: #ff0000; border-radius: 50%;"></div>
+                                
+                                <!-- Rayos -->
+                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(0deg);"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(30deg);"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(60deg);"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(90deg);"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(120deg);"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(150deg);"></div>
+                                
+                                <!-- Anillo exterior -->
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px solid #ff0000; border-radius: 50%; opacity: 0.7;"></div>
                             </div>
                         </div>
                         <h4>Círculo con Barras</h4>
@@ -649,8 +667,15 @@
                 // Scroll al resultado
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
                 
-                // Reproducir automáticamente
-                player.play().catch(e => console.log('Auto-reproducción bloqueada por el navegador'));
+                // Configurar evento de carga de video
+                player.onloadeddata = forceAudioVideo;
+                
+                // También permitir reproducción al hacer clic
+                player.addEventListener('click', () => {
+                    if (player.paused) {
+                        player.play();
+                    }
+                });
                 
             } catch (error) {
                 clearTimeout(processingTimeout);
@@ -659,6 +684,26 @@
             } finally {
                 processBtn.disabled = false;
             }
+        }
+        
+        // Función para forzar la reproducción de audio/video
+        function forceAudioVideo() {
+            // Forzar la recarga del video para asegurar que el audio se reproduzca
+            player.pause();
+            player.currentTime = 0;
+            
+            // Intentar reproducir automáticamente con volumen
+            player.volume = 1.0;
+            
+            // Pequeño retraso para asegurar que todo se haya cargado
+            setTimeout(() => {
+                player.play()
+                    .then(() => console.log("Reproducción iniciada"))
+                    .catch(e => {
+                        console.warn("Auto-reproducción bloqueada, solicitar interacción del usuario:", e);
+                        showStatus("Haz clic en el video para reproducir con audio", "info");
+                    });
+            }, 500);
         }
     </script>
 </body>
