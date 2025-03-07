@@ -5,10 +5,13 @@ const { createCanvas } = require('canvas');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const ffmpeg = require('fluent-ffmpeg');
 const { v4: uuidv4 } = require('uuid');
 const os = require('os');
-// No se requiere multer
+
+// Instala estos paquetes con: npm install @ffmpeg-installer/ffmpeg ffmpeg-static
+const ffmpegPath = require('ffmpeg-static');
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 // Configurar directorio para archivos temporales
 const TEMP_DIR = path.join(os.tmpdir(), 'audiovisualizer');
@@ -24,7 +27,6 @@ if (!fs.existsSync(OUTPUT_DIR)) {
 
 /**
  * Endpoint para procesar archivos MP3/MP4 usando el método raw de Express
- * Nota: Este enfoque es básico y tiene limitaciones de tamaño
  */
 router.post("/", express.raw({ 
     type: ['audio/mp3', 'audio/mpeg', 'video/mp4'],
