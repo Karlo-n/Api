@@ -29,7 +29,7 @@ router.get("/", (req, res) => {
     });
 });
 
-// Ruta para procesar archivos de audio/video - Versión simplificada
+// Ruta para procesar archivos de audio/video
 router.post("/", express.raw({
     type: ['audio/mp3', 'audio/mpeg', 'video/mp4', 'audio/*', 'video/*'],
     limit: '50mb'
@@ -40,7 +40,12 @@ router.post("/", express.raw({
             return res.status(400).json({ error: "No se recibió ningún archivo" });
         }
 
-        console.log("Procesando archivo de audio/video...");
+        // Obtener parámetros de la visualización
+        const type = req.query.type || 'bars'; // tipo: bars, waves, spectrum
+        const color = req.query.color || '3498db'; // color en hex sin #
+        const bgColor = req.query.bgColor || '000000'; // color de fondo
+
+        console.log(`Procesando visualización tipo: ${type}, color: ${color}, fondo: ${bgColor}`);
 
         // Generar IDs únicos para archivos
         const jobId = uuidv4();
@@ -52,8 +57,26 @@ router.post("/", express.raw({
         fs.writeFileSync(inputPath, req.body);
         console.log(`Archivo guardado en: ${inputPath} (${req.body.length} bytes)`);
 
-        // COMANDO CORREGIDO: Asegurar que el audio se procesa correctamente
-        const command = `${ffmpegPath} -i "${inputPath}" -f lavfi -i color=c=blue:s=640x360:d=10 -filter_complex "[1:v][0:a]concat=n=1:v=1:a=1[outv][outa]" -map "[outv]" -map "[outa]" -c:v libx264 -c:a aac -b:a 192k -shortest "${outputPath}"`;
+        // Seleccionar comando basado en el tipo de visualización
+        let command;
+        
+        switch (type) {
+            case 'waves':
+                // Visualización de ondas de audio
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "[0:a]showwaves=s=640x360:mode=line:rate=25:colors=#${color}[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                break;
+                
+            case 'spectrum':
+                // Visualización del espectro de frecuencias
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "[0:a]showspectrum=s=640x360:mode=combined:color=intensity:scale=log:slide=1:saturation=0.5:gain=5:fscale=lin:colors=#${color}[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                break;
+                
+            case 'bars':
+            default:
+                // Visualización de barras (similar a ecualizador)
+                command = `${ffmpegPath} -i "${inputPath}" -filter_complex "[0:a]avectorscope=s=640x360:mode=lissajous:rate=25:zoom=1.5:draw=line:scale=sqrt:mirror=x:rc=#${bgColor}:gc=#${bgColor}:bc=#${bgColor}:rf=#${color}:gf=0:bf=0[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+                break;
+        }
         
         console.log("Ejecutando comando:", command);
         
@@ -62,12 +85,12 @@ router.post("/", express.raw({
                 console.error("Error ejecutando FFmpeg:", error);
                 console.error("Detalles:", stderr);
                 
-                // Intentar un comando alternativo más simple si el primer intento falla
-                const simpleCommand = `${ffmpegPath} -i "${inputPath}" -f lavfi -i color=c=black:s=640x360:r=30:d=10 -c:a aac -shortest "${outputPath}"`;
+                // Intentar un método de respaldo que sabemos que funciona
+                const fallbackCommand = `${ffmpegPath} -i "${inputPath}" -filter_complex "[0:a]showwaves=s=640x360:mode=cline:colors=#${color}[v]" -map "[v]" -map 0:a -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
                 
-                console.log("Intentando comando alternativo:", simpleCommand);
+                console.log("Intentando comando alternativo:", fallbackCommand);
                 
-                exec(simpleCommand, (err2, stdout2, stderr2) => {
+                exec(fallbackCommand, (err2, stdout2, stderr2) => {
                     if (err2) {
                         console.error("Error en segundo intento:", err2);
                         return res.status(500).json({ 
@@ -77,7 +100,7 @@ router.post("/", express.raw({
                     }
                     
                     // Segundo intento exitoso
-                    console.log("Video generado con método alternativo:", outputPath);
+                    console.log("Visualización generada con método alternativo");
                     
                     // Limpiar archivo temporal
                     fs.unlink(inputPath, (err) => {
@@ -97,7 +120,7 @@ router.post("/", express.raw({
             }
             
             // Primer intento exitoso
-            console.log("Video generado exitosamente:", outputPath);
+            console.log("Visualización generada exitosamente");
             
             // Limpiar archivo temporal de entrada
             fs.unlink(inputPath, (err) => {
