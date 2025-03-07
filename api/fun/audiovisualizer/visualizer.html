@@ -1,4 +1,13 @@
-<!DOCTYPE html>
+// Controles de audio
+        const playBtn = document.getElementById('play-btn');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const timeDisplay = document.getElementById('time-display');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const volumeSlider = document.getElementById('volume-slider');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const downloadBtn = document.getElementById('download-btn');<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -1114,6 +1123,12 @@
         let dataArray;
         let bufferLength;
         
+        // Variables para grabación de video
+        let mediaRecorder;
+        let recordedChunks = [];
+        let isRecording = false;
+        let recordingStartTime = 0;
+        
         // Variables para randomización de colores
         let isRandomizing = false;
         let randomColors = [];
@@ -1133,17 +1148,6 @@
         const visOptions = document.querySelectorAll('.vis-option');
         const visColorPicker = document.getElementById('vis-color');
         const bgColorPicker = document.getElementById('bg-color');
-        
-        // Controles de audio
-        const playBtn = document.getElementById('play-btn');
-        const playIcon = document.getElementById('play-icon');
-        const pauseIcon = document.getElementById('pause-icon');
-        const timeDisplay = document.getElementById('time-display');
-        const progressContainer = document.getElementById('progress-container');
-        const progressBar = document.getElementById('progress-bar');
-        const volumeSlider = document.getElementById('volume-slider');
-        const fullscreenBtn = document.getElementById('fullscreen-btn');
-        const downloadBtn = document.getElementById('download-btn');
         
         // Elementos de randomización
         const randomizeToggle = document.getElementById('randomize-toggle');
@@ -1464,8 +1468,12 @@
         function drawWaveform(color) {
             analyser.getByteTimeDomainData(dataArray);
             
+            // Ajustar para que llegue a los bordes completos
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            
             // Crear efecto de reflejo
-            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
             gradient.addColorStop(0.4, 'rgba(0,0,0,0)');
             gradient.addColorStop(0.5, color);
             gradient.addColorStop(0.6, 'rgba(0,0,0,0)');
@@ -1475,12 +1483,12 @@
             ctx.strokeStyle = color;
             ctx.beginPath();
             
-            const sliceWidth = canvas.width / bufferLength;
+            const sliceWidth = canvasWidth / bufferLength;
             let x = 0;
             
             for (let i = 0; i < bufferLength; i++) {
                 const v = dataArray[i] / 128.0;
-                const y = v * canvas.height / 2;
+                const y = v * canvasHeight / 2;
                 
                 if (i === 0) {
                     ctx.moveTo(x, y);
@@ -1502,7 +1510,7 @@
             x = 0;
             for (let i = 0; i < bufferLength; i++) {
                 const v = dataArray[i] / 128.0;
-                const y = v * canvas.height / 2;
+                const y = v * canvasHeight / 2;
                 
                 if (i === 0) {
                     ctx.moveTo(x, y);
@@ -1520,7 +1528,7 @@
             x = 0;
             for (let i = 0; i < bufferLength; i += 16) {
                 const v = dataArray[i] / 128.0;
-                const y = v * canvas.height / 2;
+                const y = v * canvasHeight / 2;
                 
                 // Detectar picos
                 if (Math.abs(v - 1) > 0.3) {
@@ -1535,17 +1543,17 @@
             
             // Línea de área bajo la onda
             ctx.beginPath();
-            ctx.moveTo(0, canvas.height/2);
+            ctx.moveTo(0, canvasHeight/2);
             
             x = 0;
             for (let i = 0; i < bufferLength; i++) {
                 const v = dataArray[i] / 128.0;
-                const y = v * canvas.height / 2;
+                const y = v * canvasHeight / 2;
                 ctx.lineTo(x, y);
                 x += sliceWidth;
             }
             
-            ctx.lineTo(canvas.width, canvas.height/2);
+            ctx.lineTo(canvasWidth, canvasHeight/2);
             ctx.closePath();
             ctx.fillStyle = color + '15'; // Muy transparente
             ctx.fill();
@@ -1572,8 +1580,8 @@
                 }
                 const value = sum / step;
                 
-                // Altura de la barra con un pequeño mínimo para mejor estética
-                const barHeight = Math.max(4, (value / 255) * canvas.height * 0.8);
+                // Altura de la barra - que llegue completamente al borde
+                const barHeight = Math.max(4, (value / 255) * canvas.height);
                 
                 // Posición horizontal
                 const x = i * (barWidth + barSpacing);
@@ -1632,7 +1640,10 @@
             
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const radius = Math.min(centerX, centerY) - 30;
+            
+            // Calcular el radio para que llegue hasta los bordes
+            // Usamos el menor entre width y height para mantener un círculo dentro del canvas
+            const maxRadius = Math.min(centerX, centerY);
             
             // Dibujar círculo central con brillo
             ctx.beginPath();
@@ -1649,7 +1660,7 @@
             
             // Dibujar anillo exterior pulsante
             const avgFrequency = Array.from(dataArray).reduce((sum, value) => sum + value, 0) / dataArray.length;
-            const pulseRadius = radius * (0.8 + (avgFrequency / 255) * 0.2);
+            const pulseRadius = maxRadius * (0.8 + (avgFrequency / 255) * 0.2);
             
             ctx.beginPath();
             ctx.arc(centerX, centerY, pulseRadius, 0, 2 * Math.PI);
@@ -1664,29 +1675,39 @@
             for (let i = 0; i < barCount; i++) {
                 const freqIndex = Math.floor(i * bufferLength / barCount);
                 const amplitude = dataArray[freqIndex] / 255;
-                const barHeight = amplitude * radius;
+                
+                // Las barras ahora llegarán hasta el borde máximo del canvas
+                const barHeight = amplitude * maxRadius;
                 
                 const angle = i * step;
                 
-                const startX = centerX + Math.cos(angle) * 20;
-                const startY = centerY + Math.sin(angle) * 20;
+                // Punto de inicio cerca del centro
+                const startX = centerX + Math.cos(angle) * 15;
+                const startY = centerY + Math.sin(angle) * 15;
                 
-                const endX = centerX + Math.cos(angle) * (20 + barHeight);
-                const endY = centerY + Math.sin(angle) * (20 + barHeight);
+                // Punto final que puede llegar hasta el borde
+                const endX = centerX + Math.cos(angle) * (15 + barHeight);
+                const endY = centerY + Math.sin(angle) * (15 + barHeight);
+                
+                // Crear un gradiente para cada barra
+                const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+                gradient.addColorStop(0, color); // Color base en el centro
+                gradient.addColorStop(0.7, color); // Mantener el color
+                gradient.addColorStop(1, '#ffffff'); // Brillo al final
                 
                 // Dibujar la línea principal
                 ctx.beginPath();
                 ctx.moveTo(startX, startY);
                 ctx.lineTo(endX, endY);
-                ctx.strokeStyle = color;
+                ctx.strokeStyle = gradient;
                 ctx.lineWidth = 3;
                 ctx.lineCap = "round";
                 ctx.stroke();
                 
-                // Añadir efecto de brillo en la punta
+                // Añadir efecto de brillo en la punta para las barras más altas
                 if (amplitude > 0.5) {
                     ctx.beginPath();
-                    ctx.arc(endX, endY, 3, 0, 2 * Math.PI);
+                    ctx.arc(endX, endY, 3, 0, Math.PI * 2);
                     ctx.fillStyle = '#ffffff';
                     ctx.fill();
                 }
