@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizador de Audio</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
-    <!-- Resto de estilos igual que antes -->
     <style>
         :root {
             --primary: #5e72e4;
@@ -394,7 +393,125 @@
      </style>
 </head>
 <body>
-    <!-- El mismo HTML que ya tenías -->
+    <div class="header">
+        <div class="container">
+            <h1>Visualizador de Audio</h1>
+            <p>Convierte tus archivos MP3 y MP4 en increíbles visualizaciones</p>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="card">
+            <h2 class="card-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 18V5l12-2v13"></path>
+                    <circle cx="6" cy="18" r="3"></circle>
+                    <circle cx="18" cy="16" r="3"></circle>
+                </svg>
+                Crea tu visualización
+            </h2>
+            
+            <div class="upload-area" id="upload-area">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <h3>Arrastra un archivo MP3 o MP4 aquí</h3>
+                <p>o haz clic para seleccionar</p>
+                <input type="file" id="file-input" accept=".mp3,.mp4">
+            </div>
+            
+            <div class="file-info" id="file-info"></div>
+            
+            <div class="form-group">
+                <label>Tipo de Visualización</label>
+                <div class="vis-options">
+                    <!-- Para las Ondas -->
+                    <div class="vis-option selected" data-type="waves">
+                        <div style="height: 60px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border-radius: 8px; overflow: hidden;">
+                            <svg width="220" height="60" viewBox="0 0 220 60">
+                                <path d="M10,30 Q25,10 40,30 Q55,50 70,30 Q85,10 100,30 Q115,50 130,30 Q145,10 160,30 Q175,50 190,30 Q205,10 220,30" stroke="#ff0000" fill="none" stroke-width="3"/>
+                                <path d="M0,30 Q15,40 30,30 Q45,20 60,30 Q75,40 90,30 Q105,20 120,30 Q135,40 150,30 Q165,20 180,30 Q195,40 210,30" stroke="#ff0000" stroke-opacity="0.5" fill="none" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <h4>Ondas</h4>
+                    </div>
+
+                    <!-- Para las Barras -->
+                    <div class="vis-option" data-type="bars">
+                        <div style="height: 60px; background-color: #000; display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 10px; border-radius: 8px; padding: 5px 2px;">
+                            <div style="width: 8px; height: 25px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 40px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 15px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 35px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 10px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 30px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 45px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 20px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 35px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 15px; background-color: #ff0000; margin: 0 1px;"></div>
+                            <div style="width: 8px; height: 25px; background-color: #ff0000; margin: 0 1px;"></div>
+                        </div>
+                        <h4>Barras</h4>
+                    </div>
+
+                    <!-- Para el Círculo con Barras -->
+                    <div class="vis-option" data-type="sunburst">
+                        <div style="height: 60px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border-radius: 8px; overflow: hidden;">
+                            <div style="position: relative; width: 54px; height: 54px;">
+                                <!-- Círculo central -->
+                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; background-color: #ff0000; border-radius: 50%;"></div>
+                                
+                                <!-- Rayos -->
+                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(0deg);"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(30deg);"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(60deg);"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(90deg);"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(120deg);"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(150deg);"></div>
+                                
+                                <!-- Anillo exterior -->
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px solid #ff0000; border-radius: 50%; opacity: 0.7;"></div>
+                            </div>
+                        </div>
+                        <h4>Círculo con Barras</h4>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="color-pickers">
+                <div class="color-picker">
+                    <label>Color de Visualización</label>
+                    <input type="color" id="vis-color" value="#ff0000">
+                </div>
+                <div class="color-picker">
+                    <label>Color de Fondo</label>
+                    <input type="color" id="bg-color" value="#000000">
+                </div>
+            </div>
+            
+            <button id="process-btn" class="btn btn-primary" disabled>
+                Generar Visualización
+            </button>
+            
+            <div id="status" class="status"></div>
+        </div>
+        
+        <div id="result-container" class="result-container">
+            <div class="result-header">Tu Visualización</div>
+            <div class="video-wrapper">
+                <video id="player" controls></video>
+            </div>
+            <div class="result-actions">
+                <button id="download-btn" class="btn btn-success">Descargar</button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            © 2025 Visualizador de Audio | Powered by API Karl
+        </div>
+    </div>
     
     <script>
         // Elementos DOM
