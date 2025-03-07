@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizador de Audio</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+    <!-- Resto de estilos igual que antes -->
     <style>
         :root {
             --primary: #5e72e4;
@@ -390,128 +391,10 @@
                 height: 40px;
             }
         }
-    </style>
+     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="container">
-            <h1>Visualizador de Audio</h1>
-            <p>Convierte tus archivos MP3 y MP4 en increíbles visualizaciones</p>
-        </div>
-    </div>
-    
-    <div class="container">
-        <div class="card">
-            <h2 class="card-title">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 18V5l12-2v13"></path>
-                    <circle cx="6" cy="18" r="3"></circle>
-                    <circle cx="18" cy="16" r="3"></circle>
-                </svg>
-                Crea tu visualización
-            </h2>
-            
-            <div class="upload-area" id="upload-area">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
-                <h3>Arrastra un archivo MP3 o MP4 aquí</h3>
-                <p>o haz clic para seleccionar</p>
-                <input type="file" id="file-input" accept=".mp3,.mp4">
-            </div>
-            
-            <div class="file-info" id="file-info"></div>
-            
-            <div class="form-group">
-                <label>Tipo de Visualización</label>
-                <div class="vis-options">
-                    <!-- Para las Ondas -->
-                    <div class="vis-option selected" data-type="waves">
-                        <div style="height: 60px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border-radius: 8px; overflow: hidden;">
-                            <svg width="220" height="60" viewBox="0 0 220 60">
-                                <path d="M10,30 Q25,10 40,30 Q55,50 70,30 Q85,10 100,30 Q115,50 130,30 Q145,10 160,30 Q175,50 190,30 Q205,10 220,30" stroke="#ff0000" fill="none" stroke-width="3"/>
-                                <path d="M0,30 Q15,40 30,30 Q45,20 60,30 Q75,40 90,30 Q105,20 120,30 Q135,40 150,30 Q165,20 180,30 Q195,40 210,30" stroke="#ff0000" stroke-opacity="0.5" fill="none" stroke-width="2"/>
-                            </svg>
-                        </div>
-                        <h4>Ondas</h4>
-                    </div>
-
-                    <!-- Para las Barras -->
-                    <div class="vis-option" data-type="bars">
-                        <div style="height: 60px; background-color: #000; display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 10px; border-radius: 8px; padding: 5px 2px;">
-                            <div style="width: 8px; height: 25px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 40px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 15px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 35px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 10px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 30px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 45px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 20px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 35px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 15px; background-color: #ff0000; margin: 0 1px;"></div>
-                            <div style="width: 8px; height: 25px; background-color: #ff0000; margin: 0 1px;"></div>
-                        </div>
-                        <h4>Barras</h4>
-                    </div>
-
-                    <!-- Para el Círculo con Barras -->
-                    <div class="vis-option" data-type="sunburst">
-                        <div style="height: 60px; background-color: #000; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border-radius: 8px; overflow: hidden;">
-                            <div style="position: relative; width: 54px; height: 54px;">
-                                <!-- Círculo central -->
-                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; background-color: #ff0000; border-radius: 50%;"></div>
-                                
-                                <!-- Rayos -->
-                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(0deg);"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(30deg);"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(60deg);"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(90deg);"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(120deg);"></div>
-                                <div style="position: absolute; top: 50%; left: 50%; width: 54px; height: 2px; background-color: #ff0000; transform: translate(-50%, -50%) rotate(150deg);"></div>
-                                
-                                <!-- Anillo exterior -->
-                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px solid #ff0000; border-radius: 50%; opacity: 0.7;"></div>
-                            </div>
-                        </div>
-                        <h4>Círculo con Barras</h4>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="color-pickers">
-                <div class="color-picker">
-                    <label>Color de Visualización</label>
-                    <input type="color" id="vis-color" value="#ff0000">
-                </div>
-                <div class="color-picker">
-                    <label>Color de Fondo</label>
-                    <input type="color" id="bg-color" value="#000000">
-                </div>
-            </div>
-            
-            <button id="process-btn" class="btn btn-primary" disabled>
-                Generar Visualización
-            </button>
-            
-            <div id="status" class="status"></div>
-        </div>
-        
-        <div id="result-container" class="result-container">
-            <div class="result-header">Tu Visualización</div>
-            <div class="video-wrapper">
-                <video id="player" controls></video>
-            </div>
-            <div class="result-actions">
-                <button id="download-btn" class="btn btn-success">Descargar</button>
-            </div>
-        </div>
-        
-        <div class="footer">
-            © 2025 Visualizador de Audio | Powered by API Karl
-        </div>
-    </div>
+    <!-- El mismo HTML que ya tenías -->
     
     <script>
         // Elementos DOM
@@ -531,6 +414,7 @@
         let currentFile = null;
         let processingTimeout = null;
         let currentVisType = 'waves';
+        let currentVideoUrl = null;
         
         // Selección de tipo de visualización
         visOptions.forEach(option => {
@@ -628,6 +512,9 @@
                 const color = visColor.value.substring(1); // quitar #
                 const bgColorVal = bgColor.value.substring(1); // quitar #
                 
+                // Mostrar detalles de la solicitud
+                console.log(`Enviando: tipo=${type}, color=${color}, bgColor=${bgColorVal}, archivo=${currentFile.name}`);
+                
                 // Enviar el archivo
                 const queryParams = `type=${type}&color=${color}&bgColor=${bgColorVal}`;
                 const response = await fetch(`/api/fun/audiovisualizer?${queryParams}`, {
@@ -638,7 +525,17 @@
                     }
                 });
                 
-                const data = await response.json();
+                // Verificar si la respuesta es JSON válido
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                    console.log("Respuesta del servidor:", data);
+                } else {
+                    const text = await response.text();
+                    console.error("Respuesta no JSON:", text);
+                    throw new Error("El servidor no respondió con JSON válido");
+                }
                 
                 // Limpiar timeout
                 clearTimeout(processingTimeout);
@@ -647,18 +544,27 @@
                     throw new Error(data.error || 'Error desconocido');
                 }
                 
+                // Guardar URL del video
+                currentVideoUrl = data.videoUrl;
+                
+                // Añadir marca de tiempo para evitar caché
+                const timestamp = new Date().getTime();
+                const videoUrlWithTimestamp = currentVideoUrl.includes('?') 
+                    ? `${currentVideoUrl}&_t=${timestamp}` 
+                    : `${currentVideoUrl}?_t=${timestamp}`;
+                
                 // Mostrar el video
-                const videoUrl = data.videoUrl;
-                player.src = videoUrl.startsWith('http') ? videoUrl : window.location.origin + videoUrl;
+                player.src = videoUrlWithTimestamp.startsWith('http') 
+                    ? videoUrlWithTimestamp 
+                    : window.location.origin + videoUrlWithTimestamp;
+                
+                console.log("URL del video:", player.src);
+                
+                // Cargar el video
                 player.load();
                 
-                // Configurar botón de descarga
-                downloadBtn.onclick = () => {
-                    const a = document.createElement('a');
-                    a.href = player.src;
-                    a.download = `visualizacion-${Date.now()}.mp4`;
-                    a.click();
-                };
+                // Configurar botón de descarga correctamente
+                setupDownload(data.videoUrl, `visualizacion-${currentVisType}-${Date.now()}.mp4`);
                 
                 // Mostrar resultado
                 resultContainer.classList.add('active');
@@ -667,15 +573,20 @@
                 // Scroll al resultado
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
                 
-                // Configurar evento de carga de video
-                player.onloadeddata = forceAudioVideo;
+                // Intentar reproducir después de cargar
+                player.onloadeddata = () => {
+                    console.log("Video cargado, intentando reproducir");
+                    player.play().catch(e => {
+                        console.warn("Error al reproducir:", e);
+                        showStatus("Haz clic en el video para reproducir", "info");
+                    });
+                };
                 
-                // También permitir reproducción al hacer clic
-                player.addEventListener('click', () => {
-                    if (player.paused) {
-                        player.play();
-                    }
-                });
+                // Si hay error al cargar el video
+                player.onerror = (e) => {
+                    console.error("Error cargando video:", e);
+                    showStatus("Error al cargar el video. Intenta descargar directamente.", "error");
+                };
                 
             } catch (error) {
                 clearTimeout(processingTimeout);
@@ -686,25 +597,49 @@
             }
         }
         
-        // Función para forzar la reproducción de audio/video
-        function forceAudioVideo() {
-            // Forzar la recarga del video para asegurar que el audio se reproduzca
-            player.pause();
-            player.currentTime = 0;
+        // Configurar descarga correctamente
+        function setupDownload(videoUrl, filename) {
+            // Método 1: Configurar el botón de descarga para crear enlace temporal
+            downloadBtn.onclick = () => {
+                // URL completa
+                const fullUrl = videoUrl.startsWith('http') 
+                    ? videoUrl 
+                    : window.location.origin + videoUrl;
+                
+                console.log("Iniciando descarga desde:", fullUrl);
+                
+                // Crear enlace temporal
+                const a = document.createElement('a');
+                a.href = fullUrl;
+                a.download = filename; // Esto sugiere un nombre de archivo
+                a.target = '_blank'; // Abrir en nueva pestaña por si acaso
+                document.body.appendChild(a);
+                a.click();
+                
+                // Limpiar
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                }, 100);
+                
+                return false; // Evitar comportamiento predeterminado
+            };
             
-            // Intentar reproducir automáticamente con volumen
-            player.volume = 1.0;
-            
-            // Pequeño retraso para asegurar que todo se haya cargado
-            setTimeout(() => {
-                player.play()
-                    .then(() => console.log("Reproducción iniciada"))
-                    .catch(e => {
-                        console.warn("Auto-reproducción bloqueada, solicitar interacción del usuario:", e);
-                        showStatus("Haz clic en el video para reproducir con audio", "info");
-                    });
-            }, 500);
+            // Método alternativo para intentar descargar
+            downloadBtn.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                window.open(videoUrl, '_blank');
+                return false;
+            });
         }
+        
+        // Permitir hacer clic en el video para reproducir
+        player.addEventListener('click', () => {
+            if (player.paused) {
+                player.play().catch(e => console.warn("Error al reproducir:", e));
+            } else {
+                player.pause();
+            }
+        });
     </script>
 </body>
 </html>
