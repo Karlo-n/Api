@@ -30,6 +30,18 @@ const CATEGORIAS = {
     CASUAL: "casual"
 };
 
+// Imágenes genéricas por categoría
+const IMAGENES_CATEGORIAS = {
+    general: "https://via.placeholder.com/400x300?text=Dilema",
+    divertido: "https://via.placeholder.com/400x300?text=Dilema+Divertido",
+    extremo: "https://via.placeholder.com/400x300?text=Dilema+Extremo",
+    comida: "https://via.placeholder.com/400x300?text=Dilema+Comida",
+    viajes: "https://via.placeholder.com/400x300?text=Dilema+Viajes",
+    tecnologia: "https://via.placeholder.com/400x300?text=Dilema+Tecnologia",
+    superpoderes: "https://via.placeholder.com/400x300?text=Dilema+Superpoderes",
+    casual: "https://via.placeholder.com/400x300?text=Dilema+Casual"
+};
+
 // Endpoint para generar una nueva pregunta
 router.get("/generate", async (req, res) => {
     try {
@@ -44,42 +56,57 @@ router.get("/generate", async (req, res) => {
         }
         
         // Generar prompt según la categoría
-        let prompt = "Genera 5 dilemas del tipo '¿Qué preferirías?' ";
+        let prompt = `Genera 5 dilemas del tipo '¿Qué preferirías?' para la categoría "${categoria}". 
+Cada dilema debe estar en formato JSON como este:
+{
+  "pregunta": "¿Qué preferirías?",
+  "opciones": ["Primera opción", "Segunda opción", "Tercera opción", "Cuarta opción"]
+}
+
+La respuesta debe ser SOLAMENTE un array de objetos JSON, sin ningún otro texto o explicación. Ejemplo:
+[
+  {
+    "pregunta": "¿Qué preferirías?",
+    "opciones": ["Opción 1", "Opción 2", "Opción 3"]
+  },
+  {
+    "pregunta": "¿Qué preferirías?",
+    "opciones": ["Opción 1", "Opción 2", "Opción 3", "Opción 4"]
+  }
+]`;
         
+        // Personalizar el prompt según la categoría
         switch (categoria.toLowerCase()) {
             case CATEGORIAS.DIVERTIDO:
-                prompt += "que sean divertidos y humorísticos";
+                prompt = prompt.replace('para la categoría "divertido"', 'que sean divertidos y humorísticos');
                 break;
             case CATEGORIAS.EXTREMO:
-                prompt += "con situaciones extremas o difíciles de decidir";
+                prompt = prompt.replace('para la categoría "extremo"', 'con situaciones extremas o difíciles de decidir');
                 break;
             case CATEGORIAS.COMIDA:
-                prompt += "relacionados con comida y bebidas";
+                prompt = prompt.replace('para la categoría "comida"', 'relacionados con comida y bebidas');
                 break;
             case CATEGORIAS.VIAJES:
-                prompt += "relacionados con viajes y lugares";
+                prompt = prompt.replace('para la categoría "viajes"', 'relacionados con viajes y lugares');
                 break;
             case CATEGORIAS.TECNOLOGIA:
-                prompt += "relacionados con tecnología y dispositivos";
+                prompt = prompt.replace('para la categoría "tecnologia"', 'relacionados con tecnología y dispositivos');
                 break;
             case CATEGORIAS.SUPERPODERES:
-                prompt += "sobre superpoderes o habilidades fantásticas";
+                prompt = prompt.replace('para la categoría "superpoderes"', 'sobre superpoderes o habilidades fantásticas');
                 break;
             case CATEGORIAS.CASUAL:
-                prompt += "sobre situaciones cotidianas o triviales";
+                prompt = prompt.replace('para la categoría "casual"', 'sobre situaciones cotidianas o triviales');
                 break;
-            default:
-                prompt += "variados e interesantes";
         }
+        
+        console.log("Enviando prompt a deepseek:", prompt);
         
         // Hacer solicitud a la API de generación
         try {
-            // Agregar instrucciones de formato explícitas al prompt
-            prompt += ". Responde con un array de 5 objetos JSON, cada uno con una 'pregunta' y un array de 'opciones'";
-            
-            console.log("Enviando prompt a deepseek:", prompt);
-            
-            const response = await axios.get(`http://api.apikarl.com/api/utility/deepseek?prompt=${encodeURIComponent(prompt)}`);
+            const response = await axios.get(`http://api.apikarl.com/api/utility/deepseek`, {
+                params: { prompt }
+            });
             
             console.log("Respuesta recibida de deepseek");
             
@@ -89,9 +116,7 @@ router.get("/generate", async (req, res) => {
                     pregunta: "¿Qué preferirías?",
                     opciones: [
                         "Poder volar pero solo a 5 km/h", 
-                        "Poder teletransportarte pero solo 10 metros cada vez",
-                        "Poder leer mentes pero solo las de personas que no conoces",
-                        "Poder hablar con animales pero solo con reptiles"
+                        "Poder teletransportarte pero solo 10 metros cada vez"
                     ]
                 },
                 {
@@ -108,41 +133,38 @@ router.get("/generate", async (req, res) => {
                     opciones: [
                         "Tener que decir todo lo que piensas", 
                         "Nunca poder expresar tu opinión",
-                        "Solo poder hablar en preguntas",
-                        "Solo poder hablar en rimas"
-                    ]
-                },
-                {
-                    pregunta: "¿Qué preferirías?",
-                    opciones: [
-                        "Saber cuándo morirás pero no poder cambiarlo", 
-                        "No saber cuándo morirás pero tener la oportunidad de prolongar tu vida",
-                        "Vivir exactamente 100 años sin importar nada",
-                        "Vivir mientras seas feliz y morir cuando ya no lo seas"
-                    ]
-                },
-                {
-                    pregunta: "¿Qué preferirías?",
-                    opciones: [
-                        "Tener un botón que te da $1,000 pero una persona aleatoria pierde $100", 
-                        "Tener un botón que te quita $100 pero 10 personas aleatorias ganan $100 cada una",
-                        "Tener un botón que te da $500 y también a una persona necesitada",
-                        "No tener ningún botón especial"
+                        "Solo poder hablar en preguntas"
                     ]
                 }
             ];
             
-            // Intentar procesar la respuesta como un array de objetos
+            // Intentar procesar la respuesta desde DeepSeek
             let generatedQuestions = [];
             
-            if (response.data) {
-                if (Array.isArray(response.data)) {
-                    generatedQuestions = response.data
-                        .filter(item => item && typeof item === 'object' && item.pregunta && Array.isArray(item.opciones))
-                        .map(item => ({
-                            pregunta: item.pregunta,
-                            opciones: item.opciones.slice(0, Math.max(4, item.opciones.length))
-                        }));
+            if (response.data && response.data.respuesta) {
+                try {
+                    // Buscar el array JSON en la respuesta
+                    const respuestaTexto = response.data.respuesta;
+                    
+                    // Encontrar donde comienza y termina el array
+                    const inicioArray = respuestaTexto.indexOf('[');
+                    const finArray = respuestaTexto.lastIndexOf(']') + 1;
+                    
+                    if (inicioArray !== -1 && finArray !== -1) {
+                        const jsonText = respuestaTexto.substring(inicioArray, finArray);
+                        const parsedData = JSON.parse(jsonText);
+                        
+                        if (Array.isArray(parsedData)) {
+                            generatedQuestions = parsedData
+                                .filter(item => item && typeof item === 'object' && item.pregunta && Array.isArray(item.opciones) && item.opciones.length >= 2)
+                                .map(item => ({
+                                    pregunta: item.pregunta,
+                                    opciones: item.opciones.slice(0, Math.min(5, item.opciones.length)) // Máximo 5 opciones
+                                }));
+                        }
+                    }
+                } catch (parseError) {
+                    console.error("Error al parsear JSON de DeepSeek:", parseError);
                 }
             }
             
@@ -158,10 +180,14 @@ router.get("/generate", async (req, res) => {
             // Generar ID único para la pregunta
             const questionId = crypto.randomBytes(8).toString('hex');
             
+            // Asignar una imagen según la categoría
+            const imagen = IMAGENES_CATEGORIAS[categoria.toLowerCase()] || IMAGENES_CATEGORIAS.general;
+            
             // Guardar la pregunta en la base de datos en memoria
             questionsDB[questionId] = {
                 ...selectedQuestion,
                 categoria,
+                imagen,
                 timestamp: Date.now(),
                 visitas: 0
             };
@@ -177,7 +203,10 @@ router.get("/generate", async (req, res) => {
                     id: index + 1,
                     texto: opcion
                 })),
-                categoria
+                categoria,
+                imagen,
+                refresh_stats_after: 10, // Indicar al cliente que actualice los stats después de 10 segundos
+                stats_url: `/api/fun/would-you-rather/${questionId}/stats` // URL para obtener estadísticas
             });
         } catch (error) {
             console.error("Error en la solicitud a deepseek:", error);
@@ -188,27 +217,21 @@ router.get("/generate", async (req, res) => {
                     pregunta: "¿Qué preferirías?",
                     opciones: [
                         "Poder volar pero solo a 5 km/h", 
-                        "Poder teletransportarte pero solo 10 metros cada vez",
-                        "Poder leer mentes pero solo las de personas que no conoces",
-                        "Poder hablar con animales pero solo con reptiles"
+                        "Poder teletransportarte pero solo 10 metros cada vez"
                     ]
                 },
                 {
                     pregunta: "¿Qué preferirías?",
                     opciones: [
                         "Vivir sin internet por un año", 
-                        "Vivir sin tu comida favorita para siempre",
-                        "Vivir sin poder usar aplicaciones de mensajería",
-                        "Vivir sin poder ver series o películas"
+                        "Vivir sin tu comida favorita para siempre"
                     ]
                 },
                 {
                     pregunta: "¿Qué preferirías?",
                     opciones: [
                         "Tener que decir todo lo que piensas", 
-                        "Nunca poder expresar tu opinión",
-                        "Solo poder hablar en preguntas",
-                        "Solo poder hablar en rimas"
+                        "Nunca poder expresar tu opinión"
                     ]
                 }
             ];
@@ -219,10 +242,14 @@ router.get("/generate", async (req, res) => {
             // Generar ID único para la pregunta
             const questionId = crypto.randomBytes(8).toString('hex');
             
+            // Asignar una imagen según la categoría
+            const imagen = IMAGENES_CATEGORIAS[categoria.toLowerCase()] || IMAGENES_CATEGORIAS.general;
+            
             // Guardar la pregunta en la base de datos en memoria
             questionsDB[questionId] = {
                 ...selectedQuestion,
                 categoria,
+                imagen,
                 timestamp: Date.now(),
                 visitas: 0
             };
@@ -238,7 +265,10 @@ router.get("/generate", async (req, res) => {
                     id: index + 1,
                     texto: opcion
                 })),
-                categoria
+                categoria,
+                imagen,
+                refresh_stats_after: 10, // Indicar al cliente que actualice los stats después de 10 segundos
+                stats_url: `/api/fun/would-you-rather/${questionId}/stats` // URL para obtener estadísticas
             });
         }
         
@@ -274,7 +304,10 @@ router.get("/:id", (req, res) => {
             texto: opcion
         })),
         categoria: questionsDB[id].categoria,
-        visitas: questionsDB[id].visitas
+        imagen: questionsDB[id].imagen,
+        visitas: questionsDB[id].visitas,
+        refresh_stats_after: 10, // Indicar al cliente que actualice los stats después de 10 segundos
+        stats_url: `/api/fun/would-you-rather/${id}/stats` // URL para obtener estadísticas
     });
 });
 
@@ -310,7 +343,9 @@ router.post("/:id/answer", (req, res) => {
         respuesta_seleccionada: {
             id: respuestaIndex + 1,
             texto: questionsDB[id].opciones[respuestaIndex]
-        }
+        },
+        refresh_stats_after: 10, // Indicar al cliente que actualice los stats después de 10 segundos
+        stats_url: `/api/fun/would-you-rather/${id}/stats` // URL para obtener estadísticas
     });
 });
 
@@ -351,7 +386,8 @@ router.get("/:id/stats", (req, res) => {
         total_respuestas: totalRespuestas,
         estadisticas,
         visitas: questionsDB[id].visitas,
-        categoria: questionsDB[id].categoria
+        categoria: questionsDB[id].categoria,
+        imagen: questionsDB[id].imagen
     });
 });
 
