@@ -127,8 +127,30 @@ router.get("/", async (req, res) => {
             // Registrar acción inicial
             registrarAccion(nuevoId, "iniciar", manoJugador, manoDealer, valorJugador, valorDealer, pensamientoDealer, estadoJuego);
             
+            // Extraer solo el texto del pensamiento, eliminando el formato JSON
+            let pensamientoTexto = null;
+            if (pensamientoDealer) {
+                try {
+                    // Intentar extraer solo el texto del pensamiento sin formato JSON
+                    const match = pensamientoDealer.match(/"pensamiento":\s*"([^"]+)"/);
+                    if (match && match[1]) {
+                        pensamientoTexto = match[1];
+                    } else {
+                        // Si no podemos extraerlo, limpiar el formato JSON manualmente
+                        pensamientoTexto = pensamientoDealer
+                            .replace(/```json\n/g, '')
+                            .replace(/```/g, '')
+                            .replace(/{\s*"pensamiento":\s*"/g, '')
+                            .replace(/",\s*"decision":\s*"[^"]+"\s*}\s*/g, '')
+                            .trim();
+                    }
+                } catch (error) {
+                    console.error("Error al extraer pensamiento del dealer:", error);
+                }
+            }
+            
+            // Crear respuesta simplificada
             return res.json({
-                mensaje: "Nueva partida de 21 iniciada",
                 partidaId: nuevoId,
                 mano_jugador: {
                     cartas: manoJugador,
@@ -138,17 +160,11 @@ router.get("/", async (req, res) => {
                     cartas: manoDealer,
                     valor: valorDealer
                 },
-                pensamiento_dealer: pensamientoDealer,
-                resultado: resultado,
-                partida: {
-                    id: nuevoId,
-                    acciones_restantes: 19, // Ya usamos 1 acción para iniciar
-                    acciones_totales: 1,
-                    fecha_creacion: partidasActivas[nuevoId].fechaCreacion,
-                    tiempo_restante_segundos: 300, // 5 minutos de inactividad máxima
-                    historial: partidasActivas[nuevoId].acciones
-                },
-                instrucciones: "Usa este partidaId con acciones 'seguir', 'parar' o 'terminar'. La partida durará por 20 acciones o 5 minutos de inactividad."
+                pensamiento_dealer: pensamientoTexto,
+                decision_dealer: decisionDealer,
+                estado: estadoJuego,
+                mensaje: resultado ? resultado.mensaje : "Partida iniciada",
+                acciones_restantes: 19
             });
         }
 
@@ -409,7 +425,31 @@ router.get("/", async (req, res) => {
         }
         
         // Construir respuesta
+        // Extraer solo el texto del pensamiento, eliminando el formato JSON
+        let pensamientoTexto = null;
+        if (pensamientoDealer) {
+            try {
+                // Intentar extraer solo el texto del pensamiento sin formato JSON
+                const match = pensamientoDealer.match(/"pensamiento":\s*"([^"]+)"/);
+                if (match && match[1]) {
+                    pensamientoTexto = match[1];
+                } else {
+                    // Si no podemos extraerlo, limpiar el formato JSON manualmente
+                    pensamientoTexto = pensamientoDealer
+                        .replace(/```json\n/g, '')
+                        .replace(/```/g, '')
+                        .replace(/{\s*"pensamiento":\s*"/g, '')
+                        .replace(/",\s*"decision":\s*"[^"]+"\s*}\s*/g, '')
+                        .trim();
+                }
+            } catch (error) {
+                console.error("Error al extraer pensamiento del dealer:", error);
+            }
+        }
+
+        // Actualizar respuesta para que sea consistente en estilo
         const respuesta = {
+            partidaId: partidaId,
             mano_jugador: {
                 cartas: manoJugador,
                 valor: valorJugador
@@ -418,21 +458,11 @@ router.get("/", async (req, res) => {
                 cartas: manoDealer,
                 valor: valorDealer
             },
+            pensamiento_dealer: pensamientoTexto,
             decision_dealer: decisionDealer,
-            pensamiento_dealer: pensamientoDealer,
-            resultado: resultado || {
-                estado: estadoJuego,
-                mensaje: obtenerMensajeFinal(estadoJuego)
-            },
-            partida: {
-                id: partidaId,
-                acciones_restantes: 20 - partidasActivas[partidaId].contador,
-                acciones_totales: partidasActivas[partidaId].acciones.length,
-                fecha_creacion: partidasActivas[partidaId].fechaCreacion,
-                terminada: partidasActivas[partidaId].terminada,
-                tiempo_restante_segundos: Math.floor((5 * 60 * 1000) / 1000), // 5 minutos en segundos
-                historial: partidasActivas[partidaId].acciones
-            }
+            estado: estadoJuego,
+            mensaje: resultado ? resultado.mensaje : obtenerMensajeFinal(estadoJuego),
+            acciones_restantes: 20 - partidasActivas[partidaId].contador
         };
         
         res.json(respuesta);
@@ -630,7 +660,7 @@ function determinarEstadoJuego(valorJugador, valorDealer) {
 async function consultarGroqDealer(cartasJugador, cartasDealer, valorJugador, valorDealer) {
     try {        
         const prompt = `
-Estás jugando una partida de 21 como dealer (similar al Blackjack).
+Estás jugando una partida de 21 como dealer (croupier).
 Reglas:
 - Cartas J, Q, K valen 10
 - Ases valen 1 u 11, lo que más convenga
@@ -642,12 +672,12 @@ Situación actual:
 - Tus cartas como dealer: ${cartasDealer.join(', ')} (Valor total: ${valorDealer})
 
 Analiza la situación como un dealer experto. Responde en formato JSON con estos dos campos:
-1. "pensamiento": Escribe tu análisis detallado de la situación, incluye tus probabilidades estimadas de pasarte de 21 si pides otra carta, y tu estrategia considerando la mano del jugador (mínimo 100 caracteres)
+1. "pensamiento": Breve análisis de tu decisión (max 120 caracteres)
 2. "decision": SOLO puedes responder con "continuar" o "parar"
 
 Formato exacto de respuesta:
 {
-  "pensamiento": "Tu análisis aquí (mínimo 100 caracteres)",
+  "pensamiento": "Tu análisis aquí (max 120 caracteres)",
   "decision": "continuar" o "parar"
 }
 `;
@@ -739,15 +769,10 @@ Partida de 21 finalizada:
 - Tus cartas como dealer: ${cartasDealer.join(', ')} (Valor total: ${valorDealer})
 - Resultado: ${situacion}
 
-Como dealer experto, analiza detalladamente el resultado final del juego.
-¿Qué probabilidades teníamos cada uno? ¿Fue cuestión de suerte o de estrategia?
-¿Qué jugadas alternativas habrías considerado?
+Como dealer experto, comenta brevemente el resultado. Formato JSON:
 
-Responde en formato JSON con un campo "pensamiento" que contenga tu análisis detallado (mínimo 100 caracteres).
-
-Formato exacto de respuesta:
 {
-  "pensamiento": "Tu análisis aquí (mínimo 100 caracteres)"
+  "pensamiento": "Tu breve análisis aquí (max 120 caracteres)"
 }
 `;
 
