@@ -21,6 +21,12 @@ const PALOS_CARTAS = ['♥', '♦', '♣', '♠'];
 router.get("/", async (req, res) => {
     try {
         const { accion, partidaId } = req.query;
+        
+        // Inicializar variables para evitar errores
+        let decisionDealer = null;
+        let pensamientoDealer = null;
+        let estadoJuego = "en_curso";
+        let resultado = null;
 
         // Verificar si una partida existe (partidaId sin acción)
         if (partidaId && !accion) {
@@ -219,6 +225,7 @@ router.get("/", async (req, res) => {
         let estadoJuego = partida.estadoJuego;
         let resultado = null;
         let pensamientoDealer = null;
+        let decisionDealer = null; // Inicializar decisionDealer aquí
         let decisionDealer = null;
         
         // Procesar acción
