@@ -73,55 +73,174 @@ router.get("/generate", async (req, res) => {
         }
         
         // Hacer solicitud a la API de generación
-        const response = await axios.get(`http://api.apikarl.com/api/utility/deepseek?prompt=${encodeURIComponent(prompt)}`);
-        
-        if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
-            throw new Error("No se pudieron generar preguntas");
-        }
-        
-        // Procesar respuesta y formatear correctamente
-        const generatedQuestions = response.data.map(item => {
-            // Asumiendo que cada item tiene una pregunta y opciones
-            if (typeof item === 'object' && item.pregunta && Array.isArray(item.opciones)) {
-                return {
-                    pregunta: item.pregunta,
-                    opciones: item.opciones.slice(0, Math.max(4, item.opciones.length))
-                };
+        try {
+            // Agregar instrucciones de formato explícitas al prompt
+            prompt += ". Responde con un array de 5 objetos JSON, cada uno con una 'pregunta' y un array de 'opciones'";
+            
+            console.log("Enviando prompt a deepseek:", prompt);
+            
+            const response = await axios.get(`http://api.apikarl.com/api/utility/deepseek?prompt=${encodeURIComponent(prompt)}`);
+            
+            console.log("Respuesta recibida de deepseek");
+            
+            // Preguntas predefinidas para usar como respaldo
+            const preguntasRespaldo = [
+                {
+                    pregunta: "¿Qué preferirías?",
+                    opciones: [
+                        "Poder volar pero solo a 5 km/h", 
+                        "Poder teletransportarte pero solo 10 metros cada vez",
+                        "Poder leer mentes pero solo las de personas que no conoces",
+                        "Poder hablar con animales pero solo con reptiles"
+                    ]
+                },
+                {
+                    pregunta: "¿Qué preferirías?",
+                    opciones: [
+                        "Vivir sin internet por un año", 
+                        "Vivir sin tu comida favorita para siempre",
+                        "Vivir sin poder usar aplicaciones de mensajería",
+                        "Vivir sin poder ver series o películas"
+                    ]
+                },
+                {
+                    pregunta: "¿Qué preferirías?",
+                    opciones: [
+                        "Tener que decir todo lo que piensas", 
+                        "Nunca poder expresar tu opinión",
+                        "Solo poder hablar en preguntas",
+                        "Solo poder hablar en rimas"
+                    ]
+                },
+                {
+                    pregunta: "¿Qué preferirías?",
+                    opciones: [
+                        "Saber cuándo morirás pero no poder cambiarlo", 
+                        "No saber cuándo morirás pero tener la oportunidad de prolongar tu vida",
+                        "Vivir exactamente 100 años sin importar nada",
+                        "Vivir mientras seas feliz y morir cuando ya no lo seas"
+                    ]
+                },
+                {
+                    pregunta: "¿Qué preferirías?",
+                    opciones: [
+                        "Tener un botón que te da $1,000 pero una persona aleatoria pierde $100", 
+                        "Tener un botón que te quita $100 pero 10 personas aleatorias ganan $100 cada una",
+                        "Tener un botón que te da $500 y también a una persona necesitada",
+                        "No tener ningún botón especial"
+                    ]
+                }
+            ];
+            
+            // Intentar procesar la respuesta como un array de objetos
+            let generatedQuestions = [];
+            
+            if (response.data) {
+                if (Array.isArray(response.data)) {
+                    generatedQuestions = response.data
+                        .filter(item => item && typeof item === 'object' && item.pregunta && Array.isArray(item.opciones))
+                        .map(item => ({
+                            pregunta: item.pregunta,
+                            opciones: item.opciones.slice(0, Math.max(4, item.opciones.length))
+                        }));
+                }
             }
-            return null;
-        }).filter(item => item !== null);
-        
-        if (generatedQuestions.length === 0) {
-            throw new Error("No se pudieron procesar las preguntas generadas");
+            
+            // Si no se pudieron generar preguntas, usar las predefinidas
+            if (generatedQuestions.length === 0) {
+                console.log("Usando preguntas predefinidas");
+                generatedQuestions = preguntasRespaldo;
+            }
+            
+            // Elegir una pregunta aleatoria de las generadas
+            const selectedQuestion = generatedQuestions[Math.floor(Math.random() * generatedQuestions.length)];
+            
+            // Generar ID único para la pregunta
+            const questionId = crypto.randomBytes(8).toString('hex');
+            
+            // Guardar la pregunta en la base de datos en memoria
+            questionsDB[questionId] = {
+                ...selectedQuestion,
+                categoria,
+                timestamp: Date.now(),
+                visitas: 0
+            };
+            
+            // Inicializar contadores de respuestas
+            responsesDB[questionId] = selectedQuestion.opciones.map(() => 0);
+            
+            // Devolver la pregunta con su ID
+            return res.json({
+                id: questionId,
+                pregunta: selectedQuestion.pregunta,
+                opciones: selectedQuestion.opciones.map((opcion, index) => ({
+                    id: index + 1,
+                    texto: opcion
+                })),
+                categoria
+            });
+        } catch (error) {
+            console.error("Error en la solicitud a deepseek:", error);
+            
+            // Usar preguntas de respaldo en caso de error
+            const preguntasRespaldo = [
+                {
+                    pregunta: "¿Qué preferirías?",
+                    opciones: [
+                        "Poder volar pero solo a 5 km/h", 
+                        "Poder teletransportarte pero solo 10 metros cada vez",
+                        "Poder leer mentes pero solo las de personas que no conoces",
+                        "Poder hablar con animales pero solo con reptiles"
+                    ]
+                },
+                {
+                    pregunta: "¿Qué preferirías?",
+                    opciones: [
+                        "Vivir sin internet por un año", 
+                        "Vivir sin tu comida favorita para siempre",
+                        "Vivir sin poder usar aplicaciones de mensajería",
+                        "Vivir sin poder ver series o películas"
+                    ]
+                },
+                {
+                    pregunta: "¿Qué preferirías?",
+                    opciones: [
+                        "Tener que decir todo lo que piensas", 
+                        "Nunca poder expresar tu opinión",
+                        "Solo poder hablar en preguntas",
+                        "Solo poder hablar en rimas"
+                    ]
+                }
+            ];
+            
+            // Elegir una pregunta aleatoria de respaldo
+            const selectedQuestion = preguntasRespaldo[Math.floor(Math.random() * preguntasRespaldo.length)];
+            
+            // Generar ID único para la pregunta
+            const questionId = crypto.randomBytes(8).toString('hex');
+            
+            // Guardar la pregunta en la base de datos en memoria
+            questionsDB[questionId] = {
+                ...selectedQuestion,
+                categoria,
+                timestamp: Date.now(),
+                visitas: 0
+            };
+            
+            // Inicializar contadores de respuestas
+            responsesDB[questionId] = selectedQuestion.opciones.map(() => 0);
+            
+            // Devolver la pregunta con su ID
+            return res.json({
+                id: questionId,
+                pregunta: selectedQuestion.pregunta,
+                opciones: selectedQuestion.opciones.map((opcion, index) => ({
+                    id: index + 1,
+                    texto: opcion
+                })),
+                categoria
+            });
         }
-        
-        // Elegir una pregunta aleatoria de las generadas
-        const selectedQuestion = generatedQuestions[Math.floor(Math.random() * generatedQuestions.length)];
-        
-        // Generar ID único para la pregunta
-        const questionId = crypto.randomBytes(8).toString('hex');
-        
-        // Guardar la pregunta en la base de datos en memoria
-        questionsDB[questionId] = {
-            ...selectedQuestion,
-            categoria,
-            timestamp: Date.now(),
-            visitas: 0
-        };
-        
-        // Inicializar contadores de respuestas
-        responsesDB[questionId] = selectedQuestion.opciones.map(() => 0);
-        
-        // Devolver la pregunta con su ID
-        return res.json({
-            id: questionId,
-            pregunta: selectedQuestion.pregunta,
-            opciones: selectedQuestion.opciones.map((opcion, index) => ({
-                id: index + 1,
-                texto: opcion
-            })),
-            categoria
-        });
         
     } catch (error) {
         console.error("Error al generar pregunta:", error);
