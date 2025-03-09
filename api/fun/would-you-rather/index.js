@@ -10,12 +10,6 @@ const responsesDB = {};
 
 /**
  * API WOULD YOU RATHER - Genera escenarios de "¿Qué preferirías?" para animar conversaciones
- * 
- * Endpoints:
- * - GET /api/fun/would-you-rather/generate - Genera una nueva pregunta
- * - GET /api/fun/would-you-rather/:id - Obtiene una pregunta específica
- * - POST /api/fun/would-you-rather/:id/answer - Registra una respuesta
- * - GET /api/fun/would-you-rather/:id/stats - Obtiene estadísticas de respuestas
  */
 
 // Categorías disponibles
@@ -56,22 +50,55 @@ router.get("/generate", async (req, res) => {
         }
         
         // Generar prompt según la categoría
-        let prompt = `Genera 5 dilemas del tipo '¿Qué preferirías?' para la categoría "${categoria}". 
+        let prompt = `Genera 3 dilemas del tipo '¿Qué preferirías?' para la categoría "${categoria}". 
+Para cada opción, también incluye un porcentaje estimado de las personas que elegirían esa opción (los porcentajes de cada dilema deben sumar 100%).
+
 Cada dilema debe estar en formato JSON como este:
 {
   "pregunta": "¿Qué preferirías?",
-  "opciones": ["Primera opción", "Segunda opción", "Tercera opción", "Cuarta opción"]
+  "opciones": [
+    {
+      "texto": "Primera opción",
+      "porcentaje": 60
+    },
+    {
+      "texto": "Segunda opción",
+      "porcentaje": 40
+    }
+  ]
 }
 
 La respuesta debe ser SOLAMENTE un array de objetos JSON, sin ningún otro texto o explicación. Ejemplo:
 [
   {
     "pregunta": "¿Qué preferirías?",
-    "opciones": ["Opción 1", "Opción 2", "Opción 3"]
+    "opciones": [
+      {
+        "texto": "Opción 1",
+        "porcentaje": 70
+      },
+      {
+        "texto": "Opción 2",
+        "porcentaje": 30
+      }
+    ]
   },
   {
     "pregunta": "¿Qué preferirías?",
-    "opciones": ["Opción 1", "Opción 2", "Opción 3", "Opción 4"]
+    "opciones": [
+      {
+        "texto": "Opción 1",
+        "porcentaje": 25
+      },
+      {
+        "texto": "Opción 2",
+        "porcentaje": 45
+      },
+      {
+        "texto": "Opción 3",
+        "porcentaje": 30
+      }
+    ]
   }
 ]`;
         
@@ -115,25 +142,24 @@ La respuesta debe ser SOLAMENTE un array de objetos JSON, sin ningún otro texto
                 {
                     pregunta: "¿Qué preferirías?",
                     opciones: [
-                        "Poder volar pero solo a 5 km/h", 
-                        "Poder teletransportarte pero solo 10 metros cada vez"
+                        { texto: "Poder volar pero solo a 5 km/h", porcentaje: 65 },
+                        { texto: "Poder teletransportarte pero solo 10 metros cada vez", porcentaje: 35 }
                     ]
                 },
                 {
                     pregunta: "¿Qué preferirías?",
                     opciones: [
-                        "Vivir sin internet por un año", 
-                        "Vivir sin tu comida favorita para siempre",
-                        "Vivir sin poder usar aplicaciones de mensajería",
-                        "Vivir sin poder ver series o películas"
+                        { texto: "Vivir sin internet por un año", porcentaje: 25 },
+                        { texto: "Vivir sin tu comida favorita para siempre", porcentaje: 40 },
+                        { texto: "Vivir sin poder usar aplicaciones de mensajería", porcentaje: 35 }
                     ]
                 },
                 {
                     pregunta: "¿Qué preferirías?",
                     opciones: [
-                        "Tener que decir todo lo que piensas", 
-                        "Nunca poder expresar tu opinión",
-                        "Solo poder hablar en preguntas"
+                        { texto: "Tener que decir todo lo que piensas", porcentaje: 20 },
+                        { texto: "Nunca poder expresar tu opinión", porcentaje: 30 },
+                        { texto: "Solo poder hablar en preguntas", porcentaje: 50 }
                     ]
                 }
             ];
@@ -156,7 +182,19 @@ La respuesta debe ser SOLAMENTE un array de objetos JSON, sin ningún otro texto
                         
                         if (Array.isArray(parsedData)) {
                             generatedQuestions = parsedData
-                                .filter(item => item && typeof item === 'object' && item.pregunta && Array.isArray(item.opciones) && item.opciones.length >= 2)
+                                .filter(item => {
+                                    return item && 
+                                           typeof item === 'object' && 
+                                           item.pregunta && 
+                                           Array.isArray(item.opciones) && 
+                                           item.opciones.length >= 2 &&
+                                           item.opciones.every(opt => 
+                                               opt && 
+                                               typeof opt === 'object' && 
+                                               opt.texto && 
+                                               typeof opt.porcentaje === 'number'
+                                           );
+                                })
                                 .map(item => ({
                                     pregunta: item.pregunta,
                                     opciones: item.opciones.slice(0, Math.min(5, item.opciones.length)) // Máximo 5 opciones
@@ -183,23 +221,30 @@ La respuesta debe ser SOLAMENTE un array de objetos JSON, sin ningún otro texto
             // Asignar una imagen según la categoría
             const imagen = IMAGENES_CATEGORIAS[categoria.toLowerCase()] || IMAGENES_CATEGORIAS.general;
             
+            // Extraer textos de opciones y porcentajes
+            const opcionesTexto = selectedQuestion.opciones.map(opt => opt.texto);
+            const porcentajes = selectedQuestion.opciones.map(opt => opt.porcentaje);
+            
             // Guardar la pregunta en la base de datos en memoria
             questionsDB[questionId] = {
-                ...selectedQuestion,
+                pregunta: selectedQuestion.pregunta,
+                opciones: opcionesTexto,
                 categoria,
                 imagen,
                 timestamp: Date.now(),
                 visitas: 0
             };
             
-            // Inicializar contadores de respuestas
-            responsesDB[questionId] = selectedQuestion.opciones.map(() => 0);
+            // Simular votos basados en los porcentajes sugeridos por la IA
+            // Establecemos un número base de 100 votos totales
+            const baseVotos = 100;
+            responsesDB[questionId] = porcentajes.map(porcentaje => Math.round((porcentaje / 100) * baseVotos));
             
             // Devolver la pregunta con su ID
             return res.json({
                 id: questionId,
                 pregunta: selectedQuestion.pregunta,
-                opciones: selectedQuestion.opciones.map((opcion, index) => ({
+                opciones: opcionesTexto.map((opcion, index) => ({
                     id: index + 1,
                     texto: opcion
                 })),
@@ -216,22 +261,15 @@ La respuesta debe ser SOLAMENTE un array de objetos JSON, sin ningún otro texto
                 {
                     pregunta: "¿Qué preferirías?",
                     opciones: [
-                        "Poder volar pero solo a 5 km/h", 
-                        "Poder teletransportarte pero solo 10 metros cada vez"
+                        { texto: "Poder volar pero solo a 5 km/h", porcentaje: 65 },
+                        { texto: "Poder teletransportarte pero solo 10 metros cada vez", porcentaje: 35 }
                     ]
                 },
                 {
                     pregunta: "¿Qué preferirías?",
                     opciones: [
-                        "Vivir sin internet por un año", 
-                        "Vivir sin tu comida favorita para siempre"
-                    ]
-                },
-                {
-                    pregunta: "¿Qué preferirías?",
-                    opciones: [
-                        "Tener que decir todo lo que piensas", 
-                        "Nunca poder expresar tu opinión"
+                        { texto: "Vivir sin internet por un año", porcentaje: 25 },
+                        { texto: "Vivir sin tu comida favorita para siempre", porcentaje: 75 }
                     ]
                 }
             ];
@@ -245,23 +283,29 @@ La respuesta debe ser SOLAMENTE un array de objetos JSON, sin ningún otro texto
             // Asignar una imagen según la categoría
             const imagen = IMAGENES_CATEGORIAS[categoria.toLowerCase()] || IMAGENES_CATEGORIAS.general;
             
+            // Extraer textos de opciones y porcentajes
+            const opcionesTexto = selectedQuestion.opciones.map(opt => opt.texto);
+            const porcentajes = selectedQuestion.opciones.map(opt => opt.porcentaje);
+            
             // Guardar la pregunta en la base de datos en memoria
             questionsDB[questionId] = {
-                ...selectedQuestion,
+                pregunta: selectedQuestion.pregunta,
+                opciones: opcionesTexto,
                 categoria,
                 imagen,
                 timestamp: Date.now(),
                 visitas: 0
             };
             
-            // Inicializar contadores de respuestas
-            responsesDB[questionId] = selectedQuestion.opciones.map(() => 0);
+            // Simular votos basados en los porcentajes
+            const baseVotos = 100;
+            responsesDB[questionId] = porcentajes.map(porcentaje => Math.round((porcentaje / 100) * baseVotos));
             
             // Devolver la pregunta con su ID
             return res.json({
                 id: questionId,
                 pregunta: selectedQuestion.pregunta,
-                opciones: selectedQuestion.opciones.map((opcion, index) => ({
+                opciones: opcionesTexto.map((opcion, index) => ({
                     id: index + 1,
                     texto: opcion
                 })),
