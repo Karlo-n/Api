@@ -13,7 +13,7 @@ const byn = require("./api/fun/byn");
 const invertir = require("./api/fun/invertir");
 const pixelArtRoutes = require('./api/fun/pixel');
 const comicFilter = require("./api/fun/comic");
-const blackjackRouter = require("./api/fun/blackjack");
+const juego21Router = require("./api/fun/21");
 const audioVisualizerRouter = require("./api/fun/audiovisualizer");
 const subtitlesRouter = require("./api/fun/subtitles");
 const triviaRouter = require("./api/fun/trivia");
@@ -42,7 +42,7 @@ app.use("/api/fun/byn", byn);
 app.use("/api/fun/invertir", invertir);
 app.use('/api/fun/pixel', pixelArtRoutes);
 app.use("/api/fun/comic", comicFilter);
-app.use("/api/fun/blackjack", blackjackRouter);
+app.use("/api/fun/21", juego21Router);
 app.use("/api/fun/audiovisualizer", audioVisualizerRouter);
 app.use("/api/fun/subtitles", subtitlesRouter);
 app.use("/api/fun/trivia", triviaRouter);
@@ -79,7 +79,7 @@ app.get("/", (req, res) => {
     "/api/fun/invertir",
     "/api/fun/pixel",
     "/api/fun/comic",
-    "/api/fun/blackjack",
+    "/api/fun/21",
     "/api/fun/audiovisualizer",
     "/api/fun/subtitles",
     "/api/fun/trivia",
