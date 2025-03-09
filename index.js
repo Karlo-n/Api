@@ -17,6 +17,7 @@ const blackjackRouter = require("./api/fun/blackjack");
 const audioVisualizerRouter = require("./api/fun/audiovisualizer");
 const subtitlesRouter = require("./api/fun/subtitles");
 const triviaRouter = require("./api/fun/trivia");
+const wouldYouRatherRouter = require('./api/fun/would-you-rather');
 const qrRouter = require("./api/utility/qr");
 const boostCardRouter = require("./api/utility/boostcard");
 const traductorRouter = require("./api/utility/traductor");
@@ -45,6 +46,7 @@ app.use("/api/fun/blackjack", blackjackRouter);
 app.use("/api/fun/audiovisualizer", audioVisualizerRouter);
 app.use("/api/fun/subtitles", subtitlesRouter);
 app.use("/api/fun/trivia", triviaRouter);
+app.use("/api/fun/would-you-rather", wouldYouRatherRouter);
 app.use("/api/utility/bienvenida", bienvenidaRouter);
 app.use("/api/utility/qr", qrRouter);
 app.use("/api/utility/boostcard", boostCardRouter);
@@ -81,6 +83,7 @@ app.get("/", (req, res) => {
     "/api/fun/audiovisualizer",
     "/api/fun/subtitles",
     "/api/fun/trivia",
+    "/api/fun/would-you-rather",
     "/api/utility/boostcard",
     "/api/utility/traductor",
     "/api/utility/bienvenida",
