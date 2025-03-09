@@ -1,4 +1,4 @@
-// api/fun/blackjack/index.js
+// api/fun/21/index.js
 const express = require("express");
 const Groq = require("groq-sdk");
 const router = express.Router();
@@ -55,9 +55,21 @@ router.get("/", async (req, res) => {
             const nuevoId = uuidv4();
             const mazo = crearMazoBarajado();
             
-            // Repartir cartas iniciales
-            const manoJugador = [mazo.pop(), mazo.pop()];
-            const manoDealer = [mazo.pop(), mazo.pop()];
+            // Repartir cartas iniciales (cantidad aleatoria entre 1-4)
+            const cantidadCartasJugador = Math.floor(Math.random() * 4) + 1;
+            const cantidadCartasDealer = Math.floor(Math.random() * 4) + 1;
+            
+            const manoJugador = [];
+            const manoDealer = [];
+            
+            // Repartir cartas
+            for (let i = 0; i < cantidadCartasJugador; i++) {
+                manoJugador.push(mazo.pop());
+            }
+            
+            for (let i = 0; i < cantidadCartasDealer; i++) {
+                manoDealer.push(mazo.pop());
+            }
             
             // Crear nueva partida
             partidasActivas[nuevoId] = {
@@ -94,6 +106,11 @@ router.get("/", async (req, res) => {
                     manoJugador, manoDealer, valorJugador, valorDealer, estadoJuego
                 );
                 pensamientoDealer = respuestaDealer.pensamiento;
+                
+                // Liberar memoria si el juego ya terminó
+                setTimeout(() => {
+                    delete partidasActivas[nuevoId];
+                }, 100);
             } else {
                 // Analizar la situación inicial
                 const respuestaDealer = await consultarGroqDealer(
