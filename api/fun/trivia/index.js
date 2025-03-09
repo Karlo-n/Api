@@ -2541,7 +2541,559 @@ const BANCO_PREGUNTAS = {
         dificultad: DIFICULTADES.FACIL,
         imagen: TRIVIA_IMAGEN
     },
+{
+    pregunta: "¿Cuánto tiempo tarda la luz del Sol en llegar a la Tierra?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["8 minutos y 20 segundos", "1 segundo", "1 hora", "24 horas"],
+    respuesta_correcta: 0,
+    explicacion: "La luz viaja a aproximadamente 300,000 km/s, y la distancia media del Sol a la Tierra es de 150 millones de km, lo que resulta en un tiempo de viaje de 8 minutos y 20 segundos.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué parte del cerebro humano es responsable de la memoria?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Hipocampo", "Cerebelo", "Tálamo", "Bulbo raquídeo"],
+    respuesta_correcta: 0,
+    explicacion: "El hipocampo, ubicado en el lóbulo temporal del cerebro, desempeña un papel fundamental en la formación y consolidación de la memoria, especialmente la memoria a largo plazo.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Cuál es el elemento químico con el símbolo 'Fe'?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Hierro", "Flúor", "Fósforo", "Francio"],
+    respuesta_correcta: 0,
+    explicacion: "El símbolo 'Fe' corresponde al hierro, del latín 'ferrum'. Es un metal esencial para la formación de hemoglobina en la sangre y numerosas funciones biológicas.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué sustancia da a las plantas su color verde?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Clorofila", "Melanina", "Hemoglobina", "Caroteno"],
+    respuesta_correcta: 0,
+    explicacion: "La clorofila es el pigmento verde presente en las plantas que absorbe la luz para realizar la fotosíntesis, proporcionando el característico color verde a hojas y tallos.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Cuál de estos animales no es un mamífero?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Cocodrilo", "Murciélago", "Ballena", "Elefante"],
+    respuesta_correcta: 0,
+    explicacion: "Los cocodrilos son reptiles. Los mamíferos se caracterizan por tener glándulas mamarias, pelo o pelaje, y ser de sangre caliente, características que no poseen los cocodrilos.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué planeta tiene un día más largo que su año?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Venus", "Marte", "Mercurio", "Júpiter"],
+    respuesta_correcta: 0,
+    explicacion: "Venus tarda más en completar una rotación sobre su propio eje (243 días terrestres) que en orbitar alrededor del Sol (225 días terrestres).",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Cuál es la unidad básica de la herencia genética?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Gen", "Cromosoma", "Núcleo", "Célula"],
+    respuesta_correcta: 0,
+    explicacion: "El gen es la unidad básica de la herencia, constituido por segmentos de ADN que contienen información para la síntesis de proteínas o ARN funcional.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿En qué fase del agua las moléculas tienen mayor energía?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Gas", "Líquido", "Sólido", "Plasma"],
+    respuesta_correcta: 0,
+    explicacion: "En estado gaseoso (vapor de agua), las moléculas de agua poseen mayor energía cinética, moviéndose libremente y ocupando todo el espacio disponible.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué partícula subatómica tiene carga positiva?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Protón", "Electrón", "Neutrón", "Fotón"],
+    respuesta_correcta: 0,
+    explicacion: "El protón es una partícula subatómica con carga eléctrica positiva (+1) que se encuentra en el núcleo de los átomos. Los electrones tienen carga negativa y los neutrones no tienen carga.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Cuál de estas no es una de las cuatro fuerzas fundamentales de la física?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Fuerza centrífuga", "Gravedad", "Fuerza nuclear fuerte", "Fuerza electromagnética"],
+    respuesta_correcta: 0,
+    explicacion: "Las cuatro fuerzas fundamentales son: gravedad, electromagnética, nuclear fuerte y nuclear débil. La fuerza centrífuga es una fuerza ficticia o aparente en un marco de referencia en rotación.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué glándula produce la insulina en el cuerpo humano?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Páncreas", "Tiroides", "Hipófisis", "Suprarrenales"],
+    respuesta_correcta: 0,
+    explicacion: "El páncreas produce insulina en sus células beta, localizadas en los islotes de Langerhans. La insulina regula los niveles de glucosa en sangre.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Cuál es el planeta más caliente del sistema solar?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Venus", "Mercurio", "Marte", "Júpiter"],
+    respuesta_correcta: 0,
+    explicacion: "Aunque Mercurio está más cerca del Sol, Venus es el planeta más caliente debido a su densa atmósfera rica en CO₂ que crea un potente efecto invernadero, con temperaturas superficiales promedio de 462°C.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Cuál es el ácido presente en el jugo gástrico del estómago?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Ácido clorhídrico", "Ácido sulfúrico", "Ácido acético", "Ácido cítrico"],
+    respuesta_correcta: 0,
+    explicacion: "El ácido clorhídrico (HCl) es secretado por las células parietales del estómago y ayuda a digerir los alimentos, activar enzimas digestivas y eliminar bacterias.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Cuál de estos órganos no pertenece al sistema digestivo?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Pulmones", "Estómago", "Intestino delgado", "Páncreas"],
+    respuesta_correcta: 0,
+    explicacion: "Los pulmones pertenecen al sistema respiratorio, encargado del intercambio de gases. El resto de órganos mencionados son parte del sistema digestivo.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué fenómeno causa las mareas en los océanos?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Atracción gravitatoria de la Luna y el Sol", "Rotación de la Tierra", "Vientos oceánicos", "Corrientes marinas"],
+    respuesta_correcta: 0,
+    explicacion: "Las mareas son causadas principalmente por la atracción gravitatoria de la Luna sobre la Tierra, con una contribución menor del Sol. Esta fuerza gravitacional atrae las masas de agua de los océanos.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Cuál es la ley de Newton que establece que a toda acción le corresponde una reacción igual y opuesta?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Tercera ley", "Primera ley", "Segunda ley", "Ley de la gravitación universal"],
+    respuesta_correcta: 0,
+    explicacion: "La tercera ley de Newton establece que cuando un cuerpo ejerce una fuerza sobre otro, el segundo cuerpo ejerce sobre el primero una fuerza igual en magnitud pero de sentido opuesto.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué vitamina se produce en la piel cuando nos exponemos al sol?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Vitamina D", "Vitamina C", "Vitamina A", "Vitamina E"],
+    respuesta_correcta: 0,
+    explicacion: "La piel humana sintetiza vitamina D cuando se expone a la radiación ultravioleta B (UVB) del sol. Esta vitamina es esencial para la absorción de calcio y la salud ósea.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué gas es más abundante en la atmósfera terrestre?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Nitrógeno", "Oxígeno", "Dióxido de carbono", "Argón"],
+    respuesta_correcta: 0,
+    explicacion: "El nitrógeno constituye aproximadamente el 78% de la atmósfera terrestre, seguido por el oxígeno (21%) y otros gases en cantidades menores.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué enfermedad se previene con la vacuna BCG?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Tuberculosis", "Poliomielitis", "Sarampión", "Hepatitis B"],
+    respuesta_correcta: 0,
+    explicacion: "La vacuna BCG (Bacilo de Calmette-Guérin) protege contra la tuberculosis, una enfermedad infecciosa causada por la bacteria Mycobacterium tuberculosis.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿La teoría de la evolución por selección natural fue propuesta por Charles Darwin?",
+    tipo: TIPOS.VERDADERO_FALSO,
+    opciones: ["Verdadero", "Falso"],
+    respuesta_correcta: 0,
+    explicacion: "Charles Darwin publicó su teoría de la evolución mediante selección natural en 1859 en su obra 'El origen de las especies'. Alfred Russel Wallace también propuso independientemente una teoría similar.",
+    dificultad: DIFICULTADES.MEDIO,
+    imagen: TRIVIA_IMAGEN
+},
 
+// CIENCIA - NIVEL DIFÍCIL
+{
+    pregunta: "¿Cuál es la partícula subatómica que tiene la menor masa?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Electrón", "Protón", "Neutrón", "Muón"],
+    respuesta_correcta: 0,
+    explicacion: "El electrón es la partícula subatómica estable con menor masa, aproximadamente 1/1836 de la masa de un protón. Los neutrinos tienen masa aún menor, pero no son considerados partículas subatómicas constituyentes de los átomos.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué parte del cerebro humano controla principalmente el equilibrio y la coordinación?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Cerebelo", "Lóbulo frontal", "Hipotálamo", "Amígdala"],
+    respuesta_correcta: 0,
+    explicacion: "El cerebelo, situado en la parte posterior del cráneo, es responsable principalmente de la coordinación motora fina, el equilibrio, la postura y el aprendizaje motor.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué cambio de estado ocurre cuando un sólido pasa directamente a gas sin pasar por el estado líquido?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Sublimación", "Evaporación", "Condensación", "Fusión"],
+    respuesta_correcta: 0,
+    explicacion: "La sublimación es el proceso mediante el cual un sólido pasa directamente al estado gaseoso sin pasar por el estado líquido. Un ejemplo común es el hielo seco (CO₂ sólido) que se sublima a temperatura ambiente.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué es la entropía en termodinámica?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Medida del desorden o aleatoriedad de un sistema", "Capacidad para realizar trabajo", "Temperatura absoluta", "Presión de un gas ideal"],
+    respuesta_correcta: 0,
+    explicacion: "La entropía es una magnitud física que mide el grado de desorden o aleatoriedad de un sistema. Según la segunda ley de la termodinámica, la entropía del universo siempre aumenta en procesos espontáneos.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué son los fullerenos?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Moléculas compuestas únicamente por carbono", "Tipos de ácidos nucleicos", "Partículas elementales", "Isótopos radiactivos"],
+    respuesta_correcta: 0,
+    explicacion: "Los fullerenos son moléculas compuestas exclusivamente por átomos de carbono, formando estructuras cerradas como esferas o elipsoides. El más conocido es el C60, llamado 'buckminsterfullereno' o 'buckyball', con forma similar a un balón de fútbol.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué enfermedad es causada por la deficiencia de vitamina C?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Escorbuto", "Raquitismo", "Pelagra", "Beriberi"],
+    respuesta_correcta: 0,
+    explicacion: "El escorbuto es causado por la deficiencia de vitamina C (ácido ascórbico), esencial para la formación del colágeno. Se caracteriza por debilidad, anemia, gingivitis y retraso en la cicatrización de heridas.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué reemplazó Einstein en su teoría de la relatividad general?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["La gravedad como fuerza por la curvatura del espacio-tiempo", "La masa por la energía", "El tiempo absoluto por el tiempo relativo", "El espacio euclidiano por el espacio cuántico"],
+    respuesta_correcta: 0,
+    explicacion: "En la Teoría de la Relatividad General (1915), Einstein reemplazó el concepto newtoniano de gravedad como fuerza de atracción por la idea de que la masa deforma el espacio-tiempo, y esta curvatura es lo que experimentamos como gravedad.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué es un quásar?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["El núcleo extremadamente brillante de una galaxia activa", "Una estrella en proceso de convertirse en supernova", "Un tipo de agujero negro", "Una nebulosa planetaria"],
+    respuesta_correcta: 0,
+    explicacion: "Los quásares (quasi-stellar radio sources) son núcleos galácticos activos extremadamente luminosos, alimentados por agujeros negros supermasivos que acrecientan materia, emitiendo cantidades enormes de energía electromagnética.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Cuál es el nombre del enlace químico formado por compartición de electrones?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Enlace covalente", "Enlace iónico", "Enlace metálico", "Enlace de hidrógeno"],
+    respuesta_correcta: 0,
+    explicacion: "El enlace covalente se forma cuando dos átomos comparten uno o más pares de electrones para alcanzar estabilidad. Es común en moléculas orgánicas y entre no metales.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué describe el principio de incertidumbre de Heisenberg?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["La imposibilidad de conocer simultáneamente la posición y momento de una partícula con precisión absoluta", "La dualidad onda-partícula", "La conservación de la energía", "La invarianza relativista"],
+    respuesta_correcta: 0,
+    explicacion: "El principio de incertidumbre de Heisenberg establece que no es posible conocer simultáneamente con precisión absoluta la posición y el momento (cantidad de movimiento) de una partícula. Cuanto mayor sea la precisión en la medida de una, menor será en la otra.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué tipo de radiación tiene la mayor longitud de onda en el espectro electromagnético?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Ondas de radio", "Microondas", "Luz infrarroja", "Luz visible"],
+    respuesta_correcta: 0,
+    explicacion: "Las ondas de radio tienen la mayor longitud de onda en el espectro electromagnético, desde aproximadamente 1 milímetro hasta varios kilómetros, correspondiendo a las frecuencias más bajas.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué número corresponde al límite de Chandrasekhar en masas solares?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["1.44", "3.28", "0.91", "5.67"],
+    respuesta_correcta: 0,
+    explicacion: "El límite de Chandrasekhar es aproximadamente 1.44 masas solares, representando la masa máxima que puede tener una enana blanca estable. Por encima de este límite, la presión de degeneración de los electrones no puede contrarrestar la gravedad, llevando al colapso estelar.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Cuál de estos organismos no pertenece al reino Fungi?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Líquenes", "Levaduras", "Setas", "Mohos"],
+    respuesta_correcta: 0,
+    explicacion: "Los líquenes no son organismos individuales sino una asociación simbiótica entre un hongo (reino Fungi) y un alga o cianobacteria (reino Protista o Monera). Por tanto, no pertenecen exclusivamente al reino Fungi.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué ocurre durante una reacción de neutralización?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Un ácido y una base reaccionan para formar sal y agua", "Un elemento se oxida y otro se reduce", "Un compuesto pierde un grupo hidroxilo", "Un compuesto orgánico forma un polímero"],
+    respuesta_correcta: 0,
+    explicacion: "En una reacción de neutralización, un ácido reacciona con una base para formar una sal y agua. Por ejemplo: HCl (ácido) + NaOH (base) → NaCl (sal) + H₂O (agua).",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué científico postuló que dos masas cualquiera se atraen con una fuerza proporcional al producto de sus masas e inversamente proporcional al cuadrado de la distancia que las separa?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Niels Bohr"],
+    respuesta_correcta: 0,
+    explicacion: "Isaac Newton formuló la ley de gravitación universal en el siglo XVII, estableciendo que cualquier partícula de materia en el universo atrae a cualquier otra con una fuerza directamente proporcional al producto de sus masas e inversamente proporcional al cuadrado de la distancia entre ellas.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué tipo de radiación tiene mayor capacidad de penetración?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Radiación gamma", "Radiación alfa", "Radiación beta", "Radiación ultravioleta"],
+    respuesta_correcta: 0,
+    explicacion: "La radiación gamma (γ) tiene la mayor capacidad de penetración debido a su alta energía y ausencia de carga y masa. Puede atravesar varios centímetros de plomo y requiere gruesas paredes de hormigón o plomo para detenerse efectivamente.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué teoría unificó la electricidad y el magnetismo?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Teoría electromagnética", "Teoría de cuerdas", "Teoría cuántica", "Teoría de la relatividad"],
+    respuesta_correcta: 0,
+    explicacion: "La teoría electromagnética, formulada por James Clerk Maxwell en el siglo XIX, unificó los fenómenos eléctricos y magnéticos, demostrando que son manifestaciones diferentes de un mismo fenómeno físico: el electromagnetismo.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Cuál es la glándula endocrina más grande del cuerpo humano?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Tiroides", "Hipófisis", "Páncreas", "Suprarrenales"],
+    respuesta_correcta: 0,
+    explicacion: "La tiroides es la glándula endocrina más grande del cuerpo humano. Situada en el cuello, produce hormonas que regulan el metabolismo, el crecimiento y el desarrollo del cuerpo.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿La teoría del Big Bang postula que el universo se expande desde un estado inicial extremadamente caliente y denso?",
+    tipo: TIPOS.VERDADERO_FALSO,
+    opciones: ["Verdadero", "Falso"],
+    respuesta_correcta: 0,
+    explicacion: "La teoría del Big Bang establece que el universo comenzó hace aproximadamente 13.800 millones de años como una singularidad extremadamente caliente y densa, y se ha estado expandiendo y enfriando desde entonces.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Los humanos y los chimpancés comparten aproximadamente qué porcentaje de su ADN?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["98-99%", "85-90%", "75-80%", "50-60%"],
+    respuesta_correcta: 0,
+    explicacion: "Los humanos y los chimpancés comparten entre el 98% y 99% de su ADN, lo que refleja nuestro parentesco evolutivo cercano. Las diferencias se encuentran principalmente en la expresión génica y regulación del desarrollo.",
+    dificultad: DIFICULTADES.DIFICIL,
+    imagen: TRIVIA_IMAGEN
+},
+
+// CIENCIA - NIVEL EXPERTO
+{
+    pregunta: "¿Cuál es el nombre de la reacción química que convierte el azúcar en energía en las células?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Respiración celular", "Fotosíntesis", "Fermentación láctica", "Glucólisis anaerobia"],
+    respuesta_correcta: 0,
+    explicacion: "La respiración celular es el proceso metabólico por el cual las células obtienen energía (ATP) a partir de glucosa y oxígeno, liberando dióxido de carbono y agua. Incluye las etapas de glucólisis, ciclo de Krebs y cadena transportadora de electrones.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué son los números de oxidación en química?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["La carga que tendría un átomo si todos los enlaces fueran 100% iónicos", "El número de electrones de valencia", "El número de protones en el núcleo", "La carga eléctrica real del átomo"],
+    respuesta_correcta: 0,
+    explicacion: "El número de oxidación es la carga aparente que tendría un átomo si todos sus enlaces fueran 100% iónicos, es decir, si todos los electrones compartidos fueran asignados al átomo más electronegativo. Es fundamental para comprender reacciones redox.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué nucleótido contiene uracilo en lugar de timina?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["ARN", "ADN", "ATP", "ADP"],
+    respuesta_correcta: 0,
+    explicacion: "El ARN (ácido ribonucleico) utiliza uracilo (U) como una de sus bases nitrogenadas, a diferencia del ADN que utiliza timina (T). Esta es una diferencia estructural clave entre ambos ácidos nucleicos.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué fenómeno físico explicó Einstein con el efecto fotoeléctrico?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["La naturaleza cuántica de la luz", "La dilatación del tiempo", "La equivalencia masa-energía", "La curvatura del espacio-tiempo"],
+    respuesta_correcta: 0,
+    explicacion: "Albert Einstein explicó el efecto fotoeléctrico en 1905 proponiendo que la luz está compuesta por paquetes discretos de energía (fotones), demostrando así su naturaleza cuántica. Este trabajo le valió el Premio Nobel de Física en 1921.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué representa la constante de Avogadro?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["El número de entidades elementales en un mol", "La velocidad de la luz en el vacío", "La constante gravitacional universal", "La constante de Planck"],
+    respuesta_correcta: 0,
+    explicacion: "La constante de Avogadro (NA ≈ 6.022 × 10²³ mol⁻¹) representa el número de entidades elementales (átomos, moléculas, iones) que hay en un mol de sustancia, permitiendo conectar la escala atómica con la macroscópica.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué es un bosón, según el Modelo Estándar de la física de partículas?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Una partícula portadora de fuerza", "Una partícula de materia", "Un tipo de quark", "Un tipo de leptón"],
+    respuesta_correcta: 0,
+    explicacion: "Los bosones son partículas que transmiten las fuerzas fundamentales en el Modelo Estándar. Incluyen el fotón (fuerza electromagnética), los bosones W y Z (fuerza nuclear débil), los gluones (fuerza nuclear fuerte) y el bosón de Higgs (campo de Higgs).",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué es la presión oncótica en fisiología?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["La presión osmótica causada por las proteínas plasmáticas", "La presión arterial sistólica", "La presión intraocular", "La presión del líquido cefalorraquídeo"],
+    respuesta_correcta: 0,
+    explicacion: "La presión oncótica es la presión osmótica ejercida por las proteínas plasmáticas, principalmente la albúmina. Es crucial para mantener el equilibrio de fluidos entre el plasma sanguíneo y el fluido intersticial, evitando el edema tisular.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿En qué consiste la degeneración de la secuencia del código genético?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Diferentes codones pueden codificar el mismo aminoácido", "La acumulación de mutaciones en el ADN", "La pérdida de información genética durante la replicación", "El proceso de envejecimiento celular"],
+    respuesta_correcta: 0,
+    explicacion: "La degeneración del código genético significa que varios codones (tripletes de nucleótidos) pueden codificar el mismo aminoácido. Por ejemplo, los codones GGU, GGC, GGA y GGG codifican todos glicina, aumentando la resistencia del código a las mutaciones.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué son las líneas espectrales de Fraunhofer?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Líneas de absorción en el espectro solar", "Patrones de interferencia en cristales", "Trayectorias de partículas subatómicas", "Fluctuaciones en campos magnéticos"],
+    respuesta_correcta: 0,
+    explicacion: "Las líneas de Fraunhofer son líneas oscuras en el espectro solar, descubiertas por Joseph von Fraunhofer en 1814. Representan longitudes de onda específicas que son absorbidas por elementos en la atmósfera solar, proporcionando información sobre su composición química.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué describe la paradoja EPR en física cuántica?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["La aparente comunicación instantánea entre partículas entrelazadas", "La dualidad onda-partícula", "La incertidumbre en mediciones simultáneas", "La relación entre masa y energía"],
+    respuesta_correcta: 0,
+    explicacion: "La paradoja EPR (Einstein-Podolsky-Rosen) cuestiona la completitud de la mecánica cuántica al señalar que partículas entrelazadas parecen influirse instantáneamente a distancia ('acción fantasmal a distancia'), aparentemente contradiciendo la relatividad especial.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué científico formuló el 'principio de exclusión' fundamental para la estructura atómica?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Wolfgang Pauli", "Niels Bohr", "Werner Heisenberg", "Erwin Schrödinger"],
+    respuesta_correcta: 0,
+    explicacion: "Wolfgang Pauli formuló en 1925 el principio de exclusión que establece que dos fermiones idénticos (como los electrones) no pueden ocupar simultáneamente el mismo estado cuántico. Este principio explica la estructura de los átomos y la tabla periódica.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué es la 'deriva genética' en biología evolutiva?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Cambio aleatorio en las frecuencias alélicas de una población", "Transferencia de genes entre especies distintas", "La acumulación direccional de mutaciones beneficiosas", "El aislamiento reproductivo entre poblaciones"],
+    respuesta_correcta: 0,
+    explicacion: "La deriva genética es un mecanismo de evolución que implica cambios aleatorios en las frecuencias alélicas de una población, no dirigidos por selección natural. Su efecto es más pronunciado en poblaciones pequeñas y puede llevar a la fijación o pérdida de alelos.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué proceso estelar es responsable de la producción de elementos más pesados que el hierro?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Nucleosíntesis por captura de neutrones en supernovas", "Fusión nuclear en estrellas masivas", "Decaimiento radiactivo en enanas blancas", "Fisión nuclear espontánea"],
+    respuesta_correcta: 0,
+    explicacion: "Los elementos más pesados que el hierro se forman principalmente por nucleosíntesis de captura de neutrones durante eventos extremos como supernovas y fusiones de estrellas de neutrones, ya que la fusión de elementos más pesados que el hierro consume energía en lugar de liberarla.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué es la meiosis?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["División celular que produce células haploides para reproducción sexual", "División celular que mantiene el número de cromosomas", "Replicación del ADN sin división celular", "Proceso de muerte celular programada"],
+    respuesta_correcta: 0,
+    explicacion: "La meiosis es un tipo de división celular exclusiva de las células germinales que reduce a la mitad el número de cromosomas (de diploide a haploide), generando gametos para la reproducción sexual. Incluye recombinación genética, contribuyendo a la diversidad genética.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué describe el efecto Doppler?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["El cambio en frecuencia de una onda cuando hay movimiento relativo entre fuente y observador", "La curvatura de la luz debido a campos gravitacionales", "La interferencia constructiva y destructiva de ondas", "La absorción de ondas electromagnéticas por la atmósfera"],
+    respuesta_correcta: 0,
+    explicacion: "El efecto Doppler es el cambio aparente en la frecuencia o longitud de onda de un sonido, luz u otra onda cuando existe movimiento relativo entre la fuente y el observador. Explica fenómenos como el cambio de tono de una sirena en movimiento o el desplazamiento al rojo de galaxias lejanas.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué establece la ley de Hardy-Weinberg en genética de poblaciones?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Las frecuencias alélicas y genotípicas permanecen constantes en una población ideal", "La tasa de mutaciones espontáneas en una población", "La relación entre el genotipo y el fenotipo", "El grado de dominancia entre alelos"],
+    respuesta_correcta: 0,
+    explicacion: "La ley de Hardy-Weinberg establece que en una población grande con apareamiento aleatorio, sin selección, mutación, migración o deriva genética, las frecuencias alélicas y genotípicas permanecen constantes generación tras generación, alcanzando un equilibrio.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué causa el fenómeno astronómico conocido como 'precesión de los equinoccios'?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["El bamboleo gradual del eje de rotación terrestre", "La excentricidad de la órbita terrestre", "La rotación diferencial del Sol", "Las perturbaciones gravitacionales de Júpiter"],
+    respuesta_correcta: 0,
+    explicacion: "La precesión de los equinoccios es causada por el bamboleo lento del eje de rotación de la Tierra, similar al de un trompo, completando un ciclo aproximadamente cada 26,000 años. Es principalmente resultado de las fuerzas gravitacionales del Sol y la Luna sobre el abultamiento ecuatorial terrestre.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué es un enlace peptídico en bioquímica?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Enlace covalente entre el grupo carboxilo de un aminoácido y el grupo amino de otro", "Enlace iónico entre proteínas", "Enlace de hidrógeno en la estructura secundaria de proteínas", "Enlace disulfuro entre cadenas polipeptídicas"],
+    respuesta_correcta: 0,
+    explicacion: "Un enlace peptídico es un enlace covalente que se forma entre el grupo carboxilo (-COOH) de un aminoácido y el grupo amino (-NH₂) de otro, con liberación de una molécula de agua. Estos enlaces unen aminoácidos para formar péptidos y proteínas.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué propiedad física es cuantizada según la teoría cuántica?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["La energía", "La temperatura", "La presión", "La masa"],
+    respuesta_correcta: 0,
+    explicacion: "Según la teoría cuántica, la energía no es continua sino que viene en paquetes discretos o 'cuantos'. Esto significa que sistemas como átomos o moléculas solo pueden tener ciertos niveles de energía específicos, no cualquier valor intermedio.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué nombre recibe el trastorno genético causado por trisomía del cromosoma 21?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Síndrome de Down", "Síndrome de Klinefelter", "Síndrome de Turner", "Síndrome de Edwards"],
+    respuesta_correcta: 0,
+    explicacion: "El síndrome de Down o trisomía 21 es un trastorno genético causado por la presencia de una copia extra del cromosoma 21 (tres copias en lugar de dos). Afecta aproximadamente a 1 de cada 700 nacimientos y causa características físicas distintivas y diversos grados de discapacidad intelectual.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+},
+{
+    pregunta: "¿Qué rama de la física estudia los fenómenos de escala subatómica según principios probabilísticos?",
+    tipo: TIPOS.OPCION_MULTIPLE,
+    opciones: ["Mecánica cuántica", "Física nuclear", "Termodinámica", "Electromagnetismo"],
+    respuesta_correcta: 0,
+    explicacion: "La mecánica cuántica estudia el comportamiento de la materia y la energía a escalas muy pequeñas (subatómicas), donde los fenómenos no siguen las leyes deterministas de la física clásica sino principios probabilísticos, incluyendo dualidad onda-partícula y superposición de estados.",
+    dificultad: DIFICULTADES.EXPERTO,
+    imagen: TRIVIA_IMAGEN
+}
     ]
 };
 
