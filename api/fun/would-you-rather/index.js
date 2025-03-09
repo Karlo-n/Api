@@ -73,7 +73,7 @@ router.get("/generate", async (req, res) => {
         }
         
         // Hacer solicitud a la API de generación
-        const response = await axios.get(`http://api.apikarl.com/api/fun/deepseek?prompt=${encodeURIComponent(prompt)}`);
+        const response = await axios.get(`http://api.apikarl.com/api/utility/deepseek?prompt=${encodeURIComponent(prompt)}`);
         
         if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
             throw new Error("No se pudieron generar preguntas");
