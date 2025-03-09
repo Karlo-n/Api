@@ -137,9 +137,9 @@ router.get("/categorias", (req, res) => {
  * Valida los parámetros de la solicitud
  */
 function validarParametros(categoria, dificultad, tipo) {
-    // Si no se proporciona ningún parámetro, al menos necesitamos uno válido
+    // Si no se proporciona ningún parámetro, requerir al menos uno
     if (!categoria && !dificultad && !tipo) {
-        return true; // Permitir consulta sin parámetros para obtener pregunta aleatoria
+        return false; // No permitir consulta sin parámetros
     }
     
     // Si se proporciona categoría, validar
