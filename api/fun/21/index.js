@@ -68,11 +68,9 @@ router.get("/", async (req, res) => {
     try {
         const { partidaId } = req.query;
         
+        // Si no hay partidaId, iniciar una nueva partida automáticamente
         if (!partidaId) {
-            return res.status(400).json({
-                error: true,
-                mensaje: "Se requiere partidaId para verificar el estado"
-            });
+            return await iniciarNuevaPartida(res);
         }
         
         if (!partidasActivas[partidaId]) {
