@@ -1,4 +1,42 @@
-// api/fun/21/index.js
+/**
+ * Valida si una partida está en condiciones de recibir una acción
+ */
+function validarPartida(partidaId, res) {
+    // Verificar si la partida existe
+    if (!partidasActivas[partidaId]) {
+        res.status(404).json({
+            error: true,
+            mensaje: "Partida no encontrada",
+            sugerencia: "Inicia una nueva partida (POST /api/fun/21)"
+        });
+        return false;
+    }
+    
+    // Verificar si la partida ya terminó
+    if (partidasActivas[partidaId].terminada) {
+        res.json({
+            error: true,
+            mensaje: obtenerMensajeFinal(partidasActivas[partidaId].estadoJuego),
+            sugerencia: "Inicia una nueva partida (POST /api/fun/21)"
+        });
+        return false;
+    }
+    
+    // Verificar límite de acciones
+    if (partidasActivas[partidaId].contador >= 20) {
+        setTimeout(() => { delete partidasActivas[partidaId]; }, 100);
+        res.json({
+            error: true,
+            mensaje: "Se ha alcanzado el límite de acciones para esta partida",
+            sugerencia: "Inicia una nueva partida (POST /api/fun/21)"
+        });
+        return false;
+    }
+    
+    // Actualizar tiempo de última interacción
+    partidasActivas[partidaId].ultimaInteraccion = new Date().toISOString();
+    return true;
+}// api/fun/21/index.js
 const express = require("express");
 const Groq = require("groq-sdk");
 const router = express.Router();
@@ -17,84 +55,184 @@ const PALOS_CARTAS = ['♥', '♦', '♣', '♠'];
 
 /**
  * API de Juego 21 - Juega contra la IA
+ * 
+ * GET  /api/fun/21          - Verifica el estado de una partida existente
+ * POST /api/fun/21          - Inicia una nueva partida
+ * PUT  /api/fun/21/seguir   - El jugador pide otra carta
+ * PUT  /api/fun/21/parar    - El jugador se planta
+ * PUT  /api/fun/21/terminar - Termina la partida manualmente
  */
+
+// Verificar estado de una partida (GET)
 router.get("/", async (req, res) => {
     try {
-        const { accion, partidaId } = req.query;
+        const { partidaId } = req.query;
         
-        // CASO 1: Verificar partida existente
-        if (partidaId && !accion) {
-            if (!partidasActivas[partidaId]) {
-                return res.json({
-                    error: true,
-                    mensaje: "Partida no encontrada"
-                });
-            }
-            
-            const ahora = Date.now();
-            const ultimaAccion = new Date(partidasActivas[partidaId].ultimaInteraccion).getTime();
-            const tiempoInactivo = ahora - ultimaAccion;
-            const tiempoRestanteMs = Math.max(0, 5 * 60 * 1000 - tiempoInactivo);
-            
-            partidasActivas[partidaId].ultimaInteraccion = new Date().toISOString();
-            
-            return res.json({
-                partidaId,
-                estado: partidasActivas[partidaId].terminada ? "terminada" : "activa",
-                acciones_restantes: 20 - partidasActivas[partidaId].contador,
-                tiempo_restante_segundos: Math.floor(tiempoRestanteMs / 1000)
+        if (!partidaId) {
+            return res.status(400).json({
+                error: true,
+                mensaje: "Se requiere partidaId para verificar el estado"
             });
         }
         
-        // CASO 2: Iniciar nueva partida
-        if (!partidaId && !accion) {
-            return await iniciarNuevaPartida(res);
+        if (!partidasActivas[partidaId]) {
+            return res.json({
+                error: true,
+                mensaje: "Partida no encontrada"
+            });
         }
         
-        // CASO 3: Ejecutar acción en partida existente
-        if (partidaId && accion) {
-            // Validaciones básicas
-            if (!partidasActivas[partidaId]) {
-                return res.json({
-                    error: true,
-                    mensaje: "Partida no encontrada"
-                });
-            }
-            
-            if (partidasActivas[partidaId].terminada) {
-                return res.json({
-                    error: true,
-                    mensaje: obtenerMensajeFinal(partidasActivas[partidaId].estadoJuego),
-                    sugerencia: "Inicia una nueva partida"
-                });
-            }
-            
-            if (partidasActivas[partidaId].contador >= 20) {
-                setTimeout(() => { delete partidasActivas[partidaId]; }, 100);
-                return res.json({
-                    error: true,
-                    mensaje: "Se ha alcanzado el límite de acciones para esta partida",
-                    sugerencia: "Inicia una nueva partida"
-                });
-            }
-            
-            // Actualizar tiempo de última interacción
-            partidasActivas[partidaId].ultimaInteraccion = new Date().toISOString();
-            
-            // Procesar la acción
-            return await procesarAccion(partidaId, accion, res);
-        }
+        const ahora = Date.now();
+        const ultimaAccion = new Date(partidasActivas[partidaId].ultimaInteraccion).getTime();
+        const tiempoInactivo = ahora - ultimaAccion;
+        const tiempoRestanteMs = Math.max(0, 5 * 60 * 1000 - tiempoInactivo);
         
-        // Si no se cumple ninguno de los casos anteriores
-        return res.status(400).json({
-            error: true,
-            mensaje: "Petición no válida. Debes proporcionar un partidaId válido o iniciar una nueva partida."
+        partidasActivas[partidaId].ultimaInteraccion = new Date().toISOString();
+        
+        return res.json({
+            partidaId,
+            estado: partidasActivas[partidaId].terminada ? "terminada" : "activa",
+            acciones_restantes: 20 - partidasActivas[partidaId].contador,
+            tiempo_restante_segundos: Math.floor(tiempoRestanteMs / 1000)
         });
     } catch (error) {
-        console.error("Error en la API de 21:", error);
-        res.status(500).json({ 
-            error: "Error al procesar el juego de 21", 
-            detalle: error.message 
+        console.error("Error verificando partida:", error);
+        return res.status(500).json({
+            error: true,
+            mensaje: "Error verificando la partida",
+            detalle: error.message
+        });
+    }
+});
+
+// Iniciar nueva partida (POST)
+router.post("/", async (req, res) => {
+    try {
+        return await iniciarNuevaPartida(res);
+    } catch (error) {
+        console.error("Error iniciando partida:", error);
+        return res.status(500).json({
+            error: true,
+            mensaje: "Error iniciando nueva partida",
+            detalle: error.message
+        });
+    }
+});
+
+// Pedir carta (PUT /seguir)
+router.put("/seguir", async (req, res) => {
+    try {
+        const { partidaId } = req.query;
+        
+        if (!partidaId) {
+            return res.status(400).json({
+                error: true,
+                mensaje: "Se requiere partidaId para pedir carta"
+            });
+        }
+        
+        // Validaciones básicas
+        if (!validarPartida(partidaId, res)) return;
+        
+        // Procesar acción
+        return await procesarAccion(partidaId, "seguir", res);
+    } catch (error) {
+        console.error("Error pidiendo carta:", error);
+        return res.status(500).json({
+            error: true,
+            mensaje: "Error al pedir carta",
+            detalle: error.message
+        });
+    }
+});
+
+// Plantarse (PUT /parar)
+router.put("/parar", async (req, res) => {
+    try {
+        const { partidaId } = req.query;
+        
+        if (!partidaId) {
+            return res.status(400).json({
+                error: true,
+                mensaje: "Se requiere partidaId para plantarse"
+            });
+        }
+        
+        // Validaciones básicas
+        if (!validarPartida(partidaId, res)) return;
+        
+        // Procesar acción
+        return await procesarAccion(partidaId, "parar", res);
+    } catch (error) {
+        console.error("Error al plantarse:", error);
+        return res.status(500).json({
+            error: true,
+            mensaje: "Error al plantarse",
+            detalle: error.message
+        });
+    }
+});
+
+// Terminar partida (PUT /terminar)
+router.put("/terminar", async (req, res) => {
+    try {
+        const { partidaId } = req.query;
+        
+        if (!partidaId) {
+            return res.status(400).json({
+                error: true,
+                mensaje: "Se requiere partidaId para terminar partida"
+            });
+        }
+        
+        // Validaciones básicas
+        if (!validarPartida(partidaId, res)) return;
+        
+        // Procesar acción
+        return await procesarAccion(partidaId, "terminar", res);
+    } catch (error) {
+        console.error("Error terminando partida:", error);
+        return res.status(500).json({
+            error: true,
+            mensaje: "Error al terminar partida",
+            detalle: error.message
+        });
+    }
+});
+
+// Para compatibilidad con versiones anteriores (GET con parámetro acción)
+router.get("/:accion", async (req, res) => {
+    try {
+        const { partidaId } = req.query;
+        const { accion } = req.params;
+        
+        if (!accion || !["seguir", "parar", "terminar"].includes(accion)) {
+            return res.status(400).json({
+                error: true,
+                mensaje: "Acción no válida",
+                acciones_validas: ["seguir", "parar", "terminar"]
+            });
+        }
+        
+        if (!partidaId) {
+            return res.status(400).json({
+                error: true,
+                mensaje: "Se requiere partidaId para esta acción",
+                nota: "Recomendamos usar PUT /api/fun/21/" + accion + " en su lugar"
+            });
+        }
+        
+        // Validaciones básicas
+        if (!validarPartida(partidaId, res)) return;
+        
+        // Procesar acción
+        return await procesarAccion(partidaId, accion, res);
+    } catch (error) {
+        console.error(`Error en acción ${req.params.accion}:`, error);
+        return res.status(500).json({
+            error: true,
+            mensaje: `Error al procesar la acción ${req.params.accion}`,
+            detalle: error.message
         });
     }
 });
@@ -174,17 +312,13 @@ async function iniciarNuevaPartida(res) {
     // Crear respuesta
     return res.json({
         partidaId: nuevoId,
-        mano_jugador: {
-            cartas: manoJugador,
-            valor: valorJugador
-        },
-        mano_dealer: {
-            cartas: manoDealer,
-            valor: valorDealer
-        },
+        cartas_jugador: manoJugador,
+        valor_jugador: valorJugador,
+        cartas_dealer: manoDealer,
+        valor_dealer: valorDealer,
         pensamiento_dealer: pensamientoTexto,
         decision_dealer: decisionDealer,
-        estado: estadoJuego,
+        estado_juego: estadoJuego,
         mensaje: resultado ? resultado.mensaje : "Partida iniciada",
         acciones_restantes: 19
     });
@@ -417,17 +551,13 @@ async function procesarAccion(partidaId, accion, res) {
     // Generar respuesta
     return res.json({
         partidaId: partidaId,
-        mano_jugador: {
-            cartas: manoJugador,
-            valor: valorJugador
-        },
-        mano_dealer: {
-            cartas: manoDealer,
-            valor: valorDealer
-        },
+        cartas_jugador: manoJugador,
+        valor_jugador: valorJugador,
+        cartas_dealer: manoDealer,
+        valor_dealer: valorDealer,
         pensamiento_dealer: pensamientoTexto,
         decision_dealer: decisionDealer,
-        estado: estadoJuego,
+        estado_juego: estadoJuego,
         mensaje: resultado ? resultado.mensaje : obtenerMensajeFinal(estadoJuego),
         acciones_restantes: 20 - partidasActivas[partidaId].contador
     });
