@@ -1,4 +1,32 @@
 /**
+ * Hace que el dealer tome una carta
+ */
+function dealerTomaCarta(partidaId) {
+    try {
+        const partida = partidasActivas[partidaId];
+        if (!partida || partida.mazo.length === 0) return false;
+        
+        // Tomar una carta del mazo y añadirla a la mano del dealer
+        const nuevaCarta = partida.mazo.pop();
+        partida.manoDealer.push(nuevaCarta);
+        
+        // Recalcular el valor de la mano del dealer
+        const valorDealer = calcularValorMano(partida.manoDealer);
+        
+        console.log(`Dealer ha tomado carta: ${nuevaCarta}, nueva mano: ${partida.manoDealer.join(', ')}, valor: ${valorDealer}`);
+        
+        // Actualizar el estado si el dealer se ha pasado
+        if (valorDealer > 21) {
+            partida.estadoJuego = "jugador_gana";
+            partida.terminada = true;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error("Error al tomar carta para el dealer:", error);
+        return false;
+    }
+}/**
  * Valida si una partida está en condiciones de recibir una acción
  */
 function validarPartida(partidaId, res) {
