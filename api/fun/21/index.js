@@ -222,10 +222,10 @@ router.get("/", async (req, res) => {
         let { manoJugador, manoDealer, mazo } = partida;
         let valorJugador = calcularValorMano(manoJugador);
         let valorDealer = calcularValorMano(manoDealer);
-        let estadoJuego = partida.estadoJuego;
-        let resultado = null;
-        let pensamientoDealer = null;
-        let decisionDealer = null; // Inicializar decisionDealer aquí
+        estadoJuego = partida.estadoJuego; // Reasignación en lugar de redeclaración
+        resultado = null; // Reasignación
+        pensamientoDealer = null; // Reasignación
+        decisionDealer = null; // Reasignación
         let decisionDealer = null;
         
         // Procesar acción
