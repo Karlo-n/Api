@@ -106,21 +106,9 @@ async function iniciarNuevaPartida(res) {
     const nuevoId = uuidv4();
     const mazo = crearMazoBarajado();
     
-    // Repartir cartas iniciales (cantidad aleatoria entre 1-4)
-    const cantidadCartasJugador = Math.floor(Math.random() * 4) + 1;
-    const cantidadCartasDealer = Math.floor(Math.random() * 4) + 1;
-    
-    const manoJugador = [];
-    const manoDealer = [];
-    
-    // Repartir cartas
-    for (let i = 0; i < cantidadCartasJugador; i++) {
-        manoJugador.push(mazo.pop());
-    }
-    
-    for (let i = 0; i < cantidadCartasDealer; i++) {
-        manoDealer.push(mazo.pop());
-    }
+    // Repartir cartas iniciales (exactamente 1 carta para cada uno)
+    const manoJugador = [mazo.pop()];
+    const manoDealer = [mazo.pop()];
     
     // Calcular valores de las manos
     const valorJugador = calcularValorMano(manoJugador);
