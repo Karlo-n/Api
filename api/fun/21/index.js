@@ -1,70 +1,4 @@
-/**
- * Hace que el dealer tome una carta
- */
-function dealerTomaCarta(partidaId) {
-    try {
-        const partida = partidasActivas[partidaId];
-        if (!partida || partida.mazo.length === 0) return false;
-        
-        // Tomar una carta del mazo y añadirla a la mano del dealer
-        const nuevaCarta = partida.mazo.pop();
-        partida.manoDealer.push(nuevaCarta);
-        
-        // Recalcular el valor de la mano del dealer
-        const valorDealer = calcularValorMano(partida.manoDealer);
-        
-        console.log(`Dealer ha tomado carta: ${nuevaCarta}, nueva mano: ${partida.manoDealer.join(', ')}, valor: ${valorDealer}`);
-        
-        // Actualizar el estado si el dealer se ha pasado
-        if (valorDealer > 21) {
-            partida.estadoJuego = "jugador_gana";
-            partida.terminada = true;
-        }
-        
-        return true;
-    } catch (error) {
-        console.error("Error al tomar carta para el dealer:", error);
-        return false;
-    }
-}/**
- * Valida si una partida está en condiciones de recibir una acción
- */
-function validarPartida(partidaId, res) {
-    // Verificar si la partida existe
-    if (!partidasActivas[partidaId]) {
-        res.status(404).json({
-            error: true,
-            mensaje: "Partida no encontrada",
-            sugerencia: "Inicia una nueva partida (POST /api/fun/21)"
-        });
-        return false;
-    }
-    
-    // Verificar si la partida ya terminó
-    if (partidasActivas[partidaId].terminada) {
-        res.json({
-            error: true,
-            mensaje: obtenerMensajeFinal(partidasActivas[partidaId].estadoJuego),
-            sugerencia: "Inicia una nueva partida (POST /api/fun/21)"
-        });
-        return false;
-    }
-    
-    // Verificar límite de acciones
-    if (partidasActivas[partidaId].contador >= 20) {
-        setTimeout(() => { delete partidasActivas[partidaId]; }, 100);
-        res.json({
-            error: true,
-            mensaje: "Se ha alcanzado el límite de acciones para esta partida",
-            sugerencia: "Inicia una nueva partida (POST /api/fun/21)"
-        });
-        return false;
-    }
-    
-    // Actualizar tiempo de última interacción
-    partidasActivas[partidaId].ultimaInteraccion = new Date().toISOString();
-    return true;
-}// api/fun/21/index.js
+// api/fun/21/index.js
 const express = require("express");
 const Groq = require("groq-sdk");
 const router = express.Router();
@@ -264,6 +198,46 @@ router.get("/:accion", async (req, res) => {
 });
 
 /**
+ * Valida si una partida está en condiciones de recibir una acción
+ */
+function validarPartida(partidaId, res) {
+    // Verificar si la partida existe
+    if (!partidasActivas[partidaId]) {
+        res.status(404).json({
+            error: true,
+            mensaje: "Partida no encontrada",
+            sugerencia: "Inicia una nueva partida (POST /api/fun/21)"
+        });
+        return false;
+    }
+    
+    // Verificar si la partida ya terminó
+    if (partidasActivas[partidaId].terminada) {
+        res.json({
+            error: true,
+            mensaje: obtenerMensajeFinal(partidasActivas[partidaId].estadoJuego),
+            sugerencia: "Inicia una nueva partida (POST /api/fun/21)"
+        });
+        return false;
+    }
+    
+    // Verificar límite de acciones
+    if (partidasActivas[partidaId].contador >= 20) {
+        setTimeout(() => { delete partidasActivas[partidaId]; }, 100);
+        res.json({
+            error: true,
+            mensaje: "Se ha alcanzado el límite de acciones para esta partida",
+            sugerencia: "Inicia una nueva partida (POST /api/fun/21)"
+        });
+        return false;
+    }
+    
+    // Actualizar tiempo de última interacción
+    partidasActivas[partidaId].ultimaInteraccion = new Date().toISOString();
+    return true;
+}
+
+/**
  * Inicia una nueva partida de 21
  */
 async function iniciarNuevaPartida(res) {
@@ -344,10 +318,42 @@ async function iniciarNuevaPartida(res) {
         valor_dealer: valorDealer,
         pensamiento_dealer: pensamientoTexto,
         decision_dealer: decisionDealer,
+        decision_reciente: "iniciar",
+        decision_futura: decisionDealer,
         estado_juego: estadoJuego,
         mensaje: resultado ? resultado.mensaje : "Partida iniciada",
         acciones_restantes: 19
     });
+}
+
+/**
+ * Hace que el dealer tome una carta
+ */
+function dealerTomaCarta(partidaId) {
+    try {
+        const partida = partidasActivas[partidaId];
+        if (!partida || partida.mazo.length === 0) return false;
+        
+        // Tomar una carta del mazo y añadirla a la mano del dealer
+        const nuevaCarta = partida.mazo.pop();
+        partida.manoDealer.push(nuevaCarta);
+        
+        // Recalcular el valor de la mano del dealer
+        const valorDealer = calcularValorMano(partida.manoDealer);
+        
+        console.log(`Dealer ha tomado carta: ${nuevaCarta}, nueva mano: ${partida.manoDealer.join(', ')}, valor: ${valorDealer}`);
+        
+        // Actualizar el estado si el dealer se ha pasado
+        if (valorDealer > 21) {
+            partida.estadoJuego = "jugador_gana";
+            partida.terminada = true;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error("Error al tomar carta para el dealer:", error);
+        return false;
+    }
 }
 
 /**
@@ -365,6 +371,8 @@ async function procesarAccion(partidaId, accion, res) {
     let resultado = null;
     let pensamientoDealer = null;
     let decisionDealer = null;
+    let decisionReciente = accion;
+    let decisionFutura = null;
     
     // Procesar la acción específica
     switch (accion) {
@@ -425,11 +433,44 @@ async function procesarAccion(partidaId, accion, res) {
                     );
                     pensamientoDealer = respuestaDealer.pensamiento;
                     decisionDealer = respuestaDealer.decision;
+                    decisionFutura = decisionDealer;
                     
-                    resultado = {
-                        estado: "en_curso",
-                        mensaje: `Has pedido una carta. Tu mano ahora vale ${valorJugador}.`
-                    };
+                    // Si el dealer decide continuar, darle una carta
+                    if (decisionDealer === "continuar" && mazo.length > 0) {
+                        const nuevaCarta = mazo.pop();
+                        manoDealer.push(nuevaCarta);
+                        partida.manoDealer = manoDealer;
+                        partida.mazo = mazo;
+                        
+                        valorDealer = calcularValorMano(manoDealer);
+                        
+                        if (valorDealer > 21) {
+                            // Dealer se pasa
+                            estadoJuego = "jugador_gana";
+                            partida.estadoJuego = estadoJuego;
+                            partida.terminada = true;
+                            
+                            const respuestaFinal = await consultarGroqDealerFinal(
+                                manoJugador, manoDealer, valorJugador, valorDealer, estadoJuego
+                            );
+                            pensamientoDealer = respuestaFinal.pensamiento;
+                            
+                            resultado = {
+                                estado: estadoJuego,
+                                mensaje: obtenerMensajeFinal(estadoJuego)
+                            };
+                            
+                            // Liberar memoria
+                            setTimeout(() => { delete partidasActivas[partidaId]; }, 100);
+                        }
+                    }
+                    
+                    if (!resultado) {
+                        resultado = {
+                            estado: "en_curso",
+                            mensaje: `Has pedido una carta. Tu mano ahora vale ${valorJugador}.${decisionDealer === "continuar" ? ` El dealer ha pedido carta y su mano vale ${valorDealer}.` : ""}`
+                        };
+                    }
                 }
             } else {
                 resultado = {
@@ -446,7 +487,9 @@ async function procesarAccion(partidaId, accion, res) {
             );
             pensamientoDealer = respuestaDealer.pensamiento;
             decisionDealer = respuestaDealer.decision;
+            decisionFutura = decisionDealer;
             
+            // Si el dealer decide continuar, darle una carta
             if (decisionDealer === "continuar" && mazo.length > 0) {
                 const nuevaCarta = mazo.pop();
                 manoDealer.push(nuevaCarta);
@@ -473,14 +516,39 @@ async function procesarAccion(partidaId, accion, res) {
                     
                     // Liberar memoria
                     setTimeout(() => { delete partidasActivas[partidaId]; }, 100);
+                } else if (valorDealer >= 17) {
+                    // Dealer llega a 17 o más, comparar manos
+                    if (valorDealer > valorJugador) {
+                        estadoJuego = "dealer_gana";
+                    } else if (valorDealer < valorJugador) {
+                        estadoJuego = "jugador_gana";
+                    } else {
+                        estadoJuego = "empate";
+                    }
+                    
+                    partida.estadoJuego = estadoJuego;
+                    partida.terminada = true;
+                    
+                    const respuestaFinal = await consultarGroqDealerFinal(
+                        manoJugador, manoDealer, valorJugador, valorDealer, estadoJuego
+                    );
+                    pensamientoDealer = respuestaFinal.pensamiento;
+                    
+                    resultado = {
+                        estado: estadoJuego,
+                        mensaje: obtenerMensajeFinal(estadoJuego)
+                    };
+                    
+                    // Liberar memoria
+                    setTimeout(() => { delete partidasActivas[partidaId]; }, 100);
                 } else {
                     resultado = {
                         estado: "en_curso",
-                        mensaje: `El dealer ha pedido carta. Su mano ahora vale ${valorDealer}.`
+                        mensaje: `Te has plantado. El dealer ha pedido carta y su mano vale ${valorDealer}.`
                     };
                 }
             } else {
-                // Comparar manos
+                // El dealer decide parar, comparar manos
                 if (valorDealer > valorJugador) {
                     estadoJuego = "dealer_gana";
                 } else if (valorDealer < valorJugador) {
@@ -515,6 +583,7 @@ async function procesarAccion(partidaId, accion, res) {
                 );
                 pensamientoDealer = respuestaDealer.pensamiento;
                 decisionDealer = respuestaDealer.decision;
+                decisionFutura = decisionDealer;
                 
                 // Si el dealer quiere continuar, una última carta
                 if (decisionDealer === "continuar" && mazo.length > 0) {
@@ -583,6 +652,8 @@ async function procesarAccion(partidaId, accion, res) {
         valor_dealer: valorDealer,
         pensamiento_dealer: pensamientoTexto,
         decision_dealer: decisionDealer,
+        decision_reciente: decisionReciente,
+        decision_futura: decisionFutura,
         estado_juego: estadoJuego,
         mensaje: resultado ? resultado.mensaje : obtenerMensajeFinal(estadoJuego),
         acciones_restantes: 20 - partidasActivas[partidaId].contador
