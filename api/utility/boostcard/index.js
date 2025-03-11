@@ -228,8 +228,9 @@ function crearEfectosBorde(ctx, ancho, alto) {
             esquina.x, esquina.y, 0,
             esquina.x, esquina.y, radioEsquina
         );
-        gradienteEsquina.addColorStop(0, "rgba(255,115,250,0.8)");
-        gradienteEsquina.addColorStop(1, "rgba(255,115,250,0)");
+        gradienteEsquina.addColorStop(0, "rgba(255,115,250,0.9)"); // Más intenso
+        gradienteEsquina.addColorStop(0.6, "rgba(189,93,255,0.5)"); // Transición a morado
+        gradienteEsquina.addColorStop(1, "rgba(189,93,255,0)");
         
         ctx.fillStyle = gradienteEsquina;
         ctx.fillRect(
@@ -413,8 +414,8 @@ router.get('/', async (req, res) => {
         const mensajeTexto = texto || '¡Muchas gracias por apoyar nuestro server con tu boost!';
         
         // Dimensiones de la tarjeta (horizontal al estilo de notificación Discord pero más grande)
-        const ANCHO = 500;  // Aumentado desde 400
-        const ALTO = 90;    // Aumentado desde 70
+        const ANCHO = 550;  // Aumentado para dar más espacio al texto
+        const ALTO = 90;    // Altura mantenida igual
         
         // Crear canvas
         const canvas = createCanvas(ANCHO, ALTO);
@@ -486,13 +487,15 @@ router.get('/', async (req, res) => {
         
         // Calcular el espacio disponible para el texto
         const inicioTextoX = xAvatar + radioAvatar + 20;
-        const finTextoX = ANCHO - 65; // Dejar espacio para el diamante
+        const finTextoX = ANCHO - 75; // Aumentar espacio para el diamante
         const anchoDisponible = finTextoX - inicioTextoX;
         
         // Dividir el texto si es necesario y ajustar tamaño
         let tamañoFuente = 15;
         // Reducir el tamaño si el texto es muy largo
-        if (mensajeTexto.length > 100) {
+        if (mensajeTexto.length > 150) {
+            tamañoFuente = 12; // Tamaño aún más pequeño para textos extremadamente largos
+        } else if (mensajeTexto.length > 100) {
             tamañoFuente = 13;
         } else if (mensajeTexto.length > 60) {
             tamañoFuente = 14;
@@ -500,11 +503,9 @@ router.get('/', async (req, res) => {
         
         const lineasTexto = dividirTexto(ctx, mensajeTexto, anchoDisponible, tamañoFuente);
         
-        // Limitar a máximo 2 líneas
-        const lineasMostradas = lineasTexto.slice(0, 2);
-        if (lineasTexto.length > 2) {
-            lineasMostradas[1] += '...';
-        }
+        // Ya no necesitamos limitar aquí, nuestra función revisada de dividirTexto
+        // ya controla mejor los límites y truncamiento
+        const lineasMostradas = lineasTexto;
         
         // Dibujar cada línea de texto
         ctx.font = `${tamañoFuente}px Oswald`;
