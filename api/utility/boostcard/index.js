@@ -258,6 +258,87 @@ function crearEfectosEspeciales(ctx, ancho, alto) {
     }
 }
 
+// Función para dibujar estrellas y destellos
+function dibujarDestellos(ctx, ancho, alto) {
+    // Dibujar varias estrellas pequeñas
+    const estrellas = [
+        { x: ancho - 30, y: alto / 2 - 10, tamaño: 3 },
+        { x: ancho - 40, y: alto / 2 + 15, tamaño: 2 },
+        { x: ancho - 15, y: alto / 2 + 5, tamaño: 4 },
+        { x: ancho - 50, y: alto / 2 - 15, tamaño: 2 },
+        { x: ancho * 0.1, y: alto * 0.2, tamaño: 2 },
+        { x: ancho * 0.2, y: alto * 0.8, tamaño: 3 },
+        { x: ancho * 0.8, y: alto * 0.3, tamaño: 2 },
+        { x: ancho * 0.7, y: alto * 0.7, tamaño: 3 },
+        { x: ancho * 0.5, y: alto * 0.15, tamaño: 4 },
+        { x: ancho * 0.6, y: alto * 0.85, tamaño: 2 },
+        // Añadir más estrellas
+        { x: ancho * 0.15, y: alto * 0.5, tamaño: 3 },
+        { x: ancho * 0.85, y: alto * 0.5, tamaño: 2 },
+        { x: ancho * 0.3, y: alto * 0.15, tamaño: 3 },
+        { x: ancho * 0.4, y: alto * 0.85, tamaño: 2 },
+        { x: ancho * 0.65, y: alto * 0.25, tamaño: 3 },
+        { x: ancho * 0.75, y: alto * 0.75, tamaño: 2 },
+    ];
+    
+    estrellas.forEach(estrella => {
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+            const radio = i % 2 === 0 ? estrella.tamaño : estrella.tamaño / 2;
+            const angulo = (Math.PI * 2 * i) / 10 - Math.PI / 2;
+            const x = estrella.x + radio * Math.cos(angulo);
+            const y = estrella.y + radio * Math.sin(angulo);
+            
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.closePath();
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+    });
+    
+    // Añadir destellos brillantes (círculos con resplandor)
+    const destellos = [
+        { x: ancho - 20, y: alto / 2 + 25, tamaño: 1.5 },
+        { x: ancho - 60, y: alto / 2 - 5, tamaño: 1 },
+        { x: ancho * 0.3, y: alto * 0.3, tamaño: 1 },
+        { x: ancho * 0.75, y: alto * 0.5, tamaño: 1.5 },
+        { x: ancho * 0.4, y: alto * 0.7, tamaño: 1 },
+        // Añadir más destellos
+        { x: ancho * 0.1, y: alto * 0.4, tamaño: 1.2 },
+        { x: ancho * 0.2, y: alto * 0.6, tamaño: 0.8 },
+        { x: ancho * 0.8, y: alto * 0.2, tamaño: 1.3 },
+        { x: ancho * 0.9, y: alto * 0.8, tamaño: 1 },
+        { x: ancho * 0.5, y: alto * 0.3, tamaño: 1.2 },
+        { x: ancho * 0.6, y: alto * 0.7, tamaño: 0.9 },
+    ];
+    
+    destellos.forEach(destello => {
+        // Resplandor
+        const gradiente = ctx.createRadialGradient(
+            destello.x, destello.y, 0,
+            destello.x, destello.y, destello.tamaño * 6
+        );
+        gradiente.addColorStop(0, "rgba(255,255,255,0.8)");
+        gradiente.addColorStop(0.5, "rgba(255,255,255,0.2)");
+        gradiente.addColorStop(1, "rgba(255,255,255,0)");
+        
+        ctx.beginPath();
+        ctx.arc(destello.x, destello.y, destello.tamaño * 6, 0, Math.PI * 2);
+        ctx.fillStyle = gradiente;
+        ctx.fill();
+        
+        // Centro brillante
+        ctx.beginPath();
+        ctx.arc(destello.x, destello.y, destello.tamaño, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+    });
+}
+
 // Función para dibujar pequeños boosts en el fondo
 function dibujarMiniBoosters(ctx, ancho, alto, colores = ["#6600ff", "#00ccff"]) {
     // Crear varios mini diamantes de boost en el fondo
@@ -330,68 +411,6 @@ function dibujarResplandorAvatar(ctx, x, y, radio) {
     ctx.fill();
 }
 
-// Función para dividir el texto en múltiples líneas
-function dividirTexto(ctx, texto, anchoMaximo, tamaño) {
-    // Establecer la fuente para medir el texto
-    ctx.font = `${tamaño}px Oswald`;
-    
-    // Si el texto es muy corto, devolverlo sin cambios
-    if (ctx.measureText(texto).width <= anchoMaximo) {
-        return [texto];
-    }
-    
-    // Dividir el texto en palabras
-    const palabras = texto.split(' ');
-    const lineas = [];
-    let lineaActual = '';
-    
-    for (const palabra of palabras) {
-        const lineaTentativa = lineaActual.length === 0 ? palabra : `${lineaActual} ${palabra}`;
-        const medidaTexto = ctx.measureText(lineaTentativa).width;
-        
-        if (medidaTexto <= anchoMaximo) {
-            lineaActual = lineaTentativa;
-        } else {
-            // Si una sola palabra es más larga que el ancho máximo, dividirla
-            if (lineaActual.length === 0) {
-                let palabraParcial = '';
-                for (let i = 0; i < palabra.length; i++) {
-                    const tentativo = palabraParcial + palabra[i];
-                    if (ctx.measureText(tentativo).width <= anchoMaximo) {
-                        palabraParcial = tentativo;
-                    } else {
-                        if (palabraParcial.length > 0) {
-                            lineas.push(palabraParcial);
-                        }
-                        palabraParcial = palabra[i];
-                    }
-                }
-                if (palabraParcial.length > 0) {
-                    lineaActual = palabraParcial;
-                }
-            } else {
-                lineas.push(lineaActual);
-                lineaActual = palabra;
-            }
-            
-            // Si ya tenemos demasiadas líneas, parar el procesamiento
-            if (lineas.length >= 1) { // Solo permitir 2 líneas en total (1 + la actual)
-                if (palabra !== palabras[palabras.length - 1]) {
-                    lineaActual += '...';
-                }
-                break;
-            }
-        }
-    }
-    
-    // Añadir la última línea si queda algo
-    if (lineaActual.length > 0) {
-        lineas.push(lineaActual);
-    }
-    
-    return lineas;
-}
-
 router.get('/', async (req, res) => {
     try {
         // Extraer parámetros - solo los necesarios
@@ -440,18 +459,16 @@ router.get('/', async (req, res) => {
         ctx.closePath();
         ctx.fill();
         
-        // Aplicar fondo morado-azul
-        const colores = crearFondoMoradoAzul(ctx, ANCHO, ALTO);
-        
-        // Añadir borde brillante
-        ctx.strokeStyle = colores[0]; // Morado
+        // Aplicar borde morado
+        ctx.strokeStyle = "#bd5dff"; 
         ctx.lineWidth = 2.5;
         ctx.stroke();
         
         // Añadir efectos decorativos
         crearEfectosBorde(ctx, ANCHO, ALTO);
         crearEfectosEspeciales(ctx, ANCHO, ALTO);
-        dibujarMiniBoosters(ctx, ANCHO, ALTO, colores);
+        dibujarMiniBoosters(ctx, ANCHO, ALTO, ["#6600ff", "#00ccff"]);
+        dibujarDestellos(ctx, ANCHO, ALTO);
         
         // Cargar imagen de avatar
         const imagenAvatar = await loadImage(avatar);
