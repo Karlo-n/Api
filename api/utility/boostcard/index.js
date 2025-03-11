@@ -59,6 +59,47 @@ function dibujarDiamante(ctx, x, y, tamaño) {
     ctx.fillText("+", x + tamaño * 0.35, y - tamaño * 0.4);
 }
 
+// Función para dibujar pequeños boosts en el fondo
+function dibujarMiniBoosters(ctx, ancho, alto) {
+    // Crear varios mini diamantes de boost en el fondo
+    const miniBoosts = [
+        { x: ancho * 0.15, y: alto * 0.25, tamaño: 8 },
+        { x: ancho * 0.25, y: alto * 0.75, tamaño: 6 },
+        { x: ancho * 0.45, y: alto * 0.35, tamaño: 5 },
+        { x: ancho * 0.65, y: alto * 0.65, tamaño: 7 },
+        { x: ancho * 0.75, y: alto * 0.15, tamaño: 6 },
+        { x: ancho * 0.85, y: alto * 0.85, tamaño: 5 },
+        { x: ancho * 0.35, y: alto * 0.55, tamaño: 4 },
+        { x: ancho * 0.55, y: alto * 0.25, tamaño: 6 },
+        { x: ancho * 0.72, y: alto * 0.45, tamaño: 5 },
+        { x: ancho * 0.92, y: alto * 0.35, tamaño: 4 },
+    ];
+    
+    miniBoosts.forEach(boost => {
+        // Mini diamante
+        ctx.globalAlpha = 0.3; // Transparente para no distraer
+        ctx.beginPath();
+        ctx.moveTo(boost.x, boost.y + boost.tamaño * 0.5);
+        ctx.lineTo(boost.x - boost.tamaño * 0.4, boost.y);
+        ctx.lineTo(boost.x, boost.y - boost.tamaño * 0.5);
+        ctx.lineTo(boost.x + boost.tamaño * 0.4, boost.y);
+        ctx.closePath();
+        
+        const gradiente = ctx.createLinearGradient(
+            boost.x - boost.tamaño * 0.4, boost.y - boost.tamaño * 0.5,
+            boost.x + boost.tamaño * 0.4, boost.y + boost.tamaño * 0.5
+        );
+        gradiente.addColorStop(0, "#ff73fa");
+        gradiente.addColorStop(1, "#bd5dff");
+        
+        ctx.fillStyle = gradiente;
+        ctx.fill();
+        
+        // Resetear alpha
+        ctx.globalAlpha = 1.0;
+    });
+}
+
 // Función para dibujar estrellas y destellos
 function dibujarDestellos(ctx, ancho, alto) {
     // Dibujar varias estrellas pequeñas
@@ -200,7 +241,7 @@ function crearEfectosBorde(ctx, ancho, alto) {
     });
 }
 
-// Función para dividir el texto en múltiples líneas
+// Función para dividir el texto en múltiples líneas con control estricto de límites
 function dividirTexto(ctx, texto, anchoMaximo, tamaño) {
     // Establecer la fuente para medir el texto
     ctx.font = `${tamaño}px Oswald`;
@@ -215,8 +256,17 @@ function dividirTexto(ctx, texto, anchoMaximo, tamaño) {
     const lineas = [];
     let lineaActual = '';
     
-    // Procesar cada palabra
-    for (const palabra of palabras) {
+    // Verificar si todo el texto es demasiado largo incluso con el tamaño más pequeño
+    // Si es así, truncarlo antes de procesar
+    const textoTruncadoIndice = determinarLongitudMaxima(ctx, texto, anchoMaximo * 2.5, tamaño);
+    const textoTruncado = textoTruncadoIndice < texto.length ? 
+                           texto.substring(0, textoTruncadoIndice) + '...' : 
+                           texto;
+    
+    // Procesar cada palabra del texto potencialmente truncado
+    const palabrasTruncadas = textoTruncado.split(' ');
+    
+    for (const palabra of palabrasTruncadas) {
         const lineaTentativa = lineaActual.length === 0 ? palabra : `${lineaActual} ${palabra}`;
         const medidaTexto = ctx.measureText(lineaTentativa).width;
         
@@ -231,7 +281,9 @@ function dividirTexto(ctx, texto, anchoMaximo, tamaño) {
                     if (ctx.measureText(tentativo).width <= anchoMaximo) {
                         palabraParcial = tentativo;
                     } else {
-                        lineas.push(palabraParcial);
+                        if (palabraParcial.length > 0) {
+                            lineas.push(palabraParcial);
+                        }
                         palabraParcial = palabra[i];
                     }
                 }
@@ -242,6 +294,14 @@ function dividirTexto(ctx, texto, anchoMaximo, tamaño) {
                 lineas.push(lineaActual);
                 lineaActual = palabra;
             }
+            
+            // Si ya tenemos demasiadas líneas, parar el procesamiento
+            if (lineas.length >= 1) { // Solo permitir 2 líneas en total (1 + la actual)
+                if (palabra !== palabrasTruncadas[palabrasTruncadas.length - 1]) {
+                    lineaActual += '...';
+                }
+                break;
+            }
         }
     }
     
@@ -251,6 +311,33 @@ function dividirTexto(ctx, texto, anchoMaximo, tamaño) {
     }
     
     return lineas;
+}
+
+// Función auxiliar para determinar cuántos caracteres caben en el espacio disponible
+function determinarLongitudMaxima(ctx, texto, anchoMaximo, tamaño) {
+    ctx.font = `${tamaño}px Oswald`;
+    
+    if (ctx.measureText(texto).width <= anchoMaximo) {
+        return texto.length;
+    }
+    
+    // Búsqueda binaria para determinar cuántos caracteres caben
+    let min = 0;
+    let max = texto.length;
+    let mid;
+    
+    while (min < max - 1) {
+        mid = Math.floor((min + max) / 2);
+        const subTexto = texto.substring(0, mid);
+        
+        if (ctx.measureText(subTexto).width <= anchoMaximo) {
+            min = mid;
+        } else {
+            max = mid;
+        }
+    }
+    
+    return min;
 }
 
 // Función para dibujar resplandor alrededor del avatar
@@ -323,7 +410,7 @@ router.get('/', async (req, res) => {
         
         // Valores predeterminados
         const nombreUsuario = username || 'User.Bot';
-        const mensajeTexto = texto || '¡Muchas gracias por apoyar nuestro canal con tu boost!';
+        const mensajeTexto = texto || '¡Muchas gracias por apoyar nuestro server con tu boost!';
         
         // Dimensiones de la tarjeta (horizontal al estilo de notificación Discord pero más grande)
         const ANCHO = 500;  // Aumentado desde 400
@@ -359,6 +446,7 @@ router.get('/', async (req, res) => {
         // Añadir efectos decorativos
         crearEfectosBorde(ctx, ANCHO, ALTO);
         crearEfectosEspeciales(ctx, ANCHO, ALTO);
+        dibujarMiniBoosters(ctx, ANCHO, ALTO); // Añadir mini boosts en el fondo
         dibujarDestellos(ctx, ANCHO, ALTO);
         
         // Cargar imagen de avatar
