@@ -4,7 +4,7 @@ const path = require('path');
 
 const router = express.Router();
 
-// Registrar fuente Oswald
+// Registrar fuente para Discord - idealmente usar Whitney, pero usamos una alternativa
 registerFont(path.join(__dirname, 'Oswald-VariableFont_wght.ttf'), { family: 'Oswald' });
 
 // Función para validar URL
@@ -17,262 +17,160 @@ const isValidUrl = (string) => {
     }
 };
 
-// Función para dibujar patrón de diamantes y brillos en estilo rosa/morado Discord Nitro
-function dibujarFondoNitroBoost(ctx, ancho, alto) {
-    // Crear degradado base rosa-morado
-    const gradient = ctx.createLinearGradient(0, 0, ancho, alto);
-    gradient.addColorStop(0, "#FF0080");    // Rosa intenso
-    gradient.addColorStop(1, "#7928CA");    // Morado
+// Función para dibujar el diamante de Discord Boost
+function dibujarDiamante(ctx, x, y, tamaño) {
+    // Color base del diamante (morado/rosa de Discord)
+    const colorDiamante = "#ff73fa";
     
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, ancho, alto);
+    // Dibujar forma principal del diamante
+    ctx.beginPath();
+    ctx.moveTo(x, y + tamaño * 0.5); // Punto superior
+    ctx.lineTo(x - tamaño * 0.4, y); // Punto izquierdo
+    ctx.lineTo(x, y - tamaño * 0.5); // Punto inferior
+    ctx.lineTo(x + tamaño * 0.4, y); // Punto derecho
+    ctx.closePath();
     
-    // Añadir patrón de diamantes
-    ctx.strokeStyle = "rgba(255,255,255,0.2)";
+    // Añadir gradiente para dar profundidad
+    const gradiente = ctx.createLinearGradient(x - tamaño * 0.4, y - tamaño * 0.5, x + tamaño * 0.4, y + tamaño * 0.5);
+    gradiente.addColorStop(0, "#ff73fa");    // Rosa intenso
+    gradiente.addColorStop(0.5, "#bd5dff");  // Morado más claro
+    gradiente.addColorStop(1, "#a93efd");    // Morado más oscuro
+    
+    ctx.fillStyle = gradiente;
+    ctx.fill();
+    
+    // Añadir brillo en el diamante
+    ctx.beginPath();
+    ctx.moveTo(x - tamaño * 0.1, y);
+    ctx.lineTo(x, y - tamaño * 0.2);
+    ctx.lineTo(x + tamaño * 0.1, y);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.fill();
+    
+    // Añadir borde sutil
+    ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 1;
+    ctx.stroke();
     
-    const tamañoDiamante = 40;
-    for (let y = -tamañoDiamante; y < alto + tamañoDiamante; y += tamañoDiamante) {
-        for (let x = -tamañoDiamante; x < ancho + tamañoDiamante; x += tamañoDiamante) {
-            ctx.beginPath();
-            ctx.moveTo(x, y + tamañoDiamante/2);
-            ctx.lineTo(x + tamañoDiamante/2, y);
-            ctx.lineTo(x + tamañoDiamante, y + tamañoDiamante/2);
-            ctx.lineTo(x + tamañoDiamante/2, y + tamañoDiamante);
-            ctx.closePath();
-            ctx.stroke();
+    // Añadir "+" en la esquina superior derecha
+    ctx.font = "bold " + (tamaño * 0.3) + "px Arial";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("+", x + tamaño * 0.35, y - tamaño * 0.4);
+}
+
+// Función para dibujar estrellas y destellos
+function dibujarDestellos(ctx, ancho, alto) {
+    // Dibujar varias estrellas pequeñas
+    const estrellas = [
+        { x: ancho - 30, y: alto / 2 - 10, tamaño: 3 },
+        { x: ancho - 40, y: alto / 2 + 15, tamaño: 2 },
+        { x: ancho - 15, y: alto / 2 + 5, tamaño: 4 },
+        { x: ancho - 50, y: alto / 2 - 15, tamaño: 2 },
+        // Añadir más estrellas por toda la tarjeta
+        { x: ancho * 0.1, y: alto * 0.2, tamaño: 2 },
+        { x: ancho * 0.2, y: alto * 0.8, tamaño: 3 },
+        { x: ancho * 0.8, y: alto * 0.3, tamaño: 2 },
+        { x: ancho * 0.7, y: alto * 0.7, tamaño: 3 },
+        { x: ancho * 0.5, y: alto * 0.15, tamaño: 4 },
+        { x: ancho * 0.6, y: alto * 0.85, tamaño: 2 },
+    ];
+    
+    estrellas.forEach(estrella => {
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+            const radio = i % 2 === 0 ? estrella.tamaño : estrella.tamaño / 2;
+            const angulo = (Math.PI * 2 * i) / 10 - Math.PI / 2;
+            const x = estrella.x + radio * Math.cos(angulo);
+            const y = estrella.y + radio * Math.sin(angulo);
+            
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
         }
-    }
+        ctx.closePath();
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+    });
     
-    // Añadir brillos/partículas al estilo Discord Nitro
-    for (let i = 0; i < 30; i++) {
-        const x = Math.random() * ancho;
-        const y = Math.random() * alto;
-        const tamaño = Math.random() * 3 + 1;
-        
-        // Brillo con resplandor
-        const gradiente = ctx.createRadialGradient(x, y, 0, x, y, tamaño * 4);
+    // Añadir destellos brillantes (círculos con resplandor)
+    const destellos = [
+        { x: ancho - 20, y: alto / 2 + 25, tamaño: 1.5 },
+        { x: ancho - 60, y: alto / 2 - 5, tamaño: 1 },
+        { x: ancho * 0.3, y: alto * 0.3, tamaño: 1 },
+        { x: ancho * 0.75, y: alto * 0.5, tamaño: 1.5 },
+        { x: ancho * 0.4, y: alto * 0.7, tamaño: 1 },
+    ];
+    
+    destellos.forEach(destello => {
+        // Resplandor
+        const gradiente = ctx.createRadialGradient(
+            destello.x, destello.y, 0,
+            destello.x, destello.y, destello.tamaño * 6
+        );
         gradiente.addColorStop(0, "rgba(255,255,255,0.8)");
         gradiente.addColorStop(0.5, "rgba(255,255,255,0.2)");
         gradiente.addColorStop(1, "rgba(255,255,255,0)");
         
         ctx.beginPath();
-        ctx.arc(x, y, tamaño * 4, 0, Math.PI * 2);
+        ctx.arc(destello.x, destello.y, destello.tamaño * 6, 0, Math.PI * 2);
         ctx.fillStyle = gradiente;
         ctx.fill();
         
-        // Punto central brillante
+        // Centro brillante
         ctx.beginPath();
-        ctx.arc(x, y, tamaño, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.arc(destello.x, destello.y, destello.tamaño, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
         ctx.fill();
-    }
-    
-    // Añadir viñeta para dar profundidad y estilo Discord
-    const viñeta = ctx.createRadialGradient(
-        ancho / 2, alto / 2, alto / 3,
-        ancho / 2, alto / 2, alto
-    );
-    viñeta.addColorStop(0, "rgba(0,0,0,0)");
-    viñeta.addColorStop(1, "rgba(0,0,0,0.6)");
-    
-    ctx.fillStyle = viñeta;
-    ctx.fillRect(0, 0, ancho, alto);
-    
-    // Líneas decorativas estilo Discord en las esquinas
-    ctx.strokeStyle = "rgba(255,255,255,0.5)";
-    ctx.lineWidth = 2;
-    
-    // Tamaño de las líneas decorativas
-    const long = 25;
-    
-    // Esquina superior izquierda
-    ctx.beginPath();
-    ctx.moveTo(0, long);
-    ctx.lineTo(0, 0);
-    ctx.lineTo(long, 0);
-    ctx.stroke();
-    
-    // Esquina superior derecha
-    ctx.beginPath();
-    ctx.moveTo(ancho - long, 0);
-    ctx.lineTo(ancho, 0);
-    ctx.lineTo(ancho, long);
-    ctx.stroke();
-    
-    // Esquina inferior izquierda
-    ctx.beginPath();
-    ctx.moveTo(0, alto - long);
-    ctx.lineTo(0, alto);
-    ctx.lineTo(long, alto);
-    ctx.stroke();
-    
-    // Esquina inferior derecha
-    ctx.beginPath();
-    ctx.moveTo(ancho - long, alto);
-    ctx.lineTo(ancho, alto);
-    ctx.lineTo(ancho, alto - long);
-    ctx.stroke();
-}
-
-// Función para dibujar avatar con estilo Discord Nitro
-function dibujarAvatarDiscord(ctx, imagen, x, y, tamaño) {
-    // Guardar estado del contexto
-    ctx.save();
-    
-    // Añadir sombra brillante estilo Discord Nitro
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = "rgba(255,0,255,0.6)";
-    
-    // Crear máscara circular para avatar
-    ctx.beginPath();
-    ctx.arc(x + tamaño/2, y + tamaño/2, tamaño/2, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-    
-    // Dibujar imagen
-    ctx.drawImage(imagen, x, y, tamaño, tamaño);
-    
-    // Restaurar contexto para dibujar borde
-    ctx.restore();
-    
-    // Dibujar resplandor exterior (glow) estilo Discord Nitro
-    ctx.beginPath();
-    ctx.arc(x + tamaño/2, y + tamaño/2, tamaño/2 + 3, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(255,255,255,0.8)";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    // Dibujar borde
-    ctx.beginPath();
-    ctx.arc(x + tamaño/2, y + tamaño/2, tamaño/2, 0, Math.PI * 2);
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-}
-
-// Función para dibujar panel de texto estilo Discord
-function dibujarPanelTextoDiscord(ctx, x, y, ancho, alto) {
-    // Fondo del panel con esquinas redondeadas y semi-transparente
-    ctx.fillStyle = "rgba(0,0,0,0.7)";
-    ctx.beginPath();
-    
-    const radio = 15;
-    ctx.moveTo(x + radio, y);
-    ctx.lineTo(x + ancho - radio, y);
-    ctx.quadraticCurveTo(x + ancho, y, x + ancho, y + radio);
-    ctx.lineTo(x + ancho, y + alto - radio);
-    ctx.quadraticCurveTo(x + ancho, y + alto, x + ancho - radio, y + alto);
-    ctx.lineTo(x + radio, y + alto);
-    ctx.quadraticCurveTo(x, y + alto, x, y + alto - radio);
-    ctx.lineTo(x, y + radio);
-    ctx.quadraticCurveTo(x, y, x + radio, y);
-    ctx.closePath();
-    
-    // Añadir sombra al panel
-    ctx.shadowColor = "rgba(0,0,0,0.5)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-    ctx.fill();
-    
-    // Resetear sombra
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    
-    // Añadir borde sutil
-    ctx.strokeStyle = "rgba(128,0,128,0.5)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-}
-
-// Función para dibujar texto con estilo Discord Nitro
-function dibujarTextoDiscord(ctx, texto, x, y, anchoMaximo) {
-    // Establecer límite de caracteres
-    const LIMITE_CARACTERES = 100;
-    if (texto.length > LIMITE_CARACTERES) {
-        texto = texto.substring(0, LIMITE_CARACTERES) + '...';
-    }
-    
-    // Ajustar tamaño de fuente según longitud del texto
-    let tamañoFuente = 28; // Tamaño predeterminado para Discord
-    if (texto.length > 60) {
-        tamañoFuente = 22;
-    } else if (texto.length > 40) {
-        tamañoFuente = 24;
-    } else if (texto.length > 20) {
-        tamañoFuente = 26;
-    }
-    
-    // Aplicar fuente
-    ctx.font = `${tamañoFuente}px Oswald`;
-    
-    // Dividir texto en palabras
-    const palabras = texto.split(' ');
-    const lineas = [];
-    let lineaActual = '';
-    
-    // Agrupar palabras en líneas que quepan
-    for (const palabra of palabras) {
-        const lineaTentativa = lineaActual.length === 0 ? palabra : `${lineaActual} ${palabra}`;
-        const medidaTexto = ctx.measureText(lineaTentativa).width;
-        
-        if (medidaTexto <= anchoMaximo) {
-            lineaActual = lineaTentativa;
-        } else {
-            lineas.push(lineaActual);
-            lineaActual = palabra;
-        }
-    }
-    
-    // Añadir la última línea
-    if (lineaActual.length > 0) {
-        lineas.push(lineaActual);
-    }
-    
-    // Limitar a 3 líneas máximo
-    if (lineas.length > 3) {
-        lineas.splice(3);
-        lineas[2] += '...';
-    }
-    
-    // Dibujar texto con efectos de Discord Nitro
-    lineas.forEach((linea, index) => {
-        // Sombra exterior para efecto Discord Nitro
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.shadowBlur = 3;
-        ctx.shadowColor = "rgba(255,0,255,0.7)";
-        
-        // Dibujar el texto
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(linea, x, y + (index * (tamañoFuente + 6)));
     });
+}
+
+// Función para crear efectos de brillo en los bordes
+function crearEfectosBorde(ctx, ancho, alto) {
+    // Crear gradiente en los bordes para dar efecto iluminado
+    const altoBorde = 5;
+    const gradienteSuperior = ctx.createLinearGradient(0, 0, 0, altoBorde);
+    gradienteSuperior.addColorStop(0, "rgba(255,115,250,0.8)");
+    gradienteSuperior.addColorStop(1, "rgba(255,115,250,0)");
     
-    // Resetear sombra
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.shadowBlur = 0;
-    ctx.shadowColor = "transparent";
+    ctx.fillStyle = gradienteSuperior;
+    ctx.fillRect(0, 0, ancho, altoBorde);
     
-    // Devolver el alto total del texto
-    return lineas.length * (tamañoFuente + 6);
+    const gradienteInferior = ctx.createLinearGradient(0, alto - altoBorde, 0, alto);
+    gradienteInferior.addColorStop(0, "rgba(255,115,250,0)");
+    gradienteInferior.addColorStop(1, "rgba(255,115,250,0.8)");
+    
+    ctx.fillStyle = gradienteInferior;
+    ctx.fillRect(0, alto - altoBorde, ancho, altoBorde);
+    
+    const anchoLateral = 5;
+    const gradienteIzquierdo = ctx.createLinearGradient(0, 0, anchoLateral, 0);
+    gradienteIzquierdo.addColorStop(0, "rgba(255,115,250,0.8)");
+    gradienteIzquierdo.addColorStop(1, "rgba(255,115,250,0)");
+    
+    ctx.fillStyle = gradienteIzquierdo;
+    ctx.fillRect(0, 0, anchoLateral, alto);
+    
+    const gradienteDerecho = ctx.createLinearGradient(ancho - anchoLateral, 0, ancho, 0);
+    gradienteDerecho.addColorStop(0, "rgba(255,115,250,0)");
+    gradienteDerecho.addColorStop(1, "rgba(255,115,250,0.8)");
+    
+    ctx.fillStyle = gradienteDerecho;
+    ctx.fillRect(ancho - anchoLateral, 0, anchoLateral, alto);
 }
 
 router.get('/', async (req, res) => {
     try {
         // Extraer parámetros
-        const { avatar, texto } = req.query;
+        const { avatar, texto, username } = req.query;
         
         // Verificar parámetros mínimos
         if (!avatar) {
             return res.status(400).json({ 
                 error: 'Falta el parámetro avatar en la URL',
-                ejemplo: '/boostcard?avatar=https://tu-avatar.jpg&texto=¡Gracias por el boost!' 
+                ejemplo: '/boostcard?avatar=https://tu-avatar.jpg&username=User123&texto=Just Boosted' 
             });
         }
         
@@ -281,46 +179,77 @@ router.get('/', async (req, res) => {
             return res.status(400).json({ error: 'La URL del avatar no es válida' });
         }
         
-        // Texto predeterminado para Discord Boost
-        const mensajeTexto = texto || '¡Muchas gracias por apoyar nuestro canal con tu boost! Te lo agradecemos muchísimo.';
+        // Valores predeterminados
+        const nombreUsuario = username || 'User.Bot';
+        const mensajeTexto = texto || 'Just Boosted';
         
-        // Dimensiones de la tarjeta (estándar Discord)
-        const ANCHO = 800;
-        const ALTO = 400;
+        // Dimensiones de la tarjeta (horizontal al estilo de notificación Discord)
+        const ANCHO = 400;
+        const ALTO = 70;
         
         // Crear canvas
         const canvas = createCanvas(ANCHO, ALTO);
         const ctx = canvas.getContext('2d');
         
-        // Dibujar fondo estilo Nitro/Boost de Discord
-        dibujarFondoNitroBoost(ctx, ANCHO, ALTO);
+        // Dibujar fondo negro con bordes redondeados
+        ctx.fillStyle = "#1e1e2e"; // Fondo discord oscuro
+        
+        // Dibujar rectángulo con esquinas redondeadas
+        const radioEsquina = 15;
+        ctx.beginPath();
+        ctx.moveTo(radioEsquina, 0);
+        ctx.lineTo(ANCHO - radioEsquina, 0);
+        ctx.quadraticCurveTo(ANCHO, 0, ANCHO, radioEsquina);
+        ctx.lineTo(ANCHO, ALTO - radioEsquina);
+        ctx.quadraticCurveTo(ANCHO, ALTO, ANCHO - radioEsquina, ALTO);
+        ctx.lineTo(radioEsquina, ALTO);
+        ctx.quadraticCurveTo(0, ALTO, 0, ALTO - radioEsquina);
+        ctx.lineTo(0, radioEsquina);
+        ctx.quadraticCurveTo(0, 0, radioEsquina, 0);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Añadir borde morado brillante
+        ctx.strokeStyle = "#bd5dff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
         
         // Cargar imagen de avatar
         const imagenAvatar = await loadImage(avatar);
         
-        // Dibujar avatar con estilo Discord Nitro
-        const tamañoAvatar = 120;
-        const posXAvatar = (ANCHO - tamañoAvatar) / 2;
-        const posYAvatar = 80;
-        dibujarAvatarDiscord(ctx, imagenAvatar, posXAvatar, posYAvatar, tamañoAvatar);
+        // Dibujar avatar en círculo
+        const radioAvatar = ALTO / 2 - 10;
+        const xAvatar = 30;
+        const yAvatar = ALTO / 2;
         
-        // Dibujar panel para mensaje estilo Discord
-        const margenTexto = 40;
-        const posXTexto = margenTexto;
-        const posYTexto = posYAvatar + tamañoAvatar + 50;
-        const anchoTextoMax = ANCHO - (margenTexto * 2);
-        const altoEstimadoTexto = 80;
+        // Crear recorte circular para el avatar
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(xAvatar, yAvatar, radioAvatar, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
         
-        dibujarPanelTextoDiscord(ctx, posXTexto - 20, posYTexto - 35, anchoTextoMax + 40, altoEstimadoTexto);
+        // Dibujar avatar dentro del círculo
+        ctx.drawImage(imagenAvatar, xAvatar - radioAvatar, yAvatar - radioAvatar, radioAvatar * 2, radioAvatar * 2);
+        ctx.restore();
         
-        // Dibujar texto con estilo Discord
-        dibujarTextoDiscord(ctx, mensajeTexto, posXTexto, posYTexto, anchoTextoMax);
+        // Añadir efectos decorativos
+        crearEfectosBorde(ctx, ANCHO, ALTO);
+        dibujarDestellos(ctx, ANCHO, ALTO);
         
-        // Añadir etiqueta "Boost Card" estilo Discord
-        ctx.font = '16px Oswald';
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.textAlign = 'right';
-        ctx.fillText('Boost Card', ANCHO - 20, ALTO - 15);
+        // Dibujar nombre de usuario
+        ctx.font = "bold 16px Oswald";
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "left";
+        ctx.fillText(nombreUsuario, xAvatar + radioAvatar + 15, yAvatar - 5);
+        
+        // Dibujar texto "Just Boosted"
+        ctx.font = "14px Oswald";
+        ctx.fillStyle = "#cccccc";
+        ctx.fillText(mensajeTexto, xAvatar + radioAvatar + 15, yAvatar + 15);
+        
+        // Dibujar diamante de Discord Boost
+        dibujarDiamante(ctx, ANCHO - 35, ALTO / 2, 30);
         
         // Enviar imagen
         res.setHeader('Content-Type', 'image/png');
