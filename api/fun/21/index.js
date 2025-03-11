@@ -463,6 +463,26 @@ async function procesarAccion(partidaId, accion, res) {
                             // Liberar memoria
                             setTimeout(() => { delete partidasActivas[partidaId]; }, 100);
                         }
+                        // Verificar si el dealer llegó a 21
+                        else if (valorDealer === 21) {
+                            // Dealer llega a 21
+                            estadoJuego = "dealer_gana_21";
+                            partida.estadoJuego = estadoJuego;
+                            partida.terminada = true;
+                            
+                            const respuestaFinal = await consultarGroqDealerFinal(
+                                manoJugador, manoDealer, valorJugador, valorDealer, estadoJuego
+                            );
+                            pensamientoDealer = respuestaFinal.pensamiento;
+                            
+                            resultado = {
+                                estado: estadoJuego,
+                                mensaje: obtenerMensajeFinal(estadoJuego)
+                            };
+                            
+                            // Liberar memoria
+                            setTimeout(() => { delete partidasActivas[partidaId]; }, 100);
+                        }
                     }
                     
                     if (!resultado) {
@@ -516,16 +536,11 @@ async function procesarAccion(partidaId, accion, res) {
                     
                     // Liberar memoria
                     setTimeout(() => { delete partidasActivas[partidaId]; }, 100);
-                } else if (valorDealer >= 17) {
-                    // Dealer llega a 17 o más, comparar manos
-                    if (valorDealer > valorJugador) {
-                        estadoJuego = "dealer_gana";
-                    } else if (valorDealer < valorJugador) {
-                        estadoJuego = "jugador_gana";
-                    } else {
-                        estadoJuego = "empate";
-                    }
-                    
+                }
+                // Verificar si el dealer llegó a 21
+                else if (valorDealer === 21) {
+                    // Dealer llega a 21
+                    estadoJuego = "dealer_gana_21";
                     partida.estadoJuego = estadoJuego;
                     partida.terminada = true;
                     
@@ -541,6 +556,13 @@ async function procesarAccion(partidaId, accion, res) {
                     
                     // Liberar memoria
                     setTimeout(() => { delete partidasActivas[partidaId]; }, 100);
+                }
+                else if (valorDealer >= 17) {
+                    // Dealer llega a 17 o más pero el juego continúa
+                    resultado = {
+                        estado: "en_curso",
+                        mensaje: `Te has plantado. El dealer ha pedido carta y su mano vale ${valorDealer}. Con 17 o más, el dealer no tomará más cartas.`
+                    };
                 } else {
                     resultado = {
                         estado: "en_curso",
@@ -548,30 +570,11 @@ async function procesarAccion(partidaId, accion, res) {
                     };
                 }
             } else {
-                // El dealer decide parar, comparar manos
-                if (valorDealer > valorJugador) {
-                    estadoJuego = "dealer_gana";
-                } else if (valorDealer < valorJugador) {
-                    estadoJuego = "jugador_gana";
-                } else {
-                    estadoJuego = "empate";
-                }
-                
-                partida.estadoJuego = estadoJuego;
-                partida.terminada = true;
-                
-                const respuestaFinal = await consultarGroqDealerFinal(
-                    manoJugador, manoDealer, valorJugador, valorDealer, estadoJuego
-                );
-                pensamientoDealer = respuestaFinal.pensamiento;
-                
+                // El dealer decide parar, pero NO terminamos el juego todavía
                 resultado = {
-                    estado: estadoJuego,
-                    mensaje: obtenerMensajeFinal(estadoJuego)
+                    estado: "en_curso",
+                    mensaje: `Te has plantado. El dealer tiene ${valorDealer} y decide no tomar más cartas.`
                 };
-                
-                // Liberar memoria
-                setTimeout(() => { delete partidasActivas[partidaId]; }, 100);
             }
             break;
             
