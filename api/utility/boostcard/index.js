@@ -67,13 +67,19 @@ function dibujarDestellos(ctx, ancho, alto) {
         { x: ancho - 40, y: alto / 2 + 15, tamaño: 2 },
         { x: ancho - 15, y: alto / 2 + 5, tamaño: 4 },
         { x: ancho - 50, y: alto / 2 - 15, tamaño: 2 },
-        // Añadir más estrellas por toda la tarjeta
         { x: ancho * 0.1, y: alto * 0.2, tamaño: 2 },
         { x: ancho * 0.2, y: alto * 0.8, tamaño: 3 },
         { x: ancho * 0.8, y: alto * 0.3, tamaño: 2 },
         { x: ancho * 0.7, y: alto * 0.7, tamaño: 3 },
         { x: ancho * 0.5, y: alto * 0.15, tamaño: 4 },
         { x: ancho * 0.6, y: alto * 0.85, tamaño: 2 },
+        // Añadir más estrellas
+        { x: ancho * 0.15, y: alto * 0.5, tamaño: 3 },
+        { x: ancho * 0.85, y: alto * 0.5, tamaño: 2 },
+        { x: ancho * 0.3, y: alto * 0.15, tamaño: 3 },
+        { x: ancho * 0.4, y: alto * 0.85, tamaño: 2 },
+        { x: ancho * 0.65, y: alto * 0.25, tamaño: 3 },
+        { x: ancho * 0.75, y: alto * 0.75, tamaño: 2 },
     ];
     
     estrellas.forEach(estrella => {
@@ -102,6 +108,13 @@ function dibujarDestellos(ctx, ancho, alto) {
         { x: ancho * 0.3, y: alto * 0.3, tamaño: 1 },
         { x: ancho * 0.75, y: alto * 0.5, tamaño: 1.5 },
         { x: ancho * 0.4, y: alto * 0.7, tamaño: 1 },
+        // Añadir más destellos
+        { x: ancho * 0.1, y: alto * 0.4, tamaño: 1.2 },
+        { x: ancho * 0.2, y: alto * 0.6, tamaño: 0.8 },
+        { x: ancho * 0.8, y: alto * 0.2, tamaño: 1.3 },
+        { x: ancho * 0.9, y: alto * 0.8, tamaño: 1 },
+        { x: ancho * 0.5, y: alto * 0.3, tamaño: 1.2 },
+        { x: ancho * 0.6, y: alto * 0.7, tamaño: 0.9 },
     ];
     
     destellos.forEach(destello => {
@@ -130,7 +143,7 @@ function dibujarDestellos(ctx, ancho, alto) {
 // Función para crear efectos de brillo en los bordes
 function crearEfectosBorde(ctx, ancho, alto) {
     // Crear gradiente en los bordes para dar efecto iluminado
-    const altoBorde = 5;
+    const altoBorde = 8; // Aumentado para más brillo
     const gradienteSuperior = ctx.createLinearGradient(0, 0, 0, altoBorde);
     gradienteSuperior.addColorStop(0, "rgba(255,115,250,0.8)");
     gradienteSuperior.addColorStop(1, "rgba(255,115,250,0)");
@@ -145,7 +158,7 @@ function crearEfectosBorde(ctx, ancho, alto) {
     ctx.fillStyle = gradienteInferior;
     ctx.fillRect(0, alto - altoBorde, ancho, altoBorde);
     
-    const anchoLateral = 5;
+    const anchoLateral = 8; // Aumentado para más brillo
     const gradienteIzquierdo = ctx.createLinearGradient(0, 0, anchoLateral, 0);
     gradienteIzquierdo.addColorStop(0, "rgba(255,115,250,0.8)");
     gradienteIzquierdo.addColorStop(1, "rgba(255,115,250,0)");
@@ -159,6 +172,135 @@ function crearEfectosBorde(ctx, ancho, alto) {
     
     ctx.fillStyle = gradienteDerecho;
     ctx.fillRect(ancho - anchoLateral, 0, anchoLateral, alto);
+    
+    // Añadir un resplandor adicional en las esquinas
+    const radioEsquina = 20;
+    const esquinas = [
+        { x: 0, y: 0 },                // Superior izquierda
+        { x: ancho, y: 0 },            // Superior derecha
+        { x: 0, y: alto },             // Inferior izquierda
+        { x: ancho, y: alto }          // Inferior derecha
+    ];
+    
+    esquinas.forEach(esquina => {
+        const gradienteEsquina = ctx.createRadialGradient(
+            esquina.x, esquina.y, 0,
+            esquina.x, esquina.y, radioEsquina
+        );
+        gradienteEsquina.addColorStop(0, "rgba(255,115,250,0.8)");
+        gradienteEsquina.addColorStop(1, "rgba(255,115,250,0)");
+        
+        ctx.fillStyle = gradienteEsquina;
+        ctx.fillRect(
+            Math.max(0, esquina.x - radioEsquina),
+            Math.max(0, esquina.y - radioEsquina),
+            radioEsquina * (esquina.x === 0 ? 1 : -1) + (esquina.x === 0 ? 0 : ancho),
+            radioEsquina * (esquina.y === 0 ? 1 : -1) + (esquina.y === 0 ? 0 : alto)
+        );
+    });
+}
+
+// Función para dividir el texto en múltiples líneas
+function dividirTexto(ctx, texto, anchoMaximo, tamaño) {
+    // Establecer la fuente para medir el texto
+    ctx.font = `${tamaño}px Oswald`;
+    
+    // Si el texto es muy corto, devolverlo sin cambios
+    if (ctx.measureText(texto).width <= anchoMaximo) {
+        return [texto];
+    }
+    
+    // Dividir el texto en palabras
+    const palabras = texto.split(' ');
+    const lineas = [];
+    let lineaActual = '';
+    
+    // Procesar cada palabra
+    for (const palabra of palabras) {
+        const lineaTentativa = lineaActual.length === 0 ? palabra : `${lineaActual} ${palabra}`;
+        const medidaTexto = ctx.measureText(lineaTentativa).width;
+        
+        if (medidaTexto <= anchoMaximo) {
+            lineaActual = lineaTentativa;
+        } else {
+            // Si una sola palabra es más larga que el ancho máximo, dividirla
+            if (lineaActual.length === 0) {
+                let palabraParcial = '';
+                for (let i = 0; i < palabra.length; i++) {
+                    const tentativo = palabraParcial + palabra[i];
+                    if (ctx.measureText(tentativo).width <= anchoMaximo) {
+                        palabraParcial = tentativo;
+                    } else {
+                        lineas.push(palabraParcial);
+                        palabraParcial = palabra[i];
+                    }
+                }
+                if (palabraParcial.length > 0) {
+                    lineaActual = palabraParcial;
+                }
+            } else {
+                lineas.push(lineaActual);
+                lineaActual = palabra;
+            }
+        }
+    }
+    
+    // Añadir la última línea si queda algo
+    if (lineaActual.length > 0) {
+        lineas.push(lineaActual);
+    }
+    
+    return lineas;
+}
+
+// Función para dibujar resplandor alrededor del avatar
+function dibujarResplandorAvatar(ctx, x, y, radio) {
+    const gradiente = ctx.createRadialGradient(
+        x, y, radio * 0.9,
+        x, y, radio * 1.3
+    );
+    gradiente.addColorStop(0, "rgba(189, 93, 255, 0.5)");
+    gradiente.addColorStop(1, "rgba(189, 93, 255, 0)");
+    
+    ctx.beginPath();
+    ctx.arc(x, y, radio * 1.3, 0, Math.PI * 2);
+    ctx.fillStyle = gradiente;
+    ctx.fill();
+}
+
+// Función para crear efectos especiales adicionales
+function crearEfectosEspeciales(ctx, ancho, alto) {
+    // Crear efecto de luz horizontal central
+    const altoLuz = 15;
+    const yPosicion = alto / 2;
+    const gradienteLuz = ctx.createLinearGradient(0, yPosicion - altoLuz/2, ancho, yPosicion + altoLuz/2);
+    gradienteLuz.addColorStop(0, "rgba(189, 93, 255, 0)");
+    gradienteLuz.addColorStop(0.5, "rgba(189, 93, 255, 0.1)");
+    gradienteLuz.addColorStop(1, "rgba(189, 93, 255, 0)");
+    
+    ctx.fillStyle = gradienteLuz;
+    ctx.fillRect(0, yPosicion - altoLuz/2, ancho, altoLuz);
+    
+    // Ondas de luz sutiles
+    const numOndas = 3;
+    for (let i = 0; i < numOndas; i++) {
+        const yOnda = alto * (i + 1) / (numOndas + 1);
+        
+        ctx.beginPath();
+        ctx.moveTo(0, yOnda);
+        
+        // Crear una onda sinusoidal
+        for (let x = 0; x < ancho; x += 5) {
+            const amplitud = 2;
+            const frecuencia = 0.02;
+            const y = yOnda + Math.sin(x * frecuencia) * amplitud;
+            ctx.lineTo(x, y);
+        }
+        
+        ctx.strokeStyle = "rgba(189, 93, 255, 0.1)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
 }
 
 router.get('/', async (req, res) => {
@@ -170,7 +312,7 @@ router.get('/', async (req, res) => {
         if (!avatar) {
             return res.status(400).json({ 
                 error: 'Falta el parámetro avatar en la URL',
-                ejemplo: '/boostcard?avatar=https://tu-avatar.jpg&username=User123&texto=Just Boosted' 
+                ejemplo: '/boostcard?avatar=https://tu-avatar.jpg&username=User123&texto=¡Muchas gracias por el boost!' 
             });
         }
         
@@ -181,11 +323,11 @@ router.get('/', async (req, res) => {
         
         // Valores predeterminados
         const nombreUsuario = username || 'User.Bot';
-        const mensajeTexto = texto || 'Just Boosted';
+        const mensajeTexto = texto || '¡Muchas gracias por apoyar nuestro canal con tu boost!';
         
-        // Dimensiones de la tarjeta (horizontal al estilo de notificación Discord)
-        const ANCHO = 400;
-        const ALTO = 70;
+        // Dimensiones de la tarjeta (horizontal al estilo de notificación Discord pero más grande)
+        const ANCHO = 500;  // Aumentado desde 400
+        const ALTO = 90;    // Aumentado desde 70
         
         // Crear canvas
         const canvas = createCanvas(ANCHO, ALTO);
@@ -195,7 +337,7 @@ router.get('/', async (req, res) => {
         ctx.fillStyle = "#1e1e2e"; // Fondo discord oscuro
         
         // Dibujar rectángulo con esquinas redondeadas
-        const radioEsquina = 15;
+        const radioEsquina = 18; // Aumentado ligeramente
         ctx.beginPath();
         ctx.moveTo(radioEsquina, 0);
         ctx.lineTo(ANCHO - radioEsquina, 0);
@@ -211,16 +353,24 @@ router.get('/', async (req, res) => {
         
         // Añadir borde morado brillante
         ctx.strokeStyle = "#bd5dff";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5; // Más grueso
         ctx.stroke();
+        
+        // Añadir efectos decorativos
+        crearEfectosBorde(ctx, ANCHO, ALTO);
+        crearEfectosEspeciales(ctx, ANCHO, ALTO);
+        dibujarDestellos(ctx, ANCHO, ALTO);
         
         // Cargar imagen de avatar
         const imagenAvatar = await loadImage(avatar);
         
-        // Dibujar avatar en círculo
-        const radioAvatar = ALTO / 2 - 10;
-        const xAvatar = 30;
+        // Tamaño y posición del avatar
+        const radioAvatar = ALTO / 2 - 13;
+        const xAvatar = 35; // Ligeramente más a la derecha
         const yAvatar = ALTO / 2;
+        
+        // Dibujar resplandor alrededor del avatar
+        dibujarResplandorAvatar(ctx, xAvatar, yAvatar, radioAvatar);
         
         // Crear recorte circular para el avatar
         ctx.save();
@@ -233,23 +383,52 @@ router.get('/', async (req, res) => {
         ctx.drawImage(imagenAvatar, xAvatar - radioAvatar, yAvatar - radioAvatar, radioAvatar * 2, radioAvatar * 2);
         ctx.restore();
         
-        // Añadir efectos decorativos
-        crearEfectosBorde(ctx, ANCHO, ALTO);
-        dibujarDestellos(ctx, ANCHO, ALTO);
+        // Añadir borde al avatar
+        ctx.beginPath();
+        ctx.arc(xAvatar, yAvatar, radioAvatar, 0, Math.PI * 2);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
         
         // Dibujar nombre de usuario
-        ctx.font = "bold 16px Oswald";
+        ctx.font = "bold 18px Oswald"; // Más grande
         ctx.fillStyle = "#ffffff";
         ctx.textAlign = "left";
-        ctx.fillText(nombreUsuario, xAvatar + radioAvatar + 15, yAvatar - 5);
+        ctx.fillText(nombreUsuario, xAvatar + radioAvatar + 20, yAvatar - 10);
         
-        // Dibujar texto "Just Boosted"
-        ctx.font = "14px Oswald";
+        // Calcular el espacio disponible para el texto
+        const inicioTextoX = xAvatar + radioAvatar + 20;
+        const finTextoX = ANCHO - 65; // Dejar espacio para el diamante
+        const anchoDisponible = finTextoX - inicioTextoX;
+        
+        // Dividir el texto si es necesario y ajustar tamaño
+        let tamañoFuente = 15;
+        // Reducir el tamaño si el texto es muy largo
+        if (mensajeTexto.length > 100) {
+            tamañoFuente = 13;
+        } else if (mensajeTexto.length > 60) {
+            tamañoFuente = 14;
+        }
+        
+        const lineasTexto = dividirTexto(ctx, mensajeTexto, anchoDisponible, tamañoFuente);
+        
+        // Limitar a máximo 2 líneas
+        const lineasMostradas = lineasTexto.slice(0, 2);
+        if (lineasTexto.length > 2) {
+            lineasMostradas[1] += '...';
+        }
+        
+        // Dibujar cada línea de texto
+        ctx.font = `${tamañoFuente}px Oswald`;
         ctx.fillStyle = "#cccccc";
-        ctx.fillText(mensajeTexto, xAvatar + radioAvatar + 15, yAvatar + 15);
         
-        // Dibujar diamante de Discord Boost
-        dibujarDiamante(ctx, ANCHO - 35, ALTO / 2, 30);
+        lineasMostradas.forEach((linea, indice) => {
+            const yTexto = yAvatar + 5 + (indice * (tamañoFuente + 2));
+            ctx.fillText(linea, inicioTextoX, yTexto);
+        });
+        
+        // Dibujar diamante de Discord Boost con tamaño aumentado
+        dibujarDiamante(ctx, ANCHO - 40, ALTO / 2, 35);
         
         // Enviar imagen
         res.setHeader('Content-Type', 'image/png');
