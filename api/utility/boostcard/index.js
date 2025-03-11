@@ -482,14 +482,14 @@ function crearEfectosEspeciales(ctx, ancho, alto) {
 
 router.get('/', async (req, res) => {
     try {
-        // Extraer parámetros
-        const { avatar, texto, username, estilo, tema } = req.query;
+        // Extraer parámetros - eliminamos el parámetro tema
+        const { avatar, texto, username } = req.query;
         
         // Verificar parámetros mínimos
         if (!avatar) {
             return res.status(400).json({ 
                 error: 'Falta el parámetro avatar en la URL',
-                ejemplo: '/boostcard?avatar=https://tu-avatar.jpg&username=User123&texto=¡Muchas gracias por el boost!&estilo=moradoAzul&tema=moradoAzul' 
+                ejemplo: '/boostcard?avatar=https://tu-avatar.jpg&username=User123&texto=¡Muchas gracias por el boost!' 
             });
         }
         
@@ -502,13 +502,12 @@ router.get('/', async (req, res) => {
         const nombreUsuario = username || 'User.Bot';
         const mensajeTexto = texto || '¡Muchas gracias por apoyar nuestro server con tu boost!';
         
-        // Forzar estilo morado-azul para los textos independientemente del parámetro
-        const estiloTexto = 'moradoAzul';
-        const temaCarta = tema || 'moradoAzul';
+        // Tema fijo - siempre morado-azul
+        const temaCarta = 'moradoAzul';
         
-        // Dimensiones de la tarjeta (horizontal al estilo de notificación Discord pero más grande)
-        const ANCHO = 550;  // Aumentado para dar más espacio al texto
-        const ALTO = 90;    // Altura mantenida igual
+        // Dimensiones de la tarjeta
+        const ANCHO = 550;
+        const ALTO = 90;
         
         // Crear canvas
         const canvas = createCanvas(ANCHO, ALTO);
@@ -518,7 +517,7 @@ router.get('/', async (req, res) => {
         ctx.fillStyle = "#1e1e2e"; // Fondo discord oscuro
         
         // Dibujar rectángulo con esquinas redondeadas
-        const radioEsquina = 18; // Aumentado ligeramente
+        const radioEsquina = 18;
         ctx.beginPath();
         ctx.moveTo(radioEsquina, 0);
         ctx.lineTo(ANCHO - radioEsquina, 0);
@@ -532,24 +531,12 @@ router.get('/', async (req, res) => {
         ctx.closePath();
         ctx.fill();
         
-        // Aplicar tema de color al fondo
+        // Aplicar tema de color al fondo - fijo en morado-azul
         const temaSeleccionado = crearFondoTema(ctx, ANCHO, ALTO, temaCarta);
         
-        // Colores del diamante según tema
-        let coloresDiamante;
-        if (temaCarta === 'moradoRosa' || temaCarta === 'moradoReal') {
-            coloresDiamante = ["#ff73fa", "#bd5dff", "#a93efd"];
-        } else if (temaCarta === 'moradoAzul' || temaCarta === 'azulMorado') {
-            coloresDiamante = ["#bd5dff", "#6600ff", "#00ccff"];
-        } else if (temaCarta === 'neonAzul') {
-            coloresDiamante = ["#00ffff", "#0099ff", "#0033cc"];
-        } else {
-            coloresDiamante = ["#ff73fa", "#bd5dff", "#a93efd"]; // Por defecto
-        }
-        
-        // Añadir borde morado brillante (color según tema)
+        // Añadir borde brillante
         ctx.strokeStyle = temaSeleccionado.colores[0];
-        ctx.lineWidth = 2.5; // Más grueso
+        ctx.lineWidth = 2.5;
         ctx.stroke();
         
         // Añadir efectos decorativos
@@ -563,7 +550,7 @@ router.get('/', async (req, res) => {
         
         // Tamaño y posición del avatar
         const radioAvatar = ALTO / 2 - 13;
-        const xAvatar = 35; // Ligeramente más a la derecha
+        const xAvatar = 35;
         const yAvatar = ALTO / 2;
         
         // Dibujar resplandor alrededor del avatar
@@ -587,8 +574,8 @@ router.get('/', async (req, res) => {
         ctx.lineWidth = 2;
         ctx.stroke();
         
-        // Dibujar nombre de usuario con estilo seleccionado
-        const estiloUsuario = ESTILOS_TEXTO[estiloTexto].usuario;
+        // Dibujar nombre de usuario con estilo morado
+        const estiloUsuario = ESTILOS_TEXTO.moradoAzul.usuario;
         ctx.font = estiloUsuario.fuente;
         ctx.fillStyle = estiloUsuario.color;
         ctx.textAlign = "left";
@@ -611,14 +598,14 @@ router.get('/', async (req, res) => {
         
         // Calcular el espacio disponible para el texto
         const inicioTextoX = xAvatar + radioAvatar + 20;
-        const finTextoX = ANCHO - 75; // Aumentar espacio para el diamante
+        const finTextoX = ANCHO - 75;
         const anchoDisponible = finTextoX - inicioTextoX;
         
         // Dividir el texto si es necesario y ajustar tamaño
         let tamañoFuente = 15;
         // Reducir el tamaño si el texto es muy largo
         if (mensajeTexto.length > 150) {
-            tamañoFuente = 12; // Tamaño aún más pequeño para textos extremadamente largos
+            tamañoFuente = 12;
         } else if (mensajeTexto.length > 100) {
             tamañoFuente = 13;
         } else if (mensajeTexto.length > 60) {
@@ -626,13 +613,10 @@ router.get('/', async (req, res) => {
         }
         
         const lineasTexto = dividirTexto(ctx, mensajeTexto, anchoDisponible, tamañoFuente);
-        
-        // Ya no necesitamos limitar aquí, nuestra función revisada de dividirTexto
-        // ya controla mejor los límites y truncamiento
         const lineasMostradas = lineasTexto;
         
-        // Dibujar cada línea de texto con el estilo seleccionado
-        const estiloMensaje = ESTILOS_TEXTO[estiloTexto].mensaje;
+        // Dibujar cada línea de texto con el estilo azul
+        const estiloMensaje = ESTILOS_TEXTO.moradoAzul.mensaje;
         ctx.font = estiloMensaje.fuente;
         ctx.fillStyle = estiloMensaje.color;
         
@@ -655,8 +639,7 @@ router.get('/', async (req, res) => {
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         
-        // Dibujar diamante de Discord Boost siempre con colores morado-rosa
-        // Independientemente del tema de fondo
+        // Dibujar diamante de Discord Boost con colores morado-rosa fijos
         dibujarDiamante(ctx, ANCHO - 40, ALTO / 2, 35, ["#ff73fa", "#bd5dff", "#a93efd"]);
         
         // Enviar imagen
