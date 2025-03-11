@@ -17,45 +17,75 @@ const isValidUrl = (string) => {
     }
 };
 
-// Función para crear fondos con diferentes temas de colores
-function crearFondoTema(ctx, ancho, alto, tema = "moradoRosa") {
-    // Diferentes temas de color disponibles
-    const temas = {
-        moradoRosa: {
-            colores: ["#FF0080", "#7928CA"], // Rosa a morado (original)
-            viñeta: "rgba(0,0,0,0.6)",
-            detalles: "rgba(255,255,255,0.5)"
+// Estilos para el texto (solo el morado-azul que siempre se usará)
+const ESTILOS_TEXTO = {
+    // Estilo morado-azul (único estilo que se usará)
+    moradoAzul: {
+        usuario: {
+            // Una fuente más ornamentada para el nombre de usuario
+            fuente: "bold 18px 'Oswald'",
+            color: "#9966ff", // Morado
+            sombra: "0 0 5px #5500ff"
         },
-        moradoAzul: {
-            colores: ["#6600ff", "#00ccff"], // Morado a azul
-            viñeta: "rgba(0,0,0,0.5)",
-            detalles: "rgba(180,230,255,0.5)"
-        },
-        azulMorado: {
-            colores: ["#00c3ff", "#a04aff"], // Azul a morado
-            viñeta: "rgba(0,0,0,0.5)",
-            detalles: "rgba(200,230,255,0.5)"
-        },
-        neonAzul: {
-            colores: ["#00ffff", "#0033cc"], // Neón azul a azul oscuro
-            viñeta: "rgba(0,0,0,0.5)",
-            detalles: "rgba(0,255,255,0.5)"
-        },
-        moradoReal: {
-            colores: ["#7028e4", "#e5b2ca"], // Morado real a rosa pastel
-            viñeta: "rgba(0,0,0,0.5)",
-            detalles: "rgba(255,200,230,0.5)"
+        mensaje: {
+            // Una fuente diferente para el texto de mensaje
+            fuente: "italic 15px 'Oswald'",
+            color: "#66ccff", // Azul claro
+            sombra: "0 0 3px #0066ff"
         }
-    };
+    }
+};
+
+// Función para dibujar pequeños boosts en el fondo
+function dibujarMiniBoosters(ctx, ancho, alto, colores = ["#ff73fa", "#bd5dff"]) {
+    // Crear varios mini diamantes de boost en el fondo
+    const miniBoosts = [
+        { x: ancho * 0.15, y: alto * 0.25, tamaño: 8 },
+        { x: ancho * 0.25, y: alto * 0.75, tamaño: 6 },
+        { x: ancho * 0.45, y: alto * 0.35, tamaño: 5 },
+        { x: ancho * 0.65, y: alto * 0.65, tamaño: 7 },
+        { x: ancho * 0.75, y: alto * 0.15, tamaño: 6 },
+        { x: ancho * 0.85, y: alto * 0.85, tamaño: 5 },
+        { x: ancho * 0.35, y: alto * 0.55, tamaño: 4 },
+        { x: ancho * 0.55, y: alto * 0.25, tamaño: 6 },
+        { x: ancho * 0.72, y: alto * 0.45, tamaño: 5 },
+        { x: ancho * 0.92, y: alto * 0.35, tamaño: 4 },
+    ];
     
-    // Seleccionar un tema aleatorio si no se especifica
-    const temaSeleccionado = temas[tema] || temas[Object.keys(temas)[Math.floor(Math.random() * Object.keys(temas).length)]];
+    miniBoosts.forEach(boost => {
+        // Mini diamante
+        ctx.globalAlpha = 0.3; // Transparente para no distraer
+        ctx.beginPath();
+        ctx.moveTo(boost.x, boost.y + boost.tamaño * 0.5);
+        ctx.lineTo(boost.x - boost.tamaño * 0.4, boost.y);
+        ctx.lineTo(boost.x, boost.y - boost.tamaño * 0.5);
+        ctx.lineTo(boost.x + boost.tamaño * 0.4, boost.y);
+        ctx.closePath();
+        
+        const gradiente = ctx.createLinearGradient(
+            boost.x - boost.tamaño * 0.4, boost.y - boost.tamaño * 0.5,
+            boost.x + boost.tamaño * 0.4, boost.y + boost.tamaño * 0.5
+        );
+        gradiente.addColorStop(0, colores[0]);
+        gradiente.addColorStop(1, colores[1]);
+        
+        ctx.fillStyle = gradiente;
+        ctx.fill();
+        
+        // Resetear alpha
+        ctx.globalAlpha = 1.0;
+    });
+}
+
+// Función para crear fondo en estilo morado-azul
+function crearFondoMoradoAzul(ctx, ancho, alto) {
+    // Colores fijos para el tema morado-azul
+    const colores = ["#6600ff", "#00ccff"]; // Morado a azul
     
     // Crear degradado base
     const gradient = ctx.createLinearGradient(0, 0, ancho, alto);
-    temaSeleccionado.colores.forEach((color, index) => {
-        gradient.addColorStop(index / (temaSeleccionado.colores.length - 1), color);
-    });
+    gradient.addColorStop(0, colores[0]);
+    gradient.addColorStop(1, colores[1]);
     
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, ancho, alto);
@@ -107,13 +137,13 @@ function crearFondoTema(ctx, ancho, alto, tema = "moradoRosa") {
         ancho / 2, alto / 2, alto
     );
     viñeta.addColorStop(0, "rgba(0,0,0,0)");
-    viñeta.addColorStop(1, temaSeleccionado.viñeta);
+    viñeta.addColorStop(1, "rgba(0,0,0,0.5)");
     
     ctx.fillStyle = viñeta;
     ctx.fillRect(0, 0, ancho, alto);
     
     // Líneas decorativas en las esquinas
-    ctx.strokeStyle = temaSeleccionado.detalles;
+    ctx.strokeStyle = "rgba(180,230,255,0.5)";
     ctx.lineWidth = 2;
     
     // Tamaño de las líneas decorativas
@@ -147,127 +177,7 @@ function crearFondoTema(ctx, ancho, alto, tema = "moradoRosa") {
     ctx.lineTo(ancho, alto - long);
     ctx.stroke();
     
-    return temaSeleccionado;
-}
-
-// Función para dibujar el diamante de Discord Boost con colores variables
-function dibujarDiamante(ctx, x, y, tamaño, colores = ["#ff73fa", "#bd5dff", "#a93efd"]) {
-    // Dibujar forma principal del diamante
-    ctx.beginPath();
-    ctx.moveTo(x, y + tamaño * 0.5); // Punto superior
-    ctx.lineTo(x - tamaño * 0.4, y); // Punto izquierdo
-    ctx.lineTo(x, y - tamaño * 0.5); // Punto inferior
-    ctx.lineTo(x + tamaño * 0.4, y); // Punto derecho
-    ctx.closePath();
-    
-    // Añadir gradiente para dar profundidad
-    const gradiente = ctx.createLinearGradient(x - tamaño * 0.4, y - tamaño * 0.5, x + tamaño * 0.4, y + tamaño * 0.5);
-    gradiente.addColorStop(0, colores[0]);    // Color primario
-    gradiente.addColorStop(0.5, colores[1]);  // Color secundario
-    gradiente.addColorStop(1, colores[2]);    // Color terciario
-    
-    ctx.fillStyle = gradiente;
-    ctx.fill();
-    
-    // Añadir brillo en el diamante
-    ctx.beginPath();
-    ctx.moveTo(x - tamaño * 0.1, y);
-    ctx.lineTo(x, y - tamaño * 0.2);
-    ctx.lineTo(x + tamaño * 0.1, y);
-    ctx.closePath();
-    ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.fill();
-    
-    // Añadir borde sutil
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    
-    // Añadir "+" en la esquina superior derecha
-    ctx.font = "bold " + (tamaño * 0.3) + "px Arial";
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText("+", x + tamaño * 0.35, y - tamaño * 0.4);
-}
-
-// Función para dibujar estrellas y destellos
-function dibujarDestellos(ctx, ancho, alto) {
-    // Dibujar varias estrellas pequeñas
-    const estrellas = [
-        { x: ancho - 30, y: alto / 2 - 10, tamaño: 3 },
-        { x: ancho - 40, y: alto / 2 + 15, tamaño: 2 },
-        { x: ancho - 15, y: alto / 2 + 5, tamaño: 4 },
-        { x: ancho - 50, y: alto / 2 - 15, tamaño: 2 },
-        { x: ancho * 0.1, y: alto * 0.2, tamaño: 2 },
-        { x: ancho * 0.2, y: alto * 0.8, tamaño: 3 },
-        { x: ancho * 0.8, y: alto * 0.3, tamaño: 2 },
-        { x: ancho * 0.7, y: alto * 0.7, tamaño: 3 },
-        { x: ancho * 0.5, y: alto * 0.15, tamaño: 4 },
-        { x: ancho * 0.6, y: alto * 0.85, tamaño: 2 },
-        // Añadir más estrellas
-        { x: ancho * 0.15, y: alto * 0.5, tamaño: 3 },
-        { x: ancho * 0.85, y: alto * 0.5, tamaño: 2 },
-        { x: ancho * 0.3, y: alto * 0.15, tamaño: 3 },
-        { x: ancho * 0.4, y: alto * 0.85, tamaño: 2 },
-        { x: ancho * 0.65, y: alto * 0.25, tamaño: 3 },
-        { x: ancho * 0.75, y: alto * 0.75, tamaño: 2 },
-    ];
-    
-    estrellas.forEach(estrella => {
-        ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-            const radio = i % 2 === 0 ? estrella.tamaño : estrella.tamaño / 2;
-            const angulo = (Math.PI * 2 * i) / 10 - Math.PI / 2;
-            const x = estrella.x + radio * Math.cos(angulo);
-            const y = estrella.y + radio * Math.sin(angulo);
-            
-            if (i === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-        }
-        ctx.closePath();
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-    });
-    
-    // Añadir destellos brillantes (círculos con resplandor)
-    const destellos = [
-        { x: ancho - 20, y: alto / 2 + 25, tamaño: 1.5 },
-        { x: ancho - 60, y: alto / 2 - 5, tamaño: 1 },
-        { x: ancho * 0.3, y: alto * 0.3, tamaño: 1 },
-        { x: ancho * 0.75, y: alto * 0.5, tamaño: 1.5 },
-        { x: ancho * 0.4, y: alto * 0.7, tamaño: 1 },
-        // Añadir más destellos
-        { x: ancho * 0.1, y: alto * 0.4, tamaño: 1.2 },
-        { x: ancho * 0.2, y: alto * 0.6, tamaño: 0.8 },
-        { x: ancho * 0.8, y: alto * 0.2, tamaño: 1.3 },
-        { x: ancho * 0.9, y: alto * 0.8, tamaño: 1 },
-        { x: ancho * 0.5, y: alto * 0.3, tamaño: 1.2 },
-        { x: ancho * 0.6, y: alto * 0.7, tamaño: 0.9 },
-    ];
-    
-    destellos.forEach(destello => {
-        // Resplandor
-        const gradiente = ctx.createRadialGradient(
-            destello.x, destello.y, 0,
-            destello.x, destello.y, destello.tamaño * 6
-        );
-        gradiente.addColorStop(0, "rgba(255,255,255,0.8)");
-        gradiente.addColorStop(0.5, "rgba(255,255,255,0.2)");
-        gradiente.addColorStop(1, "rgba(255,255,255,0)");
-        
-        ctx.beginPath();
-        ctx.arc(destello.x, destello.y, destello.tamaño * 6, 0, Math.PI * 2);
-        ctx.fillStyle = gradiente;
-        ctx.fill();
-        
-        // Centro brillante
-        ctx.beginPath();
-        ctx.arc(destello.x, destello.y, destello.tamaño, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-    });
+    return colores;
 }
 
 // Función para crear efectos de brillo en los bordes
@@ -430,35 +340,20 @@ function determinarLongitudMaxima(ctx, texto, anchoMaximo, tamaño) {
     return min;
 }
 
-// Función para dibujar resplandor alrededor del avatar
-function dibujarResplandorAvatar(ctx, x, y, radio) {
-    const gradiente = ctx.createRadialGradient(
-        x, y, radio * 0.9,
-        x, y, radio * 1.3
-    );
-    gradiente.addColorStop(0, "rgba(189, 93, 255, 0.5)");
-    gradiente.addColorStop(1, "rgba(189, 93, 255, 0)");
-    
-    ctx.beginPath();
-    ctx.arc(x, y, radio * 1.3, 0, Math.PI * 2);
-    ctx.fillStyle = gradiente;
-    ctx.fill();
-}
-
-// Función para crear efectos especiales adicionales
+// Función para crear efectos especiales adicionales para morado-azul
 function crearEfectosEspeciales(ctx, ancho, alto) {
     // Crear efecto de luz horizontal central
     const altoLuz = 15;
     const yPosicion = alto / 2;
     const gradienteLuz = ctx.createLinearGradient(0, yPosicion - altoLuz/2, ancho, yPosicion + altoLuz/2);
-    gradienteLuz.addColorStop(0, "rgba(189, 93, 255, 0)");
-    gradienteLuz.addColorStop(0.5, "rgba(189, 93, 255, 0.1)");
-    gradienteLuz.addColorStop(1, "rgba(189, 93, 255, 0)");
+    gradienteLuz.addColorStop(0, "rgba(102, 0, 255, 0)"); // Morado
+    gradienteLuz.addColorStop(0.5, "rgba(102, 102, 255, 0.1)"); // Mezcla
+    gradienteLuz.addColorStop(1, "rgba(0, 204, 255, 0)"); // Azul
     
     ctx.fillStyle = gradienteLuz;
     ctx.fillRect(0, yPosicion - altoLuz/2, ancho, altoLuz);
     
-    // Ondas de luz sutiles
+    // Ondas de luz sutiles en tonos azul y morado
     const numOndas = 3;
     for (let i = 0; i < numOndas; i++) {
         const yOnda = alto * (i + 1) / (numOndas + 1);
@@ -474,15 +369,79 @@ function crearEfectosEspeciales(ctx, ancho, alto) {
             ctx.lineTo(x, y);
         }
         
-        ctx.strokeStyle = "rgba(189, 93, 255, 0.1)";
+        // Alternar colores entre morado y azul
+        ctx.strokeStyle = i % 2 === 0 ? 
+            "rgba(102, 0, 255, 0.1)" : // Morado
+            "rgba(0, 204, 255, 0.1)";  // Azul
         ctx.lineWidth = 2;
         ctx.stroke();
     }
 }
 
+// Función para crear efectos de brillo en los bordes específicos para morado-azul
+function crearEfectosBorde(ctx, ancho, alto) {
+    // Crear gradiente en los bordes para dar efecto iluminado
+    const altoBorde = 8;
+    const gradienteSuperior = ctx.createLinearGradient(0, 0, 0, altoBorde);
+    gradienteSuperior.addColorStop(0, "rgba(102,0,255,0.8)"); // Morado
+    gradienteSuperior.addColorStop(1, "rgba(102,0,255,0)");
+    
+    ctx.fillStyle = gradienteSuperior;
+    ctx.fillRect(0, 0, ancho, altoBorde);
+    
+    const gradienteInferior = ctx.createLinearGradient(0, alto - altoBorde, 0, alto);
+    gradienteInferior.addColorStop(0, "rgba(0,204,255,0)"); // Azul
+    gradienteInferior.addColorStop(1, "rgba(0,204,255,0.8)");
+    
+    ctx.fillStyle = gradienteInferior;
+    ctx.fillRect(0, alto - altoBorde, ancho, altoBorde);
+    
+    const anchoLateral = 8;
+    const gradienteIzquierdo = ctx.createLinearGradient(0, 0, anchoLateral, 0);
+    gradienteIzquierdo.addColorStop(0, "rgba(102,0,255,0.8)"); // Morado
+    gradienteIzquierdo.addColorStop(1, "rgba(102,0,255,0)");
+    
+    ctx.fillStyle = gradienteIzquierdo;
+    ctx.fillRect(0, 0, anchoLateral, alto);
+    
+    const gradienteDerecho = ctx.createLinearGradient(ancho - anchoLateral, 0, ancho, 0);
+    gradienteDerecho.addColorStop(0, "rgba(0,204,255,0)"); // Azul
+    gradienteDerecho.addColorStop(1, "rgba(0,204,255,0.8)");
+    
+    ctx.fillStyle = gradienteDerecho;
+    ctx.fillRect(ancho - anchoLateral, 0, anchoLateral, alto);
+    
+    // Añadir un resplandor adicional en las esquinas
+    const radioEsquina = 25;
+    const esquinas = [
+        { x: 0, y: 0, color: "rgba(102,0,255,0.9)" },      // Superior izquierda - Morado
+        { x: ancho, y: 0, color: "rgba(102,204,255,0.9)" }, // Superior derecha - Azul claro
+        { x: 0, y: alto, color: "rgba(102,0,255,0.9)" },    // Inferior izquierda - Morado
+        { x: ancho, y: alto, color: "rgba(0,204,255,0.9)" } // Inferior derecha - Azul
+    ];
+    
+    esquinas.forEach(esquina => {
+        const gradienteEsquina = ctx.createRadialGradient(
+            esquina.x, esquina.y, 0,
+            esquina.x, esquina.y, radioEsquina
+        );
+        gradienteEsquina.addColorStop(0, esquina.color);
+        gradienteEsquina.addColorStop(0.6, "rgba(102,102,255,0.3)"); // Mezcla morado-azul
+        gradienteEsquina.addColorStop(1, "rgba(102,102,255,0)");
+        
+        ctx.fillStyle = gradienteEsquina;
+        ctx.fillRect(
+            Math.max(0, esquina.x - radioEsquina),
+            Math.max(0, esquina.y - radioEsquina),
+            radioEsquina * (esquina.x === 0 ? 1 : -1) + (esquina.x === 0 ? 0 : ancho),
+            radioEsquina * (esquina.y === 0 ? 1 : -1) + (esquina.y === 0 ? 0 : alto)
+        );
+    });
+}
+
 router.get('/', async (req, res) => {
     try {
-        // Extraer parámetros - eliminamos el parámetro tema
+        // Extraer parámetros - solo los necesarios
         const { avatar, texto, username } = req.query;
         
         // Verificar parámetros mínimos
@@ -501,9 +460,6 @@ router.get('/', async (req, res) => {
         // Valores predeterminados
         const nombreUsuario = username || 'User.Bot';
         const mensajeTexto = texto || '¡Muchas gracias por apoyar nuestro server con tu boost!';
-        
-        // Tema fijo - siempre morado-azul
-        const temaCarta = 'moradoAzul';
         
         // Dimensiones de la tarjeta
         const ANCHO = 550;
@@ -531,18 +487,18 @@ router.get('/', async (req, res) => {
         ctx.closePath();
         ctx.fill();
         
-        // Aplicar tema de color al fondo - fijo en morado-azul
-        const temaSeleccionado = crearFondoTema(ctx, ANCHO, ALTO, temaCarta);
+        // Aplicar fondo morado-azul
+        const colores = crearFondoMoradoAzul(ctx, ANCHO, ALTO);
         
         // Añadir borde brillante
-        ctx.strokeStyle = temaSeleccionado.colores[0];
+        ctx.strokeStyle = colores[0]; // Morado
         ctx.lineWidth = 2.5;
         ctx.stroke();
         
         // Añadir efectos decorativos
         crearEfectosBorde(ctx, ANCHO, ALTO);
         crearEfectosEspeciales(ctx, ANCHO, ALTO);
-        dibujarMiniBoosters(ctx, ANCHO, ALTO, [temaSeleccionado.colores[0], temaSeleccionado.colores[1]]);
+        dibujarMiniBoosters(ctx, ANCHO, ALTO, colores);
         dibujarDestellos(ctx, ANCHO, ALTO);
         
         // Cargar imagen de avatar
@@ -575,18 +531,17 @@ router.get('/', async (req, res) => {
         ctx.stroke();
         
         // Dibujar nombre de usuario con estilo morado
-        const estiloUsuario = ESTILOS_TEXTO.moradoAzul.usuario;
-        ctx.font = estiloUsuario.fuente;
-        ctx.fillStyle = estiloUsuario.color;
+        // Los estilos están definidos manualmente aquí en lugar de usar la variable ESTILOS_TEXTO
+        // Estilo morado para el usuario
+        ctx.font = "bold 18px 'Oswald'";
+        ctx.fillStyle = "#9966ff"; // Morado
         ctx.textAlign = "left";
         
-        // Aplicar sombra si existe en el estilo
-        if (estiloUsuario.sombra) {
-            ctx.shadowColor = "rgba(0,0,0,0.7)";
-            ctx.shadowBlur = 3;
-            ctx.shadowOffsetX = 1;
-            ctx.shadowOffsetY = 1;
-        }
+        // Aplicar sombra
+        ctx.shadowColor = "rgba(0,0,0,0.7)";
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
         
         ctx.fillText(nombreUsuario, xAvatar + radioAvatar + 20, yAvatar - 10);
         
@@ -615,18 +570,16 @@ router.get('/', async (req, res) => {
         const lineasTexto = dividirTexto(ctx, mensajeTexto, anchoDisponible, tamañoFuente);
         const lineasMostradas = lineasTexto;
         
-        // Dibujar cada línea de texto con el estilo azul
-        const estiloMensaje = ESTILOS_TEXTO.moradoAzul.mensaje;
-        ctx.font = estiloMensaje.fuente;
-        ctx.fillStyle = estiloMensaje.color;
+        // Dibujar cada línea de texto con estilo azul
+        // Estilo azul para el mensaje
+        ctx.font = `italic ${tamañoFuente}px 'Oswald'`;
+        ctx.fillStyle = "#66ccff"; // Azul claro
         
-        // Aplicar sombra si existe en el estilo
-        if (estiloMensaje.sombra) {
-            ctx.shadowColor = "rgba(0,0,0,0.7)";
-            ctx.shadowBlur = 2;
-            ctx.shadowOffsetX = 1;
-            ctx.shadowOffsetY = 1;
-        }
+        // Aplicar sombra
+        ctx.shadowColor = "rgba(0,0,0,0.7)";
+        ctx.shadowBlur = 2;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
         
         lineasMostradas.forEach((linea, indice) => {
             const yTexto = yAvatar + 5 + (indice * (tamañoFuente + 2));
