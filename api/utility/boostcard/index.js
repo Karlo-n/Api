@@ -17,11 +17,141 @@ const isValidUrl = (string) => {
     }
 };
 
-// Función para dibujar el diamante de Discord Boost
-function dibujarDiamante(ctx, x, y, tamaño) {
-    // Color base del diamante (morado/rosa de Discord)
-    const colorDiamante = "#ff73fa";
+// Función para crear fondos con diferentes temas de colores
+function crearFondoTema(ctx, ancho, alto, tema = "moradoRosa") {
+    // Diferentes temas de color disponibles
+    const temas = {
+        moradoRosa: {
+            colores: ["#FF0080", "#7928CA"], // Rosa a morado (original)
+            viñeta: "rgba(0,0,0,0.6)",
+            detalles: "rgba(255,255,255,0.5)"
+        },
+        moradoAzul: {
+            colores: ["#6600ff", "#00ccff"], // Morado a azul
+            viñeta: "rgba(0,0,0,0.5)",
+            detalles: "rgba(180,230,255,0.5)"
+        },
+        azulMorado: {
+            colores: ["#00c3ff", "#a04aff"], // Azul a morado
+            viñeta: "rgba(0,0,0,0.5)",
+            detalles: "rgba(200,230,255,0.5)"
+        },
+        neonAzul: {
+            colores: ["#00ffff", "#0033cc"], // Neón azul a azul oscuro
+            viñeta: "rgba(0,0,0,0.5)",
+            detalles: "rgba(0,255,255,0.5)"
+        },
+        moradoReal: {
+            colores: ["#7028e4", "#e5b2ca"], // Morado real a rosa pastel
+            viñeta: "rgba(0,0,0,0.5)",
+            detalles: "rgba(255,200,230,0.5)"
+        }
+    };
     
+    // Seleccionar un tema aleatorio si no se especifica
+    const temaSeleccionado = temas[tema] || temas[Object.keys(temas)[Math.floor(Math.random() * Object.keys(temas).length)]];
+    
+    // Crear degradado base
+    const gradient = ctx.createLinearGradient(0, 0, ancho, alto);
+    temaSeleccionado.colores.forEach((color, index) => {
+        gradient.addColorStop(index / (temaSeleccionado.colores.length - 1), color);
+    });
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, ancho, alto);
+    
+    // Añadir patrón de diamantes
+    ctx.strokeStyle = "rgba(255,255,255,0.2)";
+    ctx.lineWidth = 1;
+    
+    const tamañoDiamante = 40;
+    for (let y = -tamañoDiamante; y < alto + tamañoDiamante; y += tamañoDiamante) {
+        for (let x = -tamañoDiamante; x < ancho + tamañoDiamante; x += tamañoDiamante) {
+            ctx.beginPath();
+            ctx.moveTo(x, y + tamañoDiamante/2);
+            ctx.lineTo(x + tamañoDiamante/2, y);
+            ctx.lineTo(x + tamañoDiamante, y + tamañoDiamante/2);
+            ctx.lineTo(x + tamañoDiamante/2, y + tamañoDiamante);
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
+    
+    // Añadir brillos/partículas
+    for (let i = 0; i < 30; i++) {
+        const x = Math.random() * ancho;
+        const y = Math.random() * alto;
+        const tamaño = Math.random() * 3 + 1;
+        
+        // Brillo con resplandor
+        const gradiente = ctx.createRadialGradient(x, y, 0, x, y, tamaño * 4);
+        gradiente.addColorStop(0, "rgba(255,255,255,0.8)");
+        gradiente.addColorStop(0.5, "rgba(255,255,255,0.2)");
+        gradiente.addColorStop(1, "rgba(255,255,255,0)");
+        
+        ctx.beginPath();
+        ctx.arc(x, y, tamaño * 4, 0, Math.PI * 2);
+        ctx.fillStyle = gradiente;
+        ctx.fill();
+        
+        // Punto central brillante
+        ctx.beginPath();
+        ctx.arc(x, y, tamaño, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.fill();
+    }
+    
+    // Añadir viñeta para dar profundidad
+    const viñeta = ctx.createRadialGradient(
+        ancho / 2, alto / 2, alto / 3,
+        ancho / 2, alto / 2, alto
+    );
+    viñeta.addColorStop(0, "rgba(0,0,0,0)");
+    viñeta.addColorStop(1, temaSeleccionado.viñeta);
+    
+    ctx.fillStyle = viñeta;
+    ctx.fillRect(0, 0, ancho, alto);
+    
+    // Líneas decorativas en las esquinas
+    ctx.strokeStyle = temaSeleccionado.detalles;
+    ctx.lineWidth = 2;
+    
+    // Tamaño de las líneas decorativas
+    const long = 25;
+    
+    // Esquina superior izquierda
+    ctx.beginPath();
+    ctx.moveTo(0, long);
+    ctx.lineTo(0, 0);
+    ctx.lineTo(long, 0);
+    ctx.stroke();
+    
+    // Esquina superior derecha
+    ctx.beginPath();
+    ctx.moveTo(ancho - long, 0);
+    ctx.lineTo(ancho, 0);
+    ctx.lineTo(ancho, long);
+    ctx.stroke();
+    
+    // Esquina inferior izquierda
+    ctx.beginPath();
+    ctx.moveTo(0, alto - long);
+    ctx.lineTo(0, alto);
+    ctx.lineTo(long, alto);
+    ctx.stroke();
+    
+    // Esquina inferior derecha
+    ctx.beginPath();
+    ctx.moveTo(ancho - long, alto);
+    ctx.lineTo(ancho, alto);
+    ctx.lineTo(ancho, alto - long);
+    ctx.stroke();
+    
+    return temaSeleccionado;
+}
+
+// Función para dibujar el diamante de Discord Boost con colores variables
+function dibujarDiamante(ctx, x, y, tamaño, colores = ["#ff73fa", "#bd5dff", "#a93efd"]) {
     // Dibujar forma principal del diamante
     ctx.beginPath();
     ctx.moveTo(x, y + tamaño * 0.5); // Punto superior
@@ -32,9 +162,9 @@ function dibujarDiamante(ctx, x, y, tamaño) {
     
     // Añadir gradiente para dar profundidad
     const gradiente = ctx.createLinearGradient(x - tamaño * 0.4, y - tamaño * 0.5, x + tamaño * 0.4, y + tamaño * 0.5);
-    gradiente.addColorStop(0, "#ff73fa");    // Rosa intenso
-    gradiente.addColorStop(0.5, "#bd5dff");  // Morado más claro
-    gradiente.addColorStop(1, "#a93efd");    // Morado más oscuro
+    gradiente.addColorStop(0, colores[0]);    // Color primario
+    gradiente.addColorStop(0.5, colores[1]);  // Color secundario
+    gradiente.addColorStop(1, colores[2]);    // Color terciario
     
     ctx.fillStyle = gradiente;
     ctx.fill();
@@ -57,47 +187,6 @@ function dibujarDiamante(ctx, x, y, tamaño) {
     ctx.font = "bold " + (tamaño * 0.3) + "px Arial";
     ctx.fillStyle = "#ffffff";
     ctx.fillText("+", x + tamaño * 0.35, y - tamaño * 0.4);
-}
-
-// Función para dibujar pequeños boosts en el fondo
-function dibujarMiniBoosters(ctx, ancho, alto) {
-    // Crear varios mini diamantes de boost en el fondo
-    const miniBoosts = [
-        { x: ancho * 0.15, y: alto * 0.25, tamaño: 8 },
-        { x: ancho * 0.25, y: alto * 0.75, tamaño: 6 },
-        { x: ancho * 0.45, y: alto * 0.35, tamaño: 5 },
-        { x: ancho * 0.65, y: alto * 0.65, tamaño: 7 },
-        { x: ancho * 0.75, y: alto * 0.15, tamaño: 6 },
-        { x: ancho * 0.85, y: alto * 0.85, tamaño: 5 },
-        { x: ancho * 0.35, y: alto * 0.55, tamaño: 4 },
-        { x: ancho * 0.55, y: alto * 0.25, tamaño: 6 },
-        { x: ancho * 0.72, y: alto * 0.45, tamaño: 5 },
-        { x: ancho * 0.92, y: alto * 0.35, tamaño: 4 },
-    ];
-    
-    miniBoosts.forEach(boost => {
-        // Mini diamante
-        ctx.globalAlpha = 0.3; // Transparente para no distraer
-        ctx.beginPath();
-        ctx.moveTo(boost.x, boost.y + boost.tamaño * 0.5);
-        ctx.lineTo(boost.x - boost.tamaño * 0.4, boost.y);
-        ctx.lineTo(boost.x, boost.y - boost.tamaño * 0.5);
-        ctx.lineTo(boost.x + boost.tamaño * 0.4, boost.y);
-        ctx.closePath();
-        
-        const gradiente = ctx.createLinearGradient(
-            boost.x - boost.tamaño * 0.4, boost.y - boost.tamaño * 0.5,
-            boost.x + boost.tamaño * 0.4, boost.y + boost.tamaño * 0.5
-        );
-        gradiente.addColorStop(0, "#ff73fa");
-        gradiente.addColorStop(1, "#bd5dff");
-        
-        ctx.fillStyle = gradiente;
-        ctx.fill();
-        
-        // Resetear alpha
-        ctx.globalAlpha = 1.0;
-    });
 }
 
 // Función para dibujar estrellas y destellos
@@ -394,13 +483,13 @@ function crearEfectosEspeciales(ctx, ancho, alto) {
 router.get('/', async (req, res) => {
     try {
         // Extraer parámetros
-        const { avatar, texto, username } = req.query;
+        const { avatar, texto, username, estilo, tema } = req.query;
         
         // Verificar parámetros mínimos
         if (!avatar) {
             return res.status(400).json({ 
                 error: 'Falta el parámetro avatar en la URL',
-                ejemplo: '/boostcard?avatar=https://tu-avatar.jpg&username=User123&texto=¡Muchas gracias por el boost!' 
+                ejemplo: '/boostcard?avatar=https://tu-avatar.jpg&username=User123&texto=¡Muchas gracias por el boost!&estilo=moradoAzul&tema=moradoAzul' 
             });
         }
         
@@ -412,6 +501,10 @@ router.get('/', async (req, res) => {
         // Valores predeterminados
         const nombreUsuario = username || 'User.Bot';
         const mensajeTexto = texto || '¡Muchas gracias por apoyar nuestro server con tu boost!';
+        
+        // Forzar estilo morado-azul para los textos independientemente del parámetro
+        const estiloTexto = 'moradoAzul';
+        const temaCarta = tema || 'moradoAzul';
         
         // Dimensiones de la tarjeta (horizontal al estilo de notificación Discord pero más grande)
         const ANCHO = 550;  // Aumentado para dar más espacio al texto
@@ -439,15 +532,30 @@ router.get('/', async (req, res) => {
         ctx.closePath();
         ctx.fill();
         
-        // Añadir borde morado brillante
-        ctx.strokeStyle = "#bd5dff";
+        // Aplicar tema de color al fondo
+        const temaSeleccionado = crearFondoTema(ctx, ANCHO, ALTO, temaCarta);
+        
+        // Colores del diamante según tema
+        let coloresDiamante;
+        if (temaCarta === 'moradoRosa' || temaCarta === 'moradoReal') {
+            coloresDiamante = ["#ff73fa", "#bd5dff", "#a93efd"];
+        } else if (temaCarta === 'moradoAzul' || temaCarta === 'azulMorado') {
+            coloresDiamante = ["#bd5dff", "#6600ff", "#00ccff"];
+        } else if (temaCarta === 'neonAzul') {
+            coloresDiamante = ["#00ffff", "#0099ff", "#0033cc"];
+        } else {
+            coloresDiamante = ["#ff73fa", "#bd5dff", "#a93efd"]; // Por defecto
+        }
+        
+        // Añadir borde morado brillante (color según tema)
+        ctx.strokeStyle = temaSeleccionado.colores[0];
         ctx.lineWidth = 2.5; // Más grueso
         ctx.stroke();
         
         // Añadir efectos decorativos
         crearEfectosBorde(ctx, ANCHO, ALTO);
         crearEfectosEspeciales(ctx, ANCHO, ALTO);
-        dibujarMiniBoosters(ctx, ANCHO, ALTO); // Añadir mini boosts en el fondo
+        dibujarMiniBoosters(ctx, ANCHO, ALTO, [temaSeleccionado.colores[0], temaSeleccionado.colores[1]]);
         dibujarDestellos(ctx, ANCHO, ALTO);
         
         // Cargar imagen de avatar
@@ -479,11 +587,27 @@ router.get('/', async (req, res) => {
         ctx.lineWidth = 2;
         ctx.stroke();
         
-        // Dibujar nombre de usuario
-        ctx.font = "bold 18px Oswald"; // Más grande
-        ctx.fillStyle = "#ffffff";
+        // Dibujar nombre de usuario con estilo seleccionado
+        const estiloUsuario = ESTILOS_TEXTO[estiloTexto].usuario;
+        ctx.font = estiloUsuario.fuente;
+        ctx.fillStyle = estiloUsuario.color;
         ctx.textAlign = "left";
+        
+        // Aplicar sombra si existe en el estilo
+        if (estiloUsuario.sombra) {
+            ctx.shadowColor = "rgba(0,0,0,0.7)";
+            ctx.shadowBlur = 3;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+        }
+        
         ctx.fillText(nombreUsuario, xAvatar + radioAvatar + 20, yAvatar - 10);
+        
+        // Resetear sombra
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
         
         // Calcular el espacio disponible para el texto
         const inicioTextoX = xAvatar + radioAvatar + 20;
@@ -507,17 +631,33 @@ router.get('/', async (req, res) => {
         // ya controla mejor los límites y truncamiento
         const lineasMostradas = lineasTexto;
         
-        // Dibujar cada línea de texto
-        ctx.font = `${tamañoFuente}px Oswald`;
-        ctx.fillStyle = "#cccccc";
+        // Dibujar cada línea de texto con el estilo seleccionado
+        const estiloMensaje = ESTILOS_TEXTO[estiloTexto].mensaje;
+        ctx.font = estiloMensaje.fuente;
+        ctx.fillStyle = estiloMensaje.color;
+        
+        // Aplicar sombra si existe en el estilo
+        if (estiloMensaje.sombra) {
+            ctx.shadowColor = "rgba(0,0,0,0.7)";
+            ctx.shadowBlur = 2;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+        }
         
         lineasMostradas.forEach((linea, indice) => {
             const yTexto = yAvatar + 5 + (indice * (tamañoFuente + 2));
             ctx.fillText(linea, inicioTextoX, yTexto);
         });
         
-        // Dibujar diamante de Discord Boost con tamaño aumentado
-        dibujarDiamante(ctx, ANCHO - 40, ALTO / 2, 35);
+        // Resetear sombra
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Dibujar diamante de Discord Boost siempre con colores morado-rosa
+        // Independientemente del tema de fondo
+        dibujarDiamante(ctx, ANCHO - 40, ALTO / 2, 35, ["#ff73fa", "#bd5dff", "#a93efd"]);
         
         // Enviar imagen
         res.setHeader('Content-Type', 'image/png');
