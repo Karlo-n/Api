@@ -17,6 +17,68 @@ const isValidUrl = (string) => {
     }
 };
 
+// Función para dividir el texto en múltiples líneas
+function dividirTexto(ctx, texto, anchoMaximo, tamaño) {
+    // Establecer la fuente para medir el texto
+    ctx.font = `${tamaño}px Oswald`;
+    
+    // Si el texto es muy corto, devolverlo sin cambios
+    if (ctx.measureText(texto).width <= anchoMaximo) {
+        return [texto];
+    }
+    
+    // Dividir el texto en palabras
+    const palabras = texto.split(' ');
+    const lineas = [];
+    let lineaActual = '';
+    
+    for (const palabra of palabras) {
+        const lineaTentativa = lineaActual.length === 0 ? palabra : `${lineaActual} ${palabra}`;
+        const medidaTexto = ctx.measureText(lineaTentativa).width;
+        
+        if (medidaTexto <= anchoMaximo) {
+            lineaActual = lineaTentativa;
+        } else {
+            // Si una sola palabra es más larga que el ancho máximo, dividirla
+            if (lineaActual.length === 0) {
+                let palabraParcial = '';
+                for (let i = 0; i < palabra.length; i++) {
+                    const tentativo = palabraParcial + palabra[i];
+                    if (ctx.measureText(tentativo).width <= anchoMaximo) {
+                        palabraParcial = tentativo;
+                    } else {
+                        if (palabraParcial.length > 0) {
+                            lineas.push(palabraParcial);
+                        }
+                        palabraParcial = palabra[i];
+                    }
+                }
+                if (palabraParcial.length > 0) {
+                    lineaActual = palabraParcial;
+                }
+            } else {
+                lineas.push(lineaActual);
+                lineaActual = palabra;
+            }
+            
+            // Si ya tenemos demasiadas líneas, parar el procesamiento
+            if (lineas.length >= 1) { // Solo permitir 2 líneas en total (1 + la actual)
+                if (palabra !== palabras[palabras.length - 1]) {
+                    lineaActual += '...';
+                }
+                break;
+            }
+        }
+    }
+    
+    // Añadir la última línea si queda algo
+    if (lineaActual.length > 0) {
+        lineas.push(lineaActual);
+    }
+    
+    return lineas;
+}
+
 // Función para dibujar el diamante de Discord Boost
 function dibujarDiamante(ctx, x, y, tamaño) {
     // Dibujar forma principal del diamante
@@ -56,107 +118,73 @@ function dibujarDiamante(ctx, x, y, tamaño) {
     ctx.fillText("+", x + tamaño * 0.35, y - tamaño * 0.4);
 }
 
-// Función para crear fondo en estilo morado-azul
-function crearFondoMoradoAzul(ctx, ancho, alto) {
-    // Colores fijos para el tema morado-azul
-    const colores = ["#6600ff", "#00ccff"]; // Morado a azul
+// Función para dibujar resplandor alrededor del avatar
+function dibujarResplandorAvatar(ctx, x, y, radio) {
+    // Dos resplandores combinados, uno morado y otro azul
     
-    // Crear degradado base
-    const gradient = ctx.createLinearGradient(0, 0, ancho, alto);
-    gradient.addColorStop(0, colores[0]);
-    gradient.addColorStop(1, colores[1]);
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, ancho, alto);
-    
-    // Añadir patrón de diamantes
-    ctx.strokeStyle = "rgba(255,255,255,0.2)";
-    ctx.lineWidth = 1;
-    
-    const tamañoDiamante = 40;
-    for (let y = -tamañoDiamante; y < alto + tamañoDiamante; y += tamañoDiamante) {
-        for (let x = -tamañoDiamante; x < ancho + tamañoDiamante; x += tamañoDiamante) {
-            ctx.beginPath();
-            ctx.moveTo(x, y + tamañoDiamante/2);
-            ctx.lineTo(x + tamañoDiamante/2, y);
-            ctx.lineTo(x + tamañoDiamante, y + tamañoDiamante/2);
-            ctx.lineTo(x + tamañoDiamante/2, y + tamañoDiamante);
-            ctx.closePath();
-            ctx.stroke();
-        }
-    }
-    
-    // Añadir brillos/partículas
-    for (let i = 0; i < 30; i++) {
-        const x = Math.random() * ancho;
-        const y = Math.random() * alto;
-        const tamaño = Math.random() * 3 + 1;
-        
-        // Brillo con resplandor
-        const gradiente = ctx.createRadialGradient(x, y, 0, x, y, tamaño * 4);
-        gradiente.addColorStop(0, "rgba(255,255,255,0.8)");
-        gradiente.addColorStop(0.5, "rgba(255,255,255,0.2)");
-        gradiente.addColorStop(1, "rgba(255,255,255,0)");
-        
-        ctx.beginPath();
-        ctx.arc(x, y, tamaño * 4, 0, Math.PI * 2);
-        ctx.fillStyle = gradiente;
-        ctx.fill();
-        
-        // Punto central brillante
-        ctx.beginPath();
-        ctx.arc(x, y, tamaño, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.9)";
-        ctx.fill();
-    }
-    
-    // Añadir viñeta para dar profundidad
-    const viñeta = ctx.createRadialGradient(
-        ancho / 2, alto / 2, alto / 3,
-        ancho / 2, alto / 2, alto
+    // Primer resplandor (morado)
+    const gradiente1 = ctx.createRadialGradient(
+        x, y, radio * 0.9,
+        x, y, radio * 1.3
     );
-    viñeta.addColorStop(0, "rgba(0,0,0,0)");
-    viñeta.addColorStop(1, "rgba(0,0,0,0.5)");
+    gradiente1.addColorStop(0, "rgba(153, 102, 255, 0.5)"); // Morado
+    gradiente1.addColorStop(1, "rgba(153, 102, 255, 0)");
     
-    ctx.fillStyle = viñeta;
-    ctx.fillRect(0, 0, ancho, alto);
-    
-    // Líneas decorativas en las esquinas
-    ctx.strokeStyle = "rgba(180,230,255,0.5)";
-    ctx.lineWidth = 2;
-    
-    // Tamaño de las líneas decorativas
-    const long = 25;
-    
-    // Esquina superior izquierda
     ctx.beginPath();
-    ctx.moveTo(0, long);
-    ctx.lineTo(0, 0);
-    ctx.lineTo(long, 0);
-    ctx.stroke();
+    ctx.arc(x, y, radio * 1.3, 0, Math.PI * 2);
+    ctx.fillStyle = gradiente1;
+    ctx.fill();
     
-    // Esquina superior derecha
+    // Segundo resplandor (azul)
+    const gradiente2 = ctx.createRadialGradient(
+        x, y, radio * 0.9,
+        x, y, radio * 1.2
+    );
+    gradiente2.addColorStop(0, "rgba(102, 204, 255, 0.3)"); // Azul
+    gradiente2.addColorStop(1, "rgba(102, 204, 255, 0)");
+    
     ctx.beginPath();
-    ctx.moveTo(ancho - long, 0);
-    ctx.lineTo(ancho, 0);
-    ctx.lineTo(ancho, long);
-    ctx.stroke();
+    ctx.arc(x, y, radio * 1.2, 0, Math.PI * 2);
+    ctx.fillStyle = gradiente2;
+    ctx.fill();
+}
+
+// Función para crear efectos especiales adicionales
+function crearEfectosEspeciales(ctx, ancho, alto) {
+    // Crear efecto de luz horizontal central
+    const altoLuz = 15;
+    const yPosicion = alto / 2;
+    const gradienteLuz = ctx.createLinearGradient(0, yPosicion - altoLuz/2, ancho, yPosicion + altoLuz/2);
+    gradienteLuz.addColorStop(0, "rgba(102, 0, 255, 0)"); // Morado
+    gradienteLuz.addColorStop(0.5, "rgba(102, 102, 255, 0.1)"); // Mezcla
+    gradienteLuz.addColorStop(1, "rgba(0, 204, 255, 0)"); // Azul
     
-    // Esquina inferior izquierda
-    ctx.beginPath();
-    ctx.moveTo(0, alto - long);
-    ctx.lineTo(0, alto);
-    ctx.lineTo(long, alto);
-    ctx.stroke();
+    ctx.fillStyle = gradienteLuz;
+    ctx.fillRect(0, yPosicion - altoLuz/2, ancho, altoLuz);
     
-    // Esquina inferior derecha
-    ctx.beginPath();
-    ctx.moveTo(ancho - long, alto);
-    ctx.lineTo(ancho, alto);
-    ctx.lineTo(ancho, alto - long);
-    ctx.stroke();
-    
-    return colores;
+    // Ondas de luz sutiles en tonos azul y morado
+    const numOndas = 3;
+    for (let i = 0; i < numOndas; i++) {
+        const yOnda = alto * (i + 1) / (numOndas + 1);
+        
+        ctx.beginPath();
+        ctx.moveTo(0, yOnda);
+        
+        // Crear una onda sinusoidal
+        for (let x = 0; x < ancho; x += 5) {
+            const amplitud = 2;
+            const frecuencia = 0.02;
+            const y = yOnda + Math.sin(x * frecuencia) * amplitud;
+            ctx.lineTo(x, y);
+        }
+        
+        // Alternar colores entre morado y azul
+        ctx.strokeStyle = i % 2 === 0 ? 
+            "rgba(102, 0, 255, 0.1)" : // Morado
+            "rgba(0, 204, 255, 0.1)";  // Azul
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
 }
 
 // Función para crear efectos de brillo en los bordes
@@ -220,42 +248,45 @@ function crearEfectosBorde(ctx, ancho, alto) {
     });
 }
 
-// Función para crear efectos especiales adicionales
-function crearEfectosEspeciales(ctx, ancho, alto) {
-    // Crear efecto de luz horizontal central
-    const altoLuz = 15;
-    const yPosicion = alto / 2;
-    const gradienteLuz = ctx.createLinearGradient(0, yPosicion - altoLuz/2, ancho, yPosicion + altoLuz/2);
-    gradienteLuz.addColorStop(0, "rgba(102, 0, 255, 0)"); // Morado
-    gradienteLuz.addColorStop(0.5, "rgba(102, 102, 255, 0.1)"); // Mezcla
-    gradienteLuz.addColorStop(1, "rgba(0, 204, 255, 0)"); // Azul
+// Función para dibujar pequeños boosts en el fondo
+function dibujarMiniBoosters(ctx, ancho, alto, colores = ["#6600ff", "#00ccff"]) {
+    // Crear varios mini diamantes de boost en el fondo
+    const miniBoosts = [
+        { x: ancho * 0.15, y: alto * 0.25, tamaño: 8 },
+        { x: ancho * 0.25, y: alto * 0.75, tamaño: 6 },
+        { x: ancho * 0.45, y: alto * 0.35, tamaño: 5 },
+        { x: ancho * 0.65, y: alto * 0.65, tamaño: 7 },
+        { x: ancho * 0.75, y: alto * 0.15, tamaño: 6 },
+        { x: ancho * 0.85, y: alto * 0.85, tamaño: 5 },
+        { x: ancho * 0.35, y: alto * 0.55, tamaño: 4 },
+        { x: ancho * 0.55, y: alto * 0.25, tamaño: 6 },
+        { x: ancho * 0.72, y: alto * 0.45, tamaño: 5 },
+        { x: ancho * 0.92, y: alto * 0.35, tamaño: 4 },
+    ];
     
-    ctx.fillStyle = gradienteLuz;
-    ctx.fillRect(0, yPosicion - altoLuz/2, ancho, altoLuz);
-    
-    // Ondas de luz sutiles en tonos azul y morado
-    const numOndas = 3;
-    for (let i = 0; i < numOndas; i++) {
-        const yOnda = alto * (i + 1) / (numOndas + 1);
-        
+    miniBoosts.forEach(boost => {
+        // Mini diamante
+        ctx.globalAlpha = 0.3; // Transparente para no distraer
         ctx.beginPath();
-        ctx.moveTo(0, yOnda);
+        ctx.moveTo(boost.x, boost.y + boost.tamaño * 0.5);
+        ctx.lineTo(boost.x - boost.tamaño * 0.4, boost.y);
+        ctx.lineTo(boost.x, boost.y - boost.tamaño * 0.5);
+        ctx.lineTo(boost.x + boost.tamaño * 0.4, boost.y);
+        ctx.closePath();
         
-        // Crear una onda sinusoidal
-        for (let x = 0; x < ancho; x += 5) {
-            const amplitud = 2;
-            const frecuencia = 0.02;
-            const y = yOnda + Math.sin(x * frecuencia) * amplitud;
-            ctx.lineTo(x, y);
-        }
+        const gradiente = ctx.createLinearGradient(
+            boost.x - boost.tamaño * 0.4, boost.y - boost.tamaño * 0.5,
+            boost.x + boost.tamaño * 0.4, boost.y + boost.tamaño * 0.5
+        );
+        gradiente.addColorStop(0, colores[0]);
+        gradiente.addColorStop(1, colores[1]);
         
-        // Alternar colores entre morado y azul
-        ctx.strokeStyle = i % 2 === 0 ? 
-            "rgba(102, 0, 255, 0.1)" : // Morado
-            "rgba(0, 204, 255, 0.1)";  // Azul
-        ctx.lineWidth = 2;
-        ctx.stroke();
-    }
+        ctx.fillStyle = gradiente;
+        ctx.fill();
+        
+        // Resetear alpha
+        ctx.globalAlpha = 1.0;
+    });
 }
 
 // Función para dibujar estrellas y destellos
@@ -337,78 +368,6 @@ function dibujarDestellos(ctx, ancho, alto) {
         ctx.fillStyle = "#ffffff";
         ctx.fill();
     });
-}
-
-// Función para dibujar pequeños boosts en el fondo
-function dibujarMiniBoosters(ctx, ancho, alto, colores = ["#6600ff", "#00ccff"]) {
-    // Crear varios mini diamantes de boost en el fondo
-    const miniBoosts = [
-        { x: ancho * 0.15, y: alto * 0.25, tamaño: 8 },
-        { x: ancho * 0.25, y: alto * 0.75, tamaño: 6 },
-        { x: ancho * 0.45, y: alto * 0.35, tamaño: 5 },
-        { x: ancho * 0.65, y: alto * 0.65, tamaño: 7 },
-        { x: ancho * 0.75, y: alto * 0.15, tamaño: 6 },
-        { x: ancho * 0.85, y: alto * 0.85, tamaño: 5 },
-        { x: ancho * 0.35, y: alto * 0.55, tamaño: 4 },
-        { x: ancho * 0.55, y: alto * 0.25, tamaño: 6 },
-        { x: ancho * 0.72, y: alto * 0.45, tamaño: 5 },
-        { x: ancho * 0.92, y: alto * 0.35, tamaño: 4 },
-    ];
-    
-    miniBoosts.forEach(boost => {
-        // Mini diamante
-        ctx.globalAlpha = 0.3; // Transparente para no distraer
-        ctx.beginPath();
-        ctx.moveTo(boost.x, boost.y + boost.tamaño * 0.5);
-        ctx.lineTo(boost.x - boost.tamaño * 0.4, boost.y);
-        ctx.lineTo(boost.x, boost.y - boost.tamaño * 0.5);
-        ctx.lineTo(boost.x + boost.tamaño * 0.4, boost.y);
-        ctx.closePath();
-        
-        const gradiente = ctx.createLinearGradient(
-            boost.x - boost.tamaño * 0.4, boost.y - boost.tamaño * 0.5,
-            boost.x + boost.tamaño * 0.4, boost.y + boost.tamaño * 0.5
-        );
-        gradiente.addColorStop(0, colores[0]);
-        gradiente.addColorStop(1, colores[1]);
-        
-        ctx.fillStyle = gradiente;
-        ctx.fill();
-        
-        // Resetear alpha
-        ctx.globalAlpha = 1.0;
-    });
-}
-
-// Función para dibujar resplandor alrededor del avatar
-function dibujarResplandorAvatar(ctx, x, y, radio) {
-    // Dos resplandores combinados, uno morado y otro azul
-    
-    // Primer resplandor (morado)
-    const gradiente1 = ctx.createRadialGradient(
-        x, y, radio * 0.9,
-        x, y, radio * 1.3
-    );
-    gradiente1.addColorStop(0, "rgba(153, 102, 255, 0.5)"); // Morado
-    gradiente1.addColorStop(1, "rgba(153, 102, 255, 0)");
-    
-    ctx.beginPath();
-    ctx.arc(x, y, radio * 1.3, 0, Math.PI * 2);
-    ctx.fillStyle = gradiente1;
-    ctx.fill();
-    
-    // Segundo resplandor (azul)
-    const gradiente2 = ctx.createRadialGradient(
-        x, y, radio * 0.9,
-        x, y, radio * 1.2
-    );
-    gradiente2.addColorStop(0, "rgba(102, 204, 255, 0.3)"); // Azul
-    gradiente2.addColorStop(1, "rgba(102, 204, 255, 0)");
-    
-    ctx.beginPath();
-    ctx.arc(x, y, radio * 1.2, 0, Math.PI * 2);
-    ctx.fillStyle = gradiente2;
-    ctx.fill();
 }
 
 router.get('/', async (req, res) => {
