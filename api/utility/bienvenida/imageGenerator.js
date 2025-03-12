@@ -16,7 +16,10 @@ if (!fs.existsSync(TEMP_DIR)) {
  */
 async function generateWelcomeImage(params) {
     try {
-        // Extract parameters with defaults
+        // Verificar y proteger parámetros sensibles (variables BDFD)
+        const processedParams = {...params};
+        
+        // Extraer parámetros con defaults
         const {
             avatar = '',
             background = '',
@@ -29,67 +32,88 @@ async function generateWelcomeImage(params) {
             avatarSize = 80,
             avatarShape = 'circle',
             effectType = 'none',
+            effectIntensity = 0.5,
             bgColor = '1e1e2e',
             bgGradient = '',
-            bgGradientDir = 'to right',
-            effectIntensity = 0.5
-        } = params;
+            bgGradientDir = 'to right'
+        } = processedParams;
 
         // Canvas setup
-        const width = parseInt(params.width) || 800;
-        const height = parseInt(params.height) || 400;
+        const width = parseInt(processedParams.width) || 800;
+        const height = parseInt(processedParams.height) || 400;
         const canvas = createCanvas(width, height);
         const ctx = canvas.getContext('2d');
+
+        // Crear un canvas temporal con fondo transparente para aplicar el recorte
+        const tempCanvas = createCanvas(width, height);
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // Dibujar el rectángulo redondeado en el canvas temporal
+        tempCtx.beginPath();
+        roundRect(tempCtx, 0, 0, width, height, parseInt(borderRadius));
+        tempCtx.closePath();
+        tempCtx.clip();
 
         // Background
         if (background && background !== 'placeholder.jpg') {
             try {
                 const bgImage = await loadImage(background);
-                ctx.drawImage(bgImage, 0, 0, width, height);
+                tempCtx.drawImage(bgImage, 0, 0, width, height);
             } catch (err) {
                 console.error('Error loading background image:', err);
                 // Fallback to color
-                ctx.fillStyle = `#${bgColor}`;
-                ctx.fillRect(0, 0, width, height);
+                tempCtx.fillStyle = `#${bgColor}`;
+                tempCtx.fillRect(0, 0, width, height);
             }
         } else if (bgGradient) {
             const [startColor, endColor] = bgGradient.split(':');
-            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            const gradient = tempCtx.createLinearGradient(0, 0, width, height);
             gradient.addColorStop(0, `#${startColor}`);
             gradient.addColorStop(1, `#${endColor}`);
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, width, height);
+            tempCtx.fillStyle = gradient;
+            tempCtx.fillRect(0, 0, width, height);
         } else {
-            ctx.fillStyle = `#${bgColor}`;
-            ctx.fillRect(0, 0, width, height);
+            tempCtx.fillStyle = `#${bgColor}`;
+            tempCtx.fillRect(0, 0, width, height);
         }
 
-        // Border
+        // Apply effects to temp canvas
+        applyEffect(tempCtx, effectType, effectIntensity, width, height);
+
+        // Copy the temp canvas to the main canvas
+        ctx.drawImage(tempCanvas, 0, 0);
+
+        // Border - dibujado después para que no sea recortado
         ctx.strokeStyle = `#${borderColor}`;
         ctx.lineWidth = borderWidth;
         ctx.beginPath();
-        ctx.roundRect(borderWidth/2, borderWidth/2, width - borderWidth, height - borderWidth, borderRadius);
+        roundRect(ctx, borderWidth/2, borderWidth/2, width - borderWidth, height - borderWidth, parseInt(borderRadius));
         ctx.stroke();
 
-        // Apply effects
-        applyEffect(ctx, effectType, effectIntensity, width, height);
-
-        // Text elements
+        // Text elements con manejo de errores
         ctx.textAlign = 'center';
         
         // Main welcome text
         if (texto1) {
-            const textX1 = parseInt(params.textX1) || width / 2;
-            const textY1 = parseInt(params.textY1) || height / 2 - 50;
-            const textSize1 = parseInt(params.textSize1) || 40;
-            const textColor1 = params.textColor1 || 'ffffff';
-            const textFont1 = params.textFont1 || 'Arial';
-            const textStyle1 = params.textStyle1 || 'bold';
+            const textX1 = parseInt(processedParams.textX1) || width / 2;
+            const textY1 = parseInt(processedParams.textY1) || height / 2 - 50;
+            const textSize1 = parseInt(processedParams.textSize1) || 40;
+            const textColor1 = processedParams.textColor1 || 'ffffff';
+            const textFont1 = processedParams.textFont1 || 'Arial';
+            const textStyle1 = processedParams.textStyle1 || 'bold';
             
-            ctx.font = `${textStyle1} ${textSize1}px ${textFont1}`;
+            // Configurar fuente de manera segura
+            try {
+                ctx.font = `${textStyle1} ${textSize1}px ${textFont1}`;
+            } catch (e) {
+                // Fallback a fuente segura
+                console.warn('Error setting font for texto1, using fallback:', e);
+                ctx.font = `bold ${textSize1}px Arial`;
+            }
+            
             ctx.fillStyle = `#${textColor1}`;
             
-            if (params.textShadow1) {
+            if (processedParams.textShadow1) {
                 ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
                 ctx.shadowBlur = 5;
                 ctx.shadowOffsetX = 2;
@@ -107,17 +131,25 @@ async function generateWelcomeImage(params) {
         
         // Username or secondary text
         if (texto2) {
-            const textX2 = parseInt(params.textX2) || width / 2;
-            const textY2 = parseInt(params.textY2) || height / 2;
-            const textSize2 = parseInt(params.textSize2) || 30;
-            const textColor2 = params.textColor2 || 'ffffff';
-            const textFont2 = params.textFont2 || 'Arial';
-            const textStyle2 = params.textStyle2 || 'normal';
+            const textX2 = parseInt(processedParams.textX2) || width / 2;
+            const textY2 = parseInt(processedParams.textY2) || height / 2;
+            const textSize2 = parseInt(processedParams.textSize2) || 30;
+            const textColor2 = processedParams.textColor2 || 'ffffff';
+            const textFont2 = processedParams.textFont2 || 'Arial';
+            const textStyle2 = processedParams.textStyle2 || 'normal';
             
-            ctx.font = `${textStyle2} ${textSize2}px ${textFont2}`;
+            // Configurar fuente de manera segura
+            try {
+                ctx.font = `${textStyle2} ${textSize2}px ${textFont2}`;
+            } catch (e) {
+                // Fallback a fuente segura
+                console.warn('Error setting font for texto2, using fallback:', e);
+                ctx.font = `normal ${textSize2}px Arial`;
+            }
+            
             ctx.fillStyle = `#${textColor2}`;
             
-            if (params.textShadow2) {
+            if (processedParams.textShadow2) {
                 ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
                 ctx.shadowBlur = 5;
                 ctx.shadowOffsetX = 2;
@@ -135,17 +167,25 @@ async function generateWelcomeImage(params) {
         
         // Server name or tertiary text
         if (texto3) {
-            const textX3 = parseInt(params.textX3) || width / 2;
-            const textY3 = parseInt(params.textY3) || height / 2 + 50;
-            const textSize3 = parseInt(params.textSize3) || 20;
-            const textColor3 = params.textColor3 || 'aaaaaa';
-            const textFont3 = params.textFont3 || 'Arial';
-            const textStyle3 = params.textStyle3 || 'normal';
+            const textX3 = parseInt(processedParams.textX3) || width / 2;
+            const textY3 = parseInt(processedParams.textY3) || height / 2 + 50;
+            const textSize3 = parseInt(processedParams.textSize3) || 20;
+            const textColor3 = processedParams.textColor3 || 'aaaaaa';
+            const textFont3 = processedParams.textFont3 || 'Arial';
+            const textStyle3 = processedParams.textStyle3 || 'normal';
             
-            ctx.font = `${textStyle3} ${textSize3}px ${textFont3}`;
+            // Configurar fuente de manera segura
+            try {
+                ctx.font = `${textStyle3} ${textSize3}px ${textFont3}`;
+            } catch (e) {
+                // Fallback a fuente segura
+                console.warn('Error setting font for texto3, using fallback:', e);
+                ctx.font = `normal ${textSize3}px Arial`;
+            }
+            
             ctx.fillStyle = `#${textColor3}`;
             
-            if (params.textShadow3) {
+            if (processedParams.textShadow3) {
                 ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
                 ctx.shadowBlur = 5;
                 ctx.shadowOffsetX = 2;
@@ -161,12 +201,21 @@ async function generateWelcomeImage(params) {
             ctx.shadowOffsetY = 0;
         }
 
-        // Avatar
+        // Avatar - con manejo de errores mejorado
         if (avatar) {
             try {
-                const avatarImg = await loadImage(avatar);
-                const x = parseInt(params.avatarX) || width / 2;
-                const y = parseInt(params.avatarY) || 120;
+                let avatarImg;
+                
+                // Manejo especial para variables de BDFD (si es que llegan al servidor)
+                if (avatar.startsWith('$')) {
+                    // Si es una variable BDFD que llegó al servidor, intentamos proveer un fallback 
+                    throw new Error('Variable BDFD detectada, usando avatar fallback');
+                } else {
+                    avatarImg = await loadImage(avatar);
+                }
+                
+                const x = parseInt(processedParams.avatarX) || width / 2;
+                const y = parseInt(processedParams.avatarY) || 120;
                 const size = parseInt(avatarSize);
                 
                 // Draw avatar with shape
@@ -177,7 +226,7 @@ async function generateWelcomeImage(params) {
                 ctx.restore();
                 
                 // Draw avatar border
-                ctx.strokeStyle = params.avatarBorderColor ? `#${params.avatarBorderColor}` : '#ffffff';
+                ctx.strokeStyle = processedParams.avatarBorderColor ? `#${processedParams.avatarBorderColor}` : '#ffffff';
                 ctx.lineWidth = 3;
                 ctx.save();
                 createAvatarClipPath(ctx, x, y, size, avatarShape);
@@ -185,7 +234,7 @@ async function generateWelcomeImage(params) {
                 ctx.restore();
                 
                 // Add glow effect if enabled
-                if (params.avatarGlow) {
+                if (processedParams.avatarGlow) {
                     ctx.save();
                     ctx.shadowColor = 'rgba(153, 102, 255, 0.7)';
                     ctx.shadowBlur = 15;
@@ -195,19 +244,46 @@ async function generateWelcomeImage(params) {
                 }
             } catch (err) {
                 console.error('Error loading avatar image:', err);
+                // Dibujamos un avatar de fallback
+                const x = parseInt(processedParams.avatarX) || width / 2;
+                const y = parseInt(processedParams.avatarY) || 120;
+                const size = parseInt(avatarSize);
+                
+                ctx.save();
+                createAvatarClipPath(ctx, x, y, size, avatarShape);
+                ctx.fillStyle = '#cccccc';
+                ctx.fill();
+                ctx.restore();
+                
+                // Borde para el fallback
+                ctx.strokeStyle = processedParams.avatarBorderColor ? `#${processedParams.avatarBorderColor}` : '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.save();
+                createAvatarClipPath(ctx, x, y, size, avatarShape);
+                ctx.stroke();
+                ctx.restore();
             }
         }
 
-        // Additional avatars
+        // Additional avatars - con manejo de errores
         for (let i = 1; i <= 4; i++) {
-            const extraAvatar = params[`extraAvatar${i}`];
+            const extraAvatar = processedParams[`extraAvatar${i}`];
             if (extraAvatar) {
                 try {
-                    const extraAvatarImg = await loadImage(extraAvatar);
-                    const x = parseInt(params[`extraAvatarX${i}`]) || 200 * i;
-                    const y = parseInt(params[`extraAvatarY${i}`]) || 200;
-                    const size = parseInt(params[`extraAvatarSize${i}`]) || 50;
-                    const shape = params[`extraAvatarShape${i}`] || 'circle';
+                    let extraAvatarImg;
+                    
+                    // Manejo especial para variables de BDFD (si es que llegan al servidor)
+                    if (extraAvatar.startsWith('$')) {
+                        // Si es una variable BDFD que llegó al servidor, intentamos proveer un fallback 
+                        throw new Error(`Variable BDFD detectada en extraAvatar${i}, usando avatar fallback`);
+                    } else {
+                        extraAvatarImg = await loadImage(extraAvatar);
+                    }
+                    
+                    const x = parseInt(processedParams[`extraAvatarX${i}`]) || 200 * i;
+                    const y = parseInt(processedParams[`extraAvatarY${i}`]) || 200;
+                    const size = parseInt(processedParams[`extraAvatarSize${i}`]) || 50;
+                    const shape = processedParams[`extraAvatarShape${i}`] || 'circle';
                     
                     // Draw extra avatar with shape
                     ctx.save();
@@ -225,6 +301,25 @@ async function generateWelcomeImage(params) {
                     ctx.restore();
                 } catch (err) {
                     console.error(`Error loading extra avatar ${i}:`, err);
+                    // Dibujamos un avatar de fallback
+                    const x = parseInt(processedParams[`extraAvatarX${i}`]) || 200 * i;
+                    const y = parseInt(processedParams[`extraAvatarY${i}`]) || 200;
+                    const size = parseInt(processedParams[`extraAvatarSize${i}`]) || 50;
+                    const shape = processedParams[`extraAvatarShape${i}`] || 'circle';
+                    
+                    ctx.save();
+                    createAvatarClipPath(ctx, x, y, size, shape);
+                    ctx.fillStyle = '#cccccc';
+                    ctx.fill();
+                    ctx.restore();
+                    
+                    // Borde para el fallback
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.save();
+                    createAvatarClipPath(ctx, x, y, size, shape);
+                    ctx.stroke();
+                    ctx.restore();
                 }
             }
         }
@@ -244,6 +339,34 @@ async function generateWelcomeImage(params) {
         console.error('Error generating welcome image:', error);
         throw error;
     }
+}
+
+/**
+ * Función auxiliar para crear rectángulos redondeados para compatibilidad
+ * @param {CanvasRenderingContext2D} ctx - Contexto del canvas
+ * @param {number} x - Posición X
+ * @param {number} y - Posición Y
+ * @param {number} width - Ancho
+ * @param {number} height - Alto
+ * @param {number} radius - Radio de las esquinas
+ */
+function roundRect(ctx, x, y, width, height, radius) {
+    if (typeof ctx.roundRect === 'function') {
+        // Usar el método nativo si está disponible
+        ctx.roundRect(x, y, width, height, radius);
+    } else {
+        // Implementación manual para compatibilidad
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.arcTo(x + width, y, x + width, y + radius, radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+        ctx.lineTo(x + radius, y + height);
+        ctx.arcTo(x, y + height, x, y + height - radius, radius);
+        ctx.lineTo(x, y + radius);
+        ctx.arcTo(x, y, x + radius, y, radius);
+    }
+    return ctx;
 }
 
 /**
