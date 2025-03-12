@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creador de API de Imágenes de Bienvenida</title>
+    <style>
+        :root {
+            --primary: #6633cc;
+            --secondary: #33aaff;
+            --dark: #1e1e2e;
+            --light: #f5f5f7;
+            --accent: #bd5dff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .site-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .site-link {
+            padding: 8px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .site-link:hover {
+            background: rgba(0, 0, 0, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+        }
+        
+        main {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .controls {
+            flex: 1;
+            background-color: rgba(30, 30, 46, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .preview {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .preview-container {
+            width: 100%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #2d2b42;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            min-height: 400px;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-generate {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            flex: 1.5;
+        }
+        
+        .btn-undo, .btn-redo {
+            background-color: #333;
+            color: white;
+            flex: 1;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .section {
+            background-color: rgba(45, 43, 66, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 3px solid var(--accent);
+        }
+        
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        
+        .section-title h3 {
+            font-size: 1.2rem;
+            color: var(--secondary);
+        }
+        
+        .section-content {
+            display: grid;
+            gap: 10px;
+        }
+        
+        .form-group {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        
+        label {
+            color: var(--light);
+            font-size: 0.9rem;
+        }
+        
+        input, select {
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+        
+        input[type="color"] {
+            height: 40px;
+            width: 100%;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+        }
+        
+        .range-value {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--secondary);
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            background-color: rgba(30, 30, 46, 0.6);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            background-color: rgba(102, 51, 204, 0.2);
+            border-bottom: 3px solid var(--accent);
+            font-weight: bold;
+        }
+        
+        .tab:hover:not(.active) {
+            background-color: rgba(102, 51, 204, 0.1);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .avatar-container {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #444;
+        }
+        
+        .avatar-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .add-text-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .add-text-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .add-text-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .text-element {
+            position: relative;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: rgba(30, 30, 46, 0.6);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+        
+        .text-element-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .remove-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .remove-btn:hover {
+            background-color: #d32f2f;
+        }
+        
+        .api-url {
+            width: 100%;
+            background-color: #2d2b42;
+            border: 1px solid var(--accent);
+            color: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            word-break: break-all;
+            display: none;
+        }
+        
+        .copy-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .effect-preview {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        #imageEffectOverlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Creador de API de Imágenes de Bienvenida</h1>
+            <p>Diseña tu imagen de bienvenida personalizada y genera una URL de API</p>
+            <div class="site-links">
+                <a href="https://bot.apikarl.com" class="site-link" target="_blank">Bots Discord</a>
+                <a href="https://apikarl.com" class="site-link" target="_blank">Ver APIs</a>
+                <a href="https://api.apikarl.com" class="site-link" target="_blank">Usar APIs</a>
+            </div>
+        </header>
+        
+        <main>
+            <div class="controls">
+                <div class="tabs">
+                    <div class="tab active" data-tab="general">General</div>
+                    <div class="tab" data-tab="text">Textos</div>
+                    <div class="tab" data-tab="avatars">Avatares</div>
+                    <div class="tab" data-tab="effects">Efectos</div>
+                </div>
+                
+                <div class="tab-content active" id="general-tab">
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Configuración del Lienzo</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="canvasWidth">Ancho:</label>
+                                <input type="number" id="canvasWidth" value="800" min="400" max="1200">
+                            </div>
+                            <div class="form-group">
+                                <label for="canvasHeight">Alto:</label>
+                                <input type="number" id="canvasHeight" value="400" min="200" max="800">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Fondo</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="bgType">Tipo:</label>
+                                <select id="bgType">
+                                    <option value="color">Color Sólido</option>
+                                    <option value="gradient">Degradado</option>
+                                    <option value="image">Imagen</option>
+                                </select>
+                            </div>
+                            
+                            <div id="bgColorOptions">
+                                <div class="form-group">
+                                    <label for="bgColor">Color:</label>
+                                    <input type="color" id="bgColor" value="#1e1e2e">
+                                </div>
+                            </div>
+                            
+                            <div id="bgGradientOptions" style="display: none;">
+                                <div class="form-group">
+                                    <label for="bgGradientStart">Color Inicial:</label>
+                                    <input type="color" id="bgGradientStart" value="#1e1e2e">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bgGradientEnd">Color Final:</label>
+                                    <input type="color" id="bgGradientEnd" value="#2d2b42">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bgGradientDirection">Dirección:</label>
+                                    <select id="bgGradientDirection">
+                                        <option value="to right">Horizontal</option>
+                                        <option value="to bottom">Vertical</option>
+                                        <option value="to bottom right">Diagonal</option>
+                                        <option value="to bottom left">Diagonal Inversa</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="bgImageOptions" style="display: none;">
+                                <div class="form-group">
+                                    <label for="bgImageUrl">URL de Imagen:</label>
+                                    <input type="text" id="bgImageUrl" placeholder="https://ejemplo.com/imagen.jpg">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bgImageOpacity">Opacidad:</label>
+                                    <input type="range" id="bgImageOpacity" min="0" max="1" step="0.1" value="0.5">
+                                    <div class="range-value">0.5</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Borde</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="borderRadius">Radio:</label>
+                                <input type="range" id="borderRadius" min="0" max="50" value="25">
+                                <div class="range-value">25px</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="borderColor">Color:</label>
+                                <input type="color" id="borderColor" value="#bd5dff">
+                            </div>
+                            <div class="form-group">
+                                <label for="borderWidth">Ancho:</label>
+                                <input type="range" id="borderWidth" min="0" max="10" value="3">
+                                <div class="range-value">3px</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="text-tab">
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Elementos de Texto</h3>
+                        </div>
+                        <div id="textElements"></div>
+                        <button id="addTextBtn" class="add-text-btn">Añadir Elemento de Texto</button>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="avatars-tab">
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Avatar Principal</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="mainAvatarUrl">URL del Avatar:</label>
+                                <input type="text" id="mainAvatarUrl" placeholder="https://ejemplo.com/avatar.jpg">
+                            </div>
+                            <div class="form-group">
+                                <label for="mainAvatarX">Posición X:</label>
+                                <input type="range" id="mainAvatarX" min="0" max="800" value="400">
+                                <div class="range-value">400px</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="mainAvatarY">Posición Y:</label>
+                                <input type="range" id="mainAvatarY" min="0" max="400" value="133">
+                                <div class="range-value">133px</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="mainAvatarSize">Tamaño:</label>
+                                <input type="range" id="mainAvatarSize" min="20" max="200" value="80">
+                                <div class="range-value">80px</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="mainAvatarShape">Forma:</label>
+                                <select id="mainAvatarShape">
+                                    <option value="circle">Círculo</option>
+                                    <option value="square">Cuadrado</option>
+                                    <option value="triangle">Triángulo</option>
+                                    <option value="pentagon">Pentágono</option>
+                                    <option value="hexagon">Hexágono</option>
+                                    <option value="octagon">Octágono</option>
+                                    <option value="star">Estrella</option>
+                                    <option value="heart">Corazón</option>
+                                    <option value="diamond">Diamante</option>
+                                    <option value="custom">Polígono Personalizado</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="mainAvatarBorderColor">Color del Borde:</label>
+                                <input type="color" id="mainAvatarBorderColor" value="#ffffff">
+                            </div>
+                            <div class="form-group">
+                                <label for="mainAvatarGlow">Efecto de Brillo:</label>
+                                <input type="checkbox" id="mainAvatarGlow" checked>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Avatares Adicionales</h3>
+                        </div>
+                        <div class="section-content">
+                            <div id="extraAvatars">
+                                <div class="avatar-container" data-index="1">
+                                    <h4>Avatar 1</h4>
+                                    <div class="form-group">
+                                        <label for="avatarUrl1">URL:</label>
+                                        <input type="text" id="avatarUrl1" placeholder="https://ejemplo.com/avatar1.jpg">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarX1">Posición X:</label>
+                                        <input type="range" id="avatarX1" min="0" max="800" value="200">
+                                        <div class="range-value">200px</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarY1">Posición Y:</label>
+                                        <input type="range" id="avatarY1" min="0" max="400" value="200">
+                                        <div class="range-value">200px</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarSize1">Tamaño:</label>
+                                        <input type="range" id="avatarSize1" min="20" max="150" value="50">
+                                        <div class="range-value">50px</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarShape1">Forma:</label>
+                                        <select id="avatarShape1">
+                                            <option value="custom">Polígono Personalizado</option>
+                                        </select>
+                                    </div>
+                                </div>>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="avatar-container" data-index="2">
+                                    <h4>Avatar 2</h4>
+                                    <div class="form-group">
+                                        <label for="avatarUrl2">URL:</label>
+                                        <input type="text" id="avatarUrl2" placeholder="https://ejemplo.com/avatar2.jpg">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarX2">Posición X:</label>
+                                        <input type="range" id="avatarX2" min="0" max="800" value="300">
+                                        <div class="range-value">300px</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarY2">Posición Y:</label>
+                                        <input type="range" id="avatarY2" min="0" max="400" value="300">
+                                        <div class="range-value">300px</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarSize2">Tamaño:</label>
+                                        <input type="range" id="avatarSize2" min="20" max="150" value="50">
+                                        <div class="range-value">50px</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarShape2">Forma:</label>
+                                        <select id="avatarShape2">
+                                            <option value="circle">Círculo</option>
+                                            <option value="square">Cuadrado</option>
+                                            <option value="triangle">Triángulo</option>
+                                            <option value="pentagon">Pentágono</option>
+                                            <option value="hexagon">Hexágono</option>
+                                            <option value="octagon">Octágono</option>
+                                            <option value="star">Estrella</option>
+                                            <option value="heart">Corazón</option>
+                                            <option value="diamond">Diamante</option>
+                                            <option value="custom">Polígono Personalizado</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="avatar-container" data-index="3">
+                                    <h4>Avatar 3</h4>
+                                    <div class="form-group">
+                                        <label for="avatarUrl3">URL:</label>
+                                        <input type="text" id="avatarUrl3" placeholder="https://ejemplo.com/avatar3.jpg">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarX3">Posición X:</label>
+                                        <input type="range" id="avatarX3" min="0" max="800" value="500">
+                                        <div class="range-value">500px</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarY3">Posición Y:</label>
+                                        <input type="range" id="avatarY3" min="0" max="400" value="300">
+                                        <div class="range-value">300px</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarSize3">Tamaño:</label>
+                                        <input type="range" id="avatarSize3" min="20" max="150" value="50">
+                                        <div class="range-value">50px</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarShape3">Forma:</label>
+                                        <select id="avatarShape3">
+                                            <option value="circle">Círculo</option>
+                                            <option value="square">Cuadrado</option>
+                                            <option value="triangle">Triángulo</option>
+                                            <option value="pentagon">Pentágono</option>
+                                            <option value="hexagon">Hexágono</option>
+                                            <option value="octagon">Octágono</option>
+                                            <option value="star">Estrella</option>
+                                            <option value="heart">Corazón</option>
+                                            <option value="diamond">Diamante</option>
+                                            <option value="custom">Polígono Personalizado</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="avatar-container" data-index="4">
+                                    <h4>Avatar 4</h4>
+                                    <div class="form-group">
+                                        <label for="avatarUrl4">URL:</label>
+                                        <input type="text" id="avatarUrl4" placeholder="https://ejemplo.com/avatar4.jpg">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarX4">Posición X:</label>
+                                        <input type="range" id="avatarX4" min="0" max="800" value="600">
+                                        <div class="range-value">600px</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarY4">Posición Y:</label>
+                                        <input type="range" id="avatarY4" min="0" max="400" value="200">
+                                        <div class="range-value">200px</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarSize4">Tamaño:</label>
+                                        <input type="range" id="avatarSize4" min="20" max="150" value="50">
+                                        <div class="range-value">50px</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="avatarShape4">Forma:</label>
+                                        <select id="avatarShape4">
+                                            <option value="circle">Círculo</option>
+                                            <option value="square">Cuadrado</option>
+                                            <option value="triangle">Triángulo</option>
+                                            <option value="pentagon">Pentágono</option>
+                                            <option value="hexagon">Hexágono</option>
+                                            <option value="octagon">Octágono</option>
+                                            <option value="star">Estrella</option>
+                                            <option value="heart">Corazón</option>
+                                            <option value="diamond">Diamante</option>
+                                            <option value="custom">Polígono Personalizado</option>
+                                        </select>
+                                    </div>
+                                </div>>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="effects-tab">
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Efectos Globales</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="globalEffect">Tipo de Efecto:</label>
+                                <select id="globalEffect">
+                                    <option value="none">Ninguno</option>
+                                    <option value="glow">Brillo de Borde</option>
+                                    <option value="sparkle">Destellos</option>
+                                    <option value="gradient">Superposición Degradada</option>
+                                    <option value="noise">Textura de Ruido</option>
+                                    <option value="vignette">Viñeta</option>
+                                    <option value="rays">Rayos de Luz</option>
+                                    <option value="grid">Líneas de Cuadrícula</option>
+                                    <option value="cyberpunk">Cyberpunk</option>
+                                    <option value="retro">Onda Retro</option>
+                                </select>
+                            </div>
+                            
+                            <div id="effectIntensity" class="form-group">
+                                <label for="effectIntensitySlider">Intensidad:</label>
+                                <input type="range" id="effectIntensitySlider" min="0" max="1" step="0.1" value="0.5">
+                                <div class="range-value">0.5</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="effectColor1">Color Primario:</label>
+                                <input type="color" id="effectColor1" value="#9966ff">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="effectColor2">Color Secundario:</label>
+                                <input type="color" id="effectColor2" value="#66ccff">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+
+                    </div>
+                </div>
+            </div>
+            
+            <div class="preview">
+                <div class="preview-container">
+                    <div id="previewCanvas" style="position: relative; width: 800px; height: 400px; border-radius: 25px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);">
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1e1e2e, #2d2b42); border: 3px solid #bd5dff; border-radius: 25px;"></div>
+                        <div id="previewBackground" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+                        <div id="previewTexts" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+                        <div id="previewAvatars" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+                        <div id="previewEffects" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+                        <div id="imageEffectOverlay"></div>
+                    </div>
+                </div>
+                
+                <div class="buttons">
+                    <button id="undoBtn" class="btn btn-undo" disabled>↩ Deshacer</button>
+                    <button id="generateBtn" class="btn btn-generate">Generar URL de API</button>
+                    <button id="redoBtn" class="btn btn-redo" disabled>Rehacer ↪</button>
+                </div>
+                
+                <div id="apiUrlContainer" class="api-url">
+                    <p>URL de la API:</p>
+                    <code id="apiUrlOutput"></code>
+                    <button id="copyBtn" class="copy-btn">Copiar al Portapapeles</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // State Management
+        const state = {
+            history: [],
+            currentState: null,
+            future: [],
+            maxTextElements: 10,
+            textCount: 0
+        };
+
+        // Initialize with default state
+        function initializeState() {
+            state.currentState = {
+                canvas: {
+                    width: 800,
+                    height: 400
+                },
+                background: {
+                    type: 'color',
+                    color: '#1e1e2e',
+                    gradientStart: '#1e1e2e',
+                    gradientEnd: '#2d2b42',
+                    gradientDirection: 'to right',
+                    imageUrl: '',
+                    imageOpacity: 0.5
+                },
+                border: {
+                    radius: 25,
+                    color: '#bd5dff',
+                    width: 3
+                },
+                mainAvatar: {
+                    url: '',
+                    x: 400,
+                    y: 133,
+                    size: 80,
+                    shape: 'circle',
+                    borderColor: '#ffffff',
+                    glow: true
+                },
+                extraAvatars: [
+                    {
+                        url: '',
+                        x: 200,
+                        y: 200,
+                        size: 50,
+                        shape: 'circle'
+                    },
+                    {
+                        url: '',
+                        x: 300,
+                        y: 300,
+                        size: 50,
+                        shape: 'circle'
+                    },
+                    {
+                        url: '',
+                        x: 500,
+                        y: 300,
+                        size: 50,
+                        shape: 'circle'
+                    },
+                    {
+                        url: '',
+                        x: 600,
+                        y: 200,
+                        size: 50,
+                        shape: 'circle'
+                    }
+                ],
+                textElements: [],
+                effects: {
+                    type: 'none',
+                    intensity: 0.5,
+                    color1: '#9966ff',
+                    color2: '#66ccff',
+                    showStars: true,
+                    showLightbeams: true,
+                    showGlowingEdges: true
+                }
+            };
+            saveState();
+            updateUI();
+        }
+
+        // Save current state to history
+        function saveState() {
+            state.history.push(JSON.stringify(state.currentState));
+            state.future = [];
+            updateUndoRedoButtons();
+        }
+
+        // Undo the last action
+        function undo() {
+            if (state.history.length > 1) {
+                state.future.push(state.history.pop());
+                state.currentState = JSON.parse(state.history[state.history.length - 1]);
+                updateUI();
+                updateUndoRedoButtons();
+            }
+        }
+
+        // Redo the last undone action
+        function redo() {
+            if (state.future.length > 0) {
+                const nextState = state.future.pop();
+                state.history.push(nextState);
+                state.currentState = JSON.parse(nextState);
+                updateUI();
+                updateUndoRedoButtons();
+            }
+        }
+
+        // Update the UI based on the current state
+        function updateUI() {
+            // Update canvas dimensions
+            document.getElementById('canvasWidth').value = state.currentState.canvas.width;
+            document.getElementById('canvasHeight').value = state.currentState.canvas.height;
+            document.getElementById('previewCanvas').style.width = state.currentState.canvas.width + 'px';
+            document.getElementById('previewCanvas').style.height = state.currentState.canvas.height + 'px';
+            
+            // Update background
+            document.getElementById('bgType').value = state.currentState.background.type;
+            document.getElementById('bgColor').value = state.currentState.background.color;
+            document.getElementById('bgGradientStart').value = state.currentState.background.gradientStart;
+            document.getElementById('bgGradientEnd').value = state.currentState.background.gradientEnd;
+            document.getElementById('bgGradientDirection').value = state.currentState.background.gradientDirection;
+            document.getElementById('bgImageUrl').value = state.currentState.background.imageUrl;
+            document.getElementById('bgImageOpacity').value = state.currentState.background.imageOpacity;
+            
+            // Toggle background options
+            document.getElementById('bgColorOptions').style.display = state.currentState.background.type === 'color' ? 'block' : 'none';
+            document.getElementById('bgGradientOptions').style.display = state.currentState.background.type === 'gradient' ? 'block' : 'none';
+            document.getElementById('bgImageOptions').style.display = state.currentState.background.type === 'image' ? 'block' : 'none';
+            
+            // Update border
+            document.getElementById('borderRadius').value = state.currentState.border.radius;
+            document.getElementById('borderColor').value = state.currentState.border.color;
+            document.getElementById('borderWidth').value = state.currentState.border.width;
+            
+            // Update main avatar
+            document.getElementById('mainAvatarUrl').value = state.currentState.mainAvatar.url;
+            document.getElementById('mainAvatarX').value = state.currentState.mainAvatar.x;
+            document.getElementById('mainAvatarY').value = state.currentState.mainAvatar.y;
+            document.getElementById('mainAvatarSize').value = state.currentState.mainAvatar.size;
+            document.getElementById('mainAvatarShape').value = state.currentState.mainAvatar.shape;
+            document.getElementById('mainAvatarBorderColor').value = state.currentState.mainAvatar.borderColor;
+            document.getElementById('mainAvatarGlow').checked = state.currentState.mainAvatar.glow;
+            
+            // Update extra avatars
+            state.currentState.extraAvatars.forEach((avatar, index) => {
+                document.getElementById(`avatarUrl${index+1}`).value = avatar.url;
+                document.getElementById(`avatarX${index+1}`).value = avatar.x;
+                document.getElementById(`avatarY${index+1}`).value = avatar.y;
+                document.getElementById(`avatarSize${index+1}`).value = avatar.size;
+                document.getElementById(`avatarShape${index+1}`).value = avatar.shape;
+            });
+            
+            // Update effects
+            document.getElementById('globalEffect').value = state.currentState.effects.type;
+            document.getElementById('effectIntensitySlider').value = state.currentState.effects.intensity;
+            document.getElementById('effectColor1').value = state.currentState.effects.color1;
+            document.getElementById('effectColor2').value = state.currentState.effects.color2;
+            document.getElementById('showStars').checked = state.currentState.effects.showStars;
+            document.getElementById('showLightbeams').checked = state.currentState.effects.showLightbeams;
+            document.getElementById('showGlowingEdges').checked = state.currentState.effects.showGlowingEdges;
+            
+            // Update range value displays
+            document.querySelectorAll('input[type="range"]').forEach(input => {
+                const valueDisplay = input.nextElementSibling;
+                if (valueDisplay && valueDisplay.classList.contains('range-value')) {
+                    valueDisplay.textContent = input.id.includes('Opacity') ? input.value : `${input.value}px`;
+                }
+            });
+            
+            // Rebuild text elements section
+            rebuildTextElements();
+            
+            // Update the preview
+            updatePreview();
+        }
+
+        // Update undo/redo buttons
+        function updateUndoRedoButtons() {
+            document.getElementById('undoBtn').disabled = state.history.length <= 1;
+            document.getElementById('redoBtn').disabled = state.future.length === 0;
+        }
+
+        // Rebuild text elements UI
+        function rebuildTextElements() {
+            const container = document.getElementById('textElements');
+            container.innerHTML = '';
+            state.textCount = state.currentState.textElements.length;
+            
+            state.currentState.textElements.forEach((textEl, index) => {
+                const element = document.createElement('div');
+                element.className = 'text-element';
+                element.dataset.index = index;
+                
+                                    element.innerHTML = `
+                    <div class="text-element-header">
+                        <h4>Texto ${index + 1}</h4>
+                        <button class="remove-btn" data-index="${index}">×</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="textContent${index}">Contenido:</label>
+                        <input type="text" id="textContent${index}" value="${textEl.content}" placeholder="Contenido del texto">
+                    </div>
+                    <div class="form-group">
+                        <label for="textX${index}">Posición X:</label>
+                        <input type="range" id="textX${index}" min="0" max="${state.currentState.canvas.width}" value="${textEl.x}">
+                        <div class="range-value">${textEl.x}px</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="textY${index}">Posición Y:</label>
+                        <input type="range" id="textY${index}" min="0" max="${state.currentState.canvas.height}" value="${textEl.y}">
+                        <div class="range-value">${textEl.y}px</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="textSize${index}">Tamaño:</label>
+                        <input type="range" id="textSize${index}" min="10" max="80" value="${textEl.size}">
+                        <div class="range-value">${textEl.size}px</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="textColor${index}">Color:</label>
+                        <input type="color" id="textColor${index}" value="${textEl.color}">
+                    </div>
+                    <div class="form-group">
+                        <label for="textFont${index}">Fuente:</label>
+                        <select id="textFont${index}">
+                            <option value="Arial" ${textEl.font === 'Arial' ? 'selected' : ''}>Arial</option>
+                            <option value="Verdana" ${textEl.font === 'Verdana' ? 'selected' : ''}>Verdana</option>
+                            <option value="Georgia" ${textEl.font === 'Georgia' ? 'selected' : ''}>Georgia</option>
+                            <option value="Times New Roman" ${textEl.font === 'Times New Roman' ? 'selected' : ''}>Times New Roman</option>
+                            <option value="Courier New" ${textEl.font === 'Courier New' ? 'selected' : ''}>Courier New</option>
+                            <option value="Impact" ${textEl.font === 'Impact' ? 'selected' : ''}>Impact</option>
+                            <option value="Comic Sans MS" ${textEl.font === 'Comic Sans MS' ? 'selected' : ''}>Comic Sans MS</option>
+                            <option value="Oswald" ${textEl.font === 'Oswald' ? 'selected' : ''}>Oswald</option>
+                            <option value="Roboto" ${textEl.font === 'Roboto' ? 'selected' : ''}>Roboto</option>
+                            <option value="Montserrat" ${textEl.font === 'Montserrat' ? 'selected' : ''}>Montserrat</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="textStyle${index}">Estilo:</label>
+                        <select id="textStyle${index}">
+                            <option value="normal" ${textEl.style === 'normal' ? 'selected' : ''}>Normal</option>
+                            <option value="italic" ${textEl.style === 'italic' ? 'selected' : ''}>Cursiva</option>
+                            <option value="bold" ${textEl.style === 'bold' ? 'selected' : ''}>Negrita</option>
+                            <option value="bold italic" ${textEl.style === 'bold italic' ? 'selected' : ''}>Negrita Cursiva</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="textShadow${index}">Sombra:</label>
+                        <input type="checkbox" id="textShadow${index}" ${textEl.shadow ? 'checked' : ''}>
+                    </div>
+                `;
+                
+                container.appendChild(element);
+                
+                // Add event listeners for the text element
+                const textContent = document.getElementById(`textContent${index}`);
+                textContent.addEventListener('change', () => {
+                    state.currentState.textElements[index].content = textContent.value;
+                    saveState();
+                    updatePreview();
+                });
+                
+                const textX = document.getElementById(`textX${index}`);
+                textX.addEventListener('input', () => {
+                    state.currentState.textElements[index].x = parseInt(textX.value);
+                    textX.nextElementSibling.textContent = `${textX.value}px`;
+                    updatePreview();
+                });
+                textX.addEventListener('change', () => {
+                    saveState();
+                });
+                
+                const textY = document.getElementById(`textY${index}`);
+                textY.addEventListener('input', () => {
+                    state.currentState.textElements[index].y = parseInt(textY.value);
+                    textY.nextElementSibling.textContent = `${textY.value}px`;
+                    updatePreview();
+                });
+                textY.addEventListener('change', () => {
+                    saveState();
+                });
+                
+                const textSize = document.getElementById(`textSize${index}`);
+                textSize.addEventListener('input', () => {
+                    state.currentState.textElements[index].size = parseInt(textSize.value);
+                    textSize.nextElementSibling.textContent = `${textSize.value}px`;
+                    updatePreview();
+                });
+                textSize.addEventListener('change', () => {
+                    saveState();
+                });
+                
+                const textColor = document.getElementById(`textColor${index}`);
+                textColor.addEventListener('change', () => {
+                    state.currentState.textElements[index].color = textColor.value;
+                    saveState();
+                    updatePreview();
+                });
+                
+                const textFont = document.getElementById(`textFont${index}`);
+                textFont.addEventListener('change', () => {
+                    state.currentState.textElements[index].font = textFont.value;
+                    saveState();
+                    updatePreview();
+                });
+                
+                const textStyle = document.getElementById(`textStyle${index}`);
+                textStyle.addEventListener('change', () => {
+                    state.currentState.textElements[index].style = textStyle.value;
+                    saveState();
+                    updatePreview();
+                });
+                
+                const textShadow = document.getElementById(`textShadow${index}`);
+                textShadow.addEventListener('change', () => {
+                    state.currentState.textElements[index].shadow = textShadow.checked;
+                    saveState();
+                    updatePreview();
+                });
+                
+                // Add remove button event listener
+                const removeBtn = element.querySelector('.remove-btn');
+                removeBtn.addEventListener('click', () => {
+                    state.currentState.textElements.splice(index, 1);
+                    saveState();
+                    rebuildTextElements();
+                    updatePreview();
+                });
+            });
+            
+            // Update the "Add Text" button state
+            document.getElementById('addTextBtn').disabled = state.textCount >= state.maxTextElements;
+        }
+
+        // Add a new text element
+        function addTextElement() {
+            if (state.textCount < state.maxTextElements) {
+                const newText = {
+                    content: `Text ${state.textCount + 1}`,
+                    x: state.currentState.canvas.width / 2,
+                    y: 200 + (state.textCount * 30),
+                    size: 30,
+                    color: '#ffffff',
+                    font: 'Arial',
+                    style: 'normal',
+                    shadow: false
+                };
+                
+                state.currentState.textElements.push(newText);
+                saveState();
+                rebuildTextElements();
+                updatePreview();
+            }
+        }
+
+        // Update the preview with current state
+        function updatePreview() {
+            const canvas = document.getElementById('previewCanvas');
+            canvas.style.width = state.currentState.canvas.width + 'px';
+            canvas.style.height = state.currentState.canvas.height + 'px';
+            canvas.style.borderRadius = state.currentState.border.radius + 'px';
+            
+            // Update background
+            const bgDiv = document.getElementById('previewBackground');
+            switch (state.currentState.background.type) {
+                case 'color':
+                    bgDiv.style.background = state.currentState.background.color;
+                    break;
+                case 'gradient':
+                    bgDiv.style.background = `linear-gradient(${state.currentState.background.gradientDirection}, ${state.currentState.background.gradientStart}, ${state.currentState.background.gradientEnd})`;
+                    break;
+                case 'image':
+                    if (state.currentState.background.imageUrl) {
+                        bgDiv.style.background = `url(${state.currentState.background.imageUrl})`;
+                        bgDiv.style.backgroundSize = 'cover';
+                        bgDiv.style.backgroundPosition = 'center';
+                        bgDiv.style.opacity = state.currentState.background.imageOpacity;
+                    } else {
+                        bgDiv.style.background = 'none';
+                    }
+                    break;
+            }
+            
+            // Update border
+            canvas.style.border = `${state.currentState.border.width}px solid ${state.currentState.border.color}`;
+            
+            // Update text elements
+            const textsDiv = document.getElementById('previewTexts');
+            textsDiv.innerHTML = '';
+            
+            state.currentState.textElements.forEach(text => {
+                const textDiv = document.createElement('div');
+                textDiv.style.position = 'absolute';
+                textDiv.style.left = `${text.x}px`;
+                textDiv.style.top = `${text.y}px`;
+                textDiv.style.transform = 'translate(-50%, -50%)';
+                textDiv.style.fontFamily = text.font;
+                textDiv.style.fontSize = `${text.size}px`;
+                textDiv.style.color = text.color;
+                textDiv.style.fontStyle = text.style.includes('italic') ? 'italic' : 'normal';
+                textDiv.style.fontWeight = text.style.includes('bold') ? 'bold' : 'normal';
+                
+                if (text.shadow) {
+                    textDiv.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+                }
+                
+                textDiv.textContent = text.content;
+                textsDiv.appendChild(textDiv);
+            });
+            
+            // Update avatars
+            const avatarsDiv = document.getElementById('previewAvatars');
+            avatarsDiv.innerHTML = '';
+            
+            // Main avatar
+            if (state.currentState.mainAvatar.url) {
+                const mainAvatarDiv = document.createElement('div');
+                mainAvatarDiv.style.position = 'absolute';
+                mainAvatarDiv.style.left = `${state.currentState.mainAvatar.x}px`;
+                mainAvatarDiv.style.top = `${state.currentState.mainAvatar.y}px`;
+                mainAvatarDiv.style.width = `${state.currentState.mainAvatar.size * 2}px`;
+                mainAvatarDiv.style.height = `${state.currentState.mainAvatar.size * 2}px`;
+                mainAvatarDiv.style.transform = 'translate(-50%, -50%)';
+                mainAvatarDiv.style.border = `3px solid ${state.currentState.mainAvatar.borderColor}`;
+                
+                // Apply different shapes
+                applyAvatarShape(mainAvatarDiv, state.currentState.mainAvatar.shape);
+                
+                // Add background image
+                mainAvatarDiv.style.backgroundImage = `url(${state.currentState.mainAvatar.url})`;
+                mainAvatarDiv.style.backgroundSize = 'cover';
+                mainAvatarDiv.style.backgroundPosition = 'center';
+                
+                // Add glow effect if enabled
+                if (state.currentState.mainAvatar.glow) {
+                    mainAvatarDiv.style.boxShadow = '0 0 15px rgba(153, 102, 255, 0.7), 0 0 30px rgba(102, 204, 255, 0.5)';
+                }
+                
+                avatarsDiv.appendChild(mainAvatarDiv);
+            }
+            
+            // Extra avatars
+            state.currentState.extraAvatars.forEach((avatar, index) => {
+                if (avatar.url) {
+                    const avatarDiv = document.createElement('div');
+                    avatarDiv.style.position = 'absolute';
+                    avatarDiv.style.left = `${avatar.x}px`;
+                    avatarDiv.style.top = `${avatar.y}px`;
+                    avatarDiv.style.width = `${avatar.size * 2}px`;
+                    avatarDiv.style.height = `${avatar.size * 2}px`;
+                    avatarDiv.style.transform = 'translate(-50%, -50%)';
+                    avatarDiv.style.border = '2px solid white';
+                    
+                    // Apply different shapes
+                    applyAvatarShape(avatarDiv, avatar.shape);
+                    
+                    // Add background image
+                    avatarDiv.style.backgroundImage = `url(${avatar.url})`;
+                    avatarDiv.style.backgroundSize = 'cover';
+                    avatarDiv.style.backgroundPosition = 'center';
+                    
+                    avatarsDiv.appendChild(avatarDiv);
+                }
+            });
+            
+            // Apply effects
+            updateEffects();
+        }
+
+        // Apply avatar shape
+        function applyAvatarShape(element, shape) {
+            switch (shape) {
+                case 'circle':
+                    element.style.borderRadius = '50%';
+                    break;
+                case 'square':
+                    element.style.borderRadius = '0%';
+                    break;
+                case 'triangle':
+                    element.style.borderRadius = '0%';
+                    element.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+                    break;
+                case 'pentagon':
+                    element.style.clipPath = 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)';
+                    break;
+                case 'hexagon':
+                    element.style.clipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
+                    break;
+                case 'octagon':
+                    element.style.clipPath = 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)';
+                    break;
+                case 'star':
+                    element.style.clipPath = 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)';
+                    break;
+                case 'heart':
+                    element.style.clipPath = 'path("M0 200 v-200 h200 a100,100 90 0,1 0,200 a100,100 90 0,1 -200,0 z")';
+                    break;
+                case 'diamond':
+                    element.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
+                    break;
+                case 'custom':
+                    // More complex shapes could be added here
+                    element.style.clipPath = 'polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%)';
+                    break;
+            }
+        }
+
+        // Generate the API URL
+        function generateApiUrl() {
+            let baseUrl = '/bienvenida-styled?';
+            const params = [];
+            
+            // Add avatar URL
+            if (state.currentState.mainAvatar.url) {
+                params.push(`avatar=${encodeURIComponent(state.currentState.mainAvatar.url)}`);
+            } else {
+                alert('¡Necesitas proporcionar una URL para el avatar principal!');
+                return;
+            }
+            
+            // Add background URL
+            if (state.currentState.background.type === 'image' && state.currentState.background.imageUrl) {
+                params.push(`background=${encodeURIComponent(state.currentState.background.imageUrl)}`);
+            } else {
+                // Use a placeholder or generate a background URL based on settings
+                params.push(`background=placeholder.jpg`);
+            }
+            
+            // Add text elements (up to 3 for the basic API)
+            for (let i = 0; i < Math.min(3, state.currentState.textElements.length); i++) {
+                params.push(`texto${i+1}=${encodeURIComponent(state.currentState.textElements[i].content)}`);
+            }
+            
+            // If less than 3 text elements, add empty ones
+            for (let i = state.currentState.textElements.length; i < 3; i++) {
+                params.push(`texto${i+1}=`);
+            }
+            
+            // Add additional parameters if needed
+            params.push(`borderRadius=${state.currentState.border.radius}`);
+            params.push(`borderColor=${encodeURIComponent(state.currentState.border.color)}`);
+            params.push(`borderWidth=${state.currentState.border.width}`);
+            params.push(`avatarSize=${state.currentState.mainAvatar.size}`);
+            params.push(`avatarShape=${state.currentState.mainAvatar.shape}`);
+            params.push(`effectType=${state.currentState.effects.type}`);
+            
+            // Include extra avatars if they have URLs
+            state.currentState.extraAvatars.forEach((avatar, index) => {
+                if (avatar.url) {
+                    params.push(`extraAvatar${index+1}=${encodeURIComponent(avatar.url)}`);
+                    params.push(`extraAvatarX${index+1}=${avatar.x}`);
+                    params.push(`extraAvatarY${index+1}=${avatar.y}`);
+                    params.push(`extraAvatarSize${index+1}=${avatar.size}`);
+                    params.push(`extraAvatarShape${index+1}=${avatar.shape}`);
+                }
+            });
+            
+            // Include additional text parameters
+            state.currentState.textElements.forEach((text, index) => {
+                params.push(`textX${index+1}=${text.x}`);
+                params.push(`textY${index+1}=${text.y}`);
+                params.push(`textSize${index+1}=${text.size}`);
+                params.push(`textColor${index+1}=${encodeURIComponent(text.color)}`);
+                params.push(`textFont${index+1}=${encodeURIComponent(text.font)}`);
+                params.push(`textStyle${index+1}=${encodeURIComponent(text.style)}`);
+            });
+            
+            const apiUrl = baseUrl + params.join('&');
+            
+            // Show the generated URL
+            const apiUrlOutput = document.getElementById('apiUrlOutput');
+            apiUrlOutput.textContent = apiUrl;
+            document.getElementById('apiUrlContainer').style.display = 'block';
+            
+            // Scroll to the URL container
+            document.getElementById('apiUrlContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Update the effects
+        function updateEffects() {
+            const effectsDiv = document.getElementById('previewEffects');
+            const effectOverlay = document.getElementById('imageEffectOverlay');
+            effectsDiv.innerHTML = '';
+            effectOverlay.innerHTML = '';
+            
+            // Apply global effect
+            switch (state.currentState.effects.type) {
+                case 'glow':
+                    const borderRadius = state.currentState.border.radius;
+                    effectOverlay.style.boxShadow = `inset 0 0 ${30 * state.currentState.effects.intensity}px ${state.currentState.effects.color1}, 0 0 ${20 * state.currentState.effects.intensity}px ${state.currentState.effects.color2}`;
+                    break;
+                case 'sparkle':
+                    // Create sparkle effect
+                    effectOverlay.innerHTML = '';
+                    const numSparkles = Math.floor(20 * state.currentState.effects.intensity);
+                    
+                    for (let i = 0; i < numSparkles; i++) {
+                        const sparkle = document.createElement('div');
+                        const size = Math.random() * 5 + 2;
+                        sparkle.style.position = 'absolute';
+                        sparkle.style.width = `${size}px`;
+                        sparkle.style.height = `${size}px`;
+                        sparkle.style.backgroundColor = Math.random() > 0.5 ? state.currentState.effects.color1 : state.currentState.effects.color2;
+                        sparkle.style.borderRadius = '50%';
+                        sparkle.style.left = `${Math.random() * 100}%`;
+                        sparkle.style.top = `${Math.random() * 100}%`;
+                        sparkle.style.boxShadow = `0 0 ${size * 2}px ${sparkle.style.backgroundColor}`;
+                        sparkle.style.animation = `sparkle ${Math.random() * 3 + 1}s infinite alternate`;
+                        effectOverlay.appendChild(sparkle);
+                    }
+                    
+                    // Add keyframes for sparkle animation
+                    if (!document.getElementById('sparkleAnimation')) {
+                        const style = document.createElement('style');
+                        style.id = 'sparkleAnimation';
+                        style.innerHTML = `
+                            @keyframes sparkle {
+                                0% { opacity: 0.2; transform: scale(1); }
+                                100% { opacity: 1; transform: scale(1.5); }
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    }
+                    break;
+                case 'gradient':
+                    effectOverlay.style.background = `linear-gradient(135deg, ${state.currentState.effects.color1}${Math.floor(state.currentState.effects.intensity * 50).toString(16)}, ${state.currentState.effects.color2}${Math.floor(state.currentState.effects.intensity * 50).toString(16)})`;
+                    effectOverlay.style.mixBlendMode = 'overlay';
+                    break;
+                case 'noise':
+                    // Create canvas for noise effect
+                    if (!document.getElementById('noiseCanvas')) {
+                        const canvas = document.createElement('canvas');
+                        canvas.id = 'noiseCanvas';
+                        canvas.width = 200;
+                        canvas.height = 200;
+                        document.body.appendChild(canvas);
+                        
+                        const ctx = canvas.getContext('2d');
+                        const imgData = ctx.createImageData(200, 200);
+                        const data = imgData.data;
+                        
+                        for (let i = 0; i < data.length; i += 4) {
+                            const value = Math.floor(Math.random() * 255);
+                            data[i] = value;
+                            data[i + 1] = value;
+                            data[i + 2] = value;
+                            data[i + 3] = Math.random() * 50;
+                        }
+                        
+                        ctx.putImageData(imgData, 0, 0);
+                        canvas.style.display = 'none';
+                    }
+                    
+                    effectOverlay.style.backgroundImage = 'url(' + document.getElementById('noiseCanvas').toDataURL() + ')';
+                    effectOverlay.style.opacity = state.currentState.effects.intensity;
+                    effectOverlay.style.mixBlendMode = 'overlay';
+                    break;
+                case 'vignette':
+                    effectOverlay.style.boxShadow = `inset 0 0 ${150 * state.currentState.effects.intensity}px rgba(0,0,0,0.8)`;
+                    break;
+                case 'rays':
+                    effectOverlay.innerHTML = '';
+                    const numRays = Math.floor(12 * state.currentState.effects.intensity);
+                    
+                    for (let i = 0; i < numRays; i++) {
+                        const ray = document.createElement('div');
+                        ray.style.position = 'absolute';
+                        ray.style.width = '3px';
+                        ray.style.height = '100%';
+                        ray.style.left = '50%';
+                        ray.style.top = '0';
+                        ray.style.backgroundColor = Math.random() > 0.5 ? state.currentState.effects.color1 : state.currentState.effects.color2;
+                        ray.style.transform = `rotate(${(i * 360 / numRays)}deg)`;
+                        ray.style.transformOrigin = 'center center';
+                        ray.style.opacity = '0.3';
+                        effectOverlay.appendChild(ray);
+                    }
+                    break;
+                case 'grid':
+                    // Create a grid overlay
+                    const gridSize = Math.floor(20 / state.currentState.effects.intensity);
+                    effectOverlay.style.backgroundImage = `
+                        linear-gradient(to right, ${state.currentState.effects.color1}20 1px, transparent 1px),
+                        linear-gradient(to bottom, ${state.currentState.effects.color2}20 1px, transparent 1px)
+                    `;
+                    effectOverlay.style.backgroundSize = `${gridSize}px ${gridSize}px`;
+                    break;
+                case 'cyberpunk':
+                    // Create cyberpunk effect with glitchy scanlines
+                    effectOverlay.style.background = `
+                        linear-gradient(transparent 50%, rgba(0,0,0,0.1) 50%),
+                        linear-gradient(90deg, ${state.currentState.effects.color1}10, ${state.currentState.effects.color2}10)
+                    `;
+                    effectOverlay.style.backgroundSize = `100% 4px, 100% 100%`;
+                    
+                    // Add horizontal color bars
+                    const glitchBar = document.createElement('div');
+                    glitchBar.style.position = 'absolute';
+                    glitchBar.style.width = '100%';
+                    glitchBar.style.height = '5px';
+                    glitchBar.style.top = `${Math.random() * 100}%`;
+                    glitchBar.style.backgroundColor = state.currentState.effects.color1;
+                    glitchBar.style.opacity = '0.7';
+                    effectOverlay.appendChild(glitchBar);
+                    
+                    const glitchBar2 = document.createElement('div');
+                    glitchBar2.style.position = 'absolute';
+                    glitchBar2.style.width = '100%';
+                    glitchBar2.style.height = '3px';
+                    glitchBar2.style.top = `${Math.random() * 100}%`;
+                    glitchBar2.style.backgroundColor = state.currentState.effects.color2;
+                    glitchBar2.style.opacity = '0.5';
+                    effectOverlay.appendChild(glitchBar2);
+                    break;
+                case 'retro':
+                    // Create retro wave sun and grid effect
+                    const sunDiv = document.createElement('div');
+                    sunDiv.style.position = 'absolute';
+                    sunDiv.style.width = '300px';
+                    sunDiv.style.height = '150px';
+                    sunDiv.style.bottom = '0';
+                    sunDiv.style.left = '50%';
+                    sunDiv.style.transform = 'translateX(-50%)';
+                    sunDiv.style.background = `radial-gradient(ellipse at center, ${state.currentState.effects.color1} 0%, transparent 70%)`;
+                    sunDiv.style.opacity = state.currentState.effects.intensity;
+                    effectOverlay.appendChild(sunDiv);
+                    
+                    // Add grid perspective
+                    const gridDiv = document.createElement('div');
+                    gridDiv.style.position = 'absolute';
+                    gridDiv.style.width = '100%';
+                    gridDiv.style.height = '50%';
+                    gridDiv.style.bottom = '0';
+                    gridDiv.style.perspective = '500px';
+                    
+                    const innerGrid = document.createElement('div');
+                    innerGrid.style.width = '100%';
+                    innerGrid.style.height = '100%';
+                    innerGrid.style.background = `
+                        linear-gradient(to right, ${state.currentState.effects.color2}40 1px, transparent 1px),
+                        linear-gradient(to bottom, ${state.currentState.effects.color2}40 1px, transparent 1px)
+                    `;
+                    innerGrid.style.backgroundSize = '40px 40px';
+                    innerGrid.style.transform = 'rotateX(60deg)';
+                    innerGrid.style.transformOrigin = 'center bottom';
+                    
+                    gridDiv.appendChild(innerGrid);
+                    effectOverlay.appendChild(gridDiv);
+                    break;
+            }
+            
+            // Add stars if enabled
+            if (state.currentState.effects.showStars) {
+                for (let i = 0; i < 20; i++) {
+                    const star = document.createElement('div');
+                    star.style.position = 'absolute';
+                    star.style.width = `${Math.random() * 3 + 1}px`;
+                    star.style.height = star.style.width;
+                    star.style.backgroundColor = 'white';
+                    star.style.borderRadius = '50%';
+                    star.style.left = `${Math.random() * 100}%`;
+                    star.style.top = `${Math.random() * 100}%`;
+                    star.style.opacity = Math.random() * 0.7 + 0.3;
+                    star.style.boxShadow = '0 0 3px white';
+                    effectsDiv.appendChild(star);
+                }
+            }
+            
+            // Add light beams if enabled
+            if (state.currentState.effects.showLightbeams) {
+                const beam = document.createElement('div');
+                beam.style.position = 'absolute';
+                beam.style.width = '400px';
+                beam.style.height = '30px';
+                beam.style.background = 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%)';
+                beam.style.top = '40%';
+                beam.style.left = '50%';
+                beam.style.transform = 'translateX(-50%) rotate(-30deg)';
+                beam.style.opacity = '0.5';
+                effectsDiv.appendChild(beam);
+                
+                const beam2 = document.createElement('div');
+                beam2.style.position = 'absolute';
+                beam2.style.width = '300px';
+                beam2.style.height = '20px';
+                beam2.style.background = 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%)';
+                beam2.style.top = '60%';
+                beam2.style.left = '30%';
+                beam2.style.transform = 'rotate(30deg)';
+                beam2.style.opacity = '0.3';
+                effectsDiv.appendChild(beam2);
+            }
+            
+            // Add glowing edges if enabled
+            if (state.currentState.effects.showGlowingEdges) {
+                const borderRadius = state.currentState.border.radius;
+                const canvas = document.getElementById('previewCanvas');
+                canvas.style.boxShadow = `0 0 10px ${state.currentState.border.color}, 0 0 20px rgba(153, 102, 255, 0.5)`;
+            }
+        }
+
+        // Copy API URL to clipboard
+        function copyApiUrl() {
+            const apiUrl = document.getElementById('apiUrlOutput').textContent;
+            
+            // Create a temporary input element
+            const tempInput = document.createElement('input');
+            tempInput.value = apiUrl;
+            document.body.appendChild(tempInput);
+            
+            // Select and copy the URL
+            tempInput.select();
+            document.execCommand('copy');
+            
+            // Remove the temporary input element
+            document.body.removeChild(tempInput);
+            
+            // Change button text temporarily
+            const copyBtn = document.getElementById('copyBtn');
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000);
+        }
+
+        // --- Event Listeners ---
+        
+        // Tab navigation
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Hide all tab content
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // Show the corresponding tab content
+                const tabId = tab.dataset.tab + '-tab';
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // Background type change
+        document.getElementById('bgType').addEventListener('change', function() {
+            document.getElementById('bgColorOptions').style.display = this.value === 'color' ? 'block' : 'none';
+            document.getElementById('bgGradientOptions').style.display = this.value === 'gradient' ? 'block' : 'none';
+            document.getElementById('bgImageOptions').style.display = this.value === 'image' ? 'block' : 'none';
+            
+            state.currentState.background.type = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        // Canvas dimensions
+        document.getElementById('canvasWidth').addEventListener('change', function() {
+            state.currentState.canvas.width = parseInt(this.value);
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('canvasHeight').addEventListener('change', function() {
+            state.currentState.canvas.height = parseInt(this.value);
+            saveState();
+            updatePreview();
+        });
+        
+        // Background color
+        document.getElementById('bgColor').addEventListener('change', function() {
+            state.currentState.background.color = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        // Background gradient
+        document.getElementById('bgGradientStart').addEventListener('change', function() {
+            state.currentState.background.gradientStart = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('bgGradientEnd').addEventListener('change', function() {
+            state.currentState.background.gradientEnd = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('bgGradientDirection').addEventListener('change', function() {
+            state.currentState.background.gradientDirection = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        // Background image
+        document.getElementById('bgImageUrl').addEventListener('change', function() {
+            state.currentState.background.imageUrl = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('bgImageOpacity').addEventListener('input', function() {
+            state.currentState.background.imageOpacity = parseFloat(this.value);
+            this.nextElementSibling.textContent = this.value;
+            updatePreview();
+        });
+        
+        document.getElementById('bgImageOpacity').addEventListener('change', function() {
+            saveState();
+        });
+        
+        // Border settings
+        document.getElementById('borderRadius').addEventListener('input', function() {
+            state.currentState.border.radius = parseInt(this.value);
+            this.nextElementSibling.textContent = `${this.value}px`;
+            updatePreview();
+        });
+        
+        document.getElementById('borderRadius').addEventListener('change', function() {
+            saveState();
+        });
+        
+        document.getElementById('borderColor').addEventListener('change', function() {
+            state.currentState.border.color = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('borderWidth').addEventListener('input', function() {
+            state.currentState.border.width = parseInt(this.value);
+            this.nextElementSibling.textContent = `${this.value}px`;
+            updatePreview();
+        });
+        
+        document.getElementById('borderWidth').addEventListener('change', function() {
+            saveState();
+        });
+        
+        // Main avatar settings
+        document.getElementById('mainAvatarUrl').addEventListener('change', function() {
+            state.currentState.mainAvatar.url = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('mainAvatarX').addEventListener('input', function() {
+            state.currentState.mainAvatar.x = parseInt(this.value);
+            this.nextElementSibling.textContent = `${this.value}px`;
+            updatePreview();
+        });
+        
+        document.getElementById('mainAvatarX').addEventListener('change', function() {
+            saveState();
+        });
+        
+        document.getElementById('mainAvatarY').addEventListener('input', function() {
+            state.currentState.mainAvatar.y = parseInt(this.value);
+            this.nextElementSibling.textContent = `${this.value}px`;
+            updatePreview();
+        });
+        
+        document.getElementById('mainAvatarY').addEventListener('change', function() {
+            saveState();
+        });
+        
+        document.getElementById('mainAvatarSize').addEventListener('input', function() {
+            state.currentState.mainAvatar.size = parseInt(this.value);
+            this.nextElementSibling.textContent = `${this.value}px`;
+            updatePreview();
+        });
+        
+        document.getElementById('mainAvatarSize').addEventListener('change', function() {
+            saveState();
+        });
+        
+        document.getElementById('mainAvatarShape').addEventListener('change', function() {
+            state.currentState.mainAvatar.shape = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('mainAvatarBorderColor').addEventListener('change', function() {
+            state.currentState.mainAvatar.borderColor = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('mainAvatarGlow').addEventListener('change', function() {
+            state.currentState.mainAvatar.glow = this.checked;
+            saveState();
+            updatePreview();
+        });
+        
+        // Extra avatar settings
+        for (let i = 1; i <= 4; i++) {
+            document.getElementById(`avatarUrl${i}`).addEventListener('change', function() {
+                state.currentState.extraAvatars[i-1].url = this.value;
+                saveState();
+                updatePreview();
+            });
+            
+            document.getElementById(`avatarX${i}`).addEventListener('input', function() {
+                state.currentState.extraAvatars[i-1].x = parseInt(this.value);
+                this.nextElementSibling.textContent = `${this.value}px`;
+                updatePreview();
+            });
+            
+            document.getElementById(`avatarX${i}`).addEventListener('change', function() {
+                saveState();
+            });
+            
+            document.getElementById(`avatarY${i}`).addEventListener('input', function() {
+                state.currentState.extraAvatars[i-1].y = parseInt(this.value);
+                this.nextElementSibling.textContent = `${this.value}px`;
+                updatePreview();
+            });
+            
+            document.getElementById(`avatarY${i}`).addEventListener('change', function() {
+                saveState();
+            });
+            
+            document.getElementById(`avatarSize${i}`).addEventListener('input', function() {
+                state.currentState.extraAvatars[i-1].size = parseInt(this.value);
+                this.nextElementSibling.textContent = `${this.value}px`;
+                updatePreview();
+            });
+            
+            document.getElementById(`avatarSize${i}`).addEventListener('change', function() {
+                saveState();
+            });
+            
+            document.getElementById(`avatarShape${i}`).addEventListener('change', function() {
+                state.currentState.extraAvatars[i-1].shape = this.value;
+                saveState();
+                updatePreview();
+            });
+        }
+        
+        // Effects settings
+        document.getElementById('globalEffect').addEventListener('change', function() {
+            state.currentState.effects.type = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('effectIntensitySlider').addEventListener('input', function() {
+            state.currentState.effects.intensity = parseFloat(this.value);
+            this.nextElementSibling.textContent = this.value;
+            updatePreview();
+        });
+        
+        document.getElementById('effectIntensitySlider').addEventListener('change', function() {
+            saveState();
+        });
+        
+        document.getElementById('effectColor1').addEventListener('change', function() {
+            state.currentState.effects.color1 = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('effectColor2').addEventListener('change', function() {
+            state.currentState.effects.color2 = this.value;
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('showStars').addEventListener('change', function() {
+            state.currentState.effects.showStars = this.checked;
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('showLightbeams').addEventListener('change', function() {
+            state.currentState.effects.showLightbeams = this.checked;
+            saveState();
+            updatePreview();
+        });
+        
+        document.getElementById('showGlowingEdges').addEventListener('change', function() {
+            state.currentState.effects.showGlowingEdges = this.checked;
+            saveState();
+            updatePreview();
+        });
+        
+        // Button listeners
+        document.getElementById('addTextBtn').addEventListener('click', addTextElement);
+        document.getElementById('undoBtn').addEventListener('click', undo);
+        document.getElementById('redoBtn').addEventListener('click', redo);
+        document.getElementById('generateBtn').addEventListener('click', generateApiUrl);
+        document.getElementById('copyBtn').addEventListener('click', copyApiUrl);
+        
+        // Initialize the app
+        initializeState();
+    </script>
+</body>
+</html>
