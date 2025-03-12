@@ -511,17 +511,27 @@ function generateApiUrl() {
     let baseUrl = 'https://api.apikarl.com/api/utility/bienvenida/bienvenida-styled?';
     const params = [];
     
-    // Add avatar URL
+    // Add avatar URL - Manejo especial para variables BDFD
     if (state.currentState.mainAvatar.url) {
-        params.push(`avatar=${encodeURIComponent(state.currentState.mainAvatar.url)}`);
+        // Comprobar si es una variable BDFD (comienza con $)
+        if (state.currentState.mainAvatar.url.startsWith('$')) {
+            // No codificar las variables BDFD, pasarlas directamente
+            params.push(`avatar=${state.currentState.mainAvatar.url}`);
+        } else {
+            params.push(`avatar=${encodeURIComponent(state.currentState.mainAvatar.url)}`);
+        }
     } else {
         alert('¡Necesitas proporcionar una URL para el avatar principal!');
         return;
     }
     
-    // Add background settings
+    // Add background settings - Manejo especial para variables BDFD
     if (state.currentState.background.type === 'image' && state.currentState.background.imageUrl) {
-        params.push(`background=${encodeURIComponent(state.currentState.background.imageUrl)}`);
+        if (state.currentState.background.imageUrl.startsWith('$')) {
+            params.push(`background=${state.currentState.background.imageUrl}`);
+        } else {
+            params.push(`background=${encodeURIComponent(state.currentState.background.imageUrl)}`);
+        }
     } else if (state.currentState.background.type === 'color') {
         params.push(`bgColor=${encodeURIComponent(state.currentState.background.color.replace('#', ''))}`);
     } else if (state.currentState.background.type === 'gradient') {
@@ -529,9 +539,15 @@ function generateApiUrl() {
         params.push(`bgGradientDir=${encodeURIComponent(state.currentState.background.gradientDirection)}`);
     }
     
-    // Add text elements (up to 3 for the basic API)
+    // Add text elements (up to 3 for the basic API) - Manejo especial para variables BDFD
     for (let i = 0; i < Math.min(3, state.currentState.textElements.length); i++) {
-        params.push(`texto${i+1}=${encodeURIComponent(state.currentState.textElements[i].content)}`);
+        const textContent = state.currentState.textElements[i].content;
+        if (textContent.includes('$')) {
+            // Si contiene variables BDFD, no codificar el texto completo
+            params.push(`texto${i+1}=${textContent}`);
+        } else {
+            params.push(`texto${i+1}=${encodeURIComponent(textContent)}`);
+        }
     }
     
     // If less than 3 text elements, add empty ones
@@ -548,10 +564,14 @@ function generateApiUrl() {
     params.push(`effectType=${state.currentState.effects.type}`);
     params.push(`effectIntensity=${state.currentState.effects.intensity}`);
     
-    // Include extra avatars if they have URLs
+    // Include extra avatars if they have URLs - Manejo especial para variables BDFD
     state.currentState.extraAvatars.forEach((avatar, index) => {
         if (avatar.url) {
-            params.push(`extraAvatar${index+1}=${encodeURIComponent(avatar.url)}`);
+            if (avatar.url.startsWith('$')) {
+                params.push(`extraAvatar${index+1}=${avatar.url}`);
+            } else {
+                params.push(`extraAvatar${index+1}=${encodeURIComponent(avatar.url)}`);
+            }
             params.push(`extraAvatarX${index+1}=${avatar.x}`);
             params.push(`extraAvatarY${index+1}=${avatar.y}`);
             params.push(`extraAvatarSize${index+1}=${avatar.size}`);
