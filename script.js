@@ -507,7 +507,8 @@ function applyAvatarShape(element, shape) {
 
 // Generate the API URL
 function generateApiUrl() {
-    let baseUrl = '/api/utility/bienvenida-styled?';
+    // URL base con el dominio completo
+    let baseUrl = 'https://api.apikarl.com/api/utility/bienvenida/bienvenida-styled?';
     const params = [];
     
     // Add avatar URL
