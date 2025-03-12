@@ -7,13 +7,21 @@ const { generateWelcomeImage } = require('./imageGenerator');
 // Ruta al archivo HTML
 const HTML_PATH = path.join(__dirname, 'index.html');
 
-// IMPORTANTE: Primero configuramos los archivos estáticos
-// Esto debe ir ANTES de las rutas para que funcione correctamente
-router.use(express.static(__dirname));
+// Ruta a la raíz del proyecto
+const ROOT_DIR = path.join(__dirname, '../../../');
 
-// Después configuramos la ruta para servir el HTML
+// Ruta principal - Sirve el HTML
 router.get("/", (req, res) => {
     res.sendFile(HTML_PATH);
+});
+
+// Rutas explícitas para CSS y JS de la raíz
+router.get("/styles.css", (req, res) => {
+    res.sendFile(path.join(ROOT_DIR, 'styles.css'));
+});
+
+router.get("/script.js", (req, res) => {
+    res.sendFile(path.join(ROOT_DIR, 'script.js'));
 });
 
 // Endpoint para generar imágenes de bienvenida
