@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Función para generar la URL de la API
     function generateApiUrl() {
         // Construir URL base de la API con el dominio y ruta correctos
-        const baseUrl = 'https://apikarl.com/api/utility/bienvenida';
+        const baseUrl = 'https://apikarl.com/api/utility/bienvenida/generate';
         const params = new URLSearchParams();
         
         // Añadir parámetros de fondo
