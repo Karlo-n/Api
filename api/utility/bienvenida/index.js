@@ -8,7 +8,7 @@ const { generateWelcomeImage } = require('./imageGenerator');
 const HTML_PATH = path.join(__dirname, 'index.html');
 
 // Ruta a la raíz del proyecto
-const ROOT_DIR = path.join(__dirname, '../../../');
+const ROOT_DIR = path.join(__dirname, '');
 
 // Ruta principal - Sirve el HTML
 router.get("/", (req, res) => {
