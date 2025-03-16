@@ -634,7 +634,6 @@
         </main>
     </div>
 
-    <script src="/api/utility/bienvenida/script.js"></script>
     <script>
         // Script para la sincronización de entradas numéricas
         document.addEventListener('DOMContentLoaded', function() {
@@ -738,5 +737,9 @@
             textSizeRangeGroup.parentNode.insertBefore(sizeInput, textSizeRangeGroup.nextSibling);
         }
     </script>
+    
+    <!-- Incluir los scripts necesarios en el orden correcto -->
+    <script src="/api/utility/bienvenida/script.js"></script>
+    <script src="/api/utility/bienvenida/generador.js"></script>
 </body>
 </html>
