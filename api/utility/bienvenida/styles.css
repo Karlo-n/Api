@@ -197,6 +197,161 @@ header {
     font-size: 0.8em;
 }
 
+/* Mejora estética general */
+.container {
+    background-color: rgba(10, 10, 15, 0.5);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+}
+
+header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+}
+
+.tabs {
+    background: rgba(45, 43, 66, 0.5);
+    border-radius: 30px;
+    padding: 5px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.tab {
+    border-radius: 25px;
+    margin: 0 5px;
+}
+
+.tab.active {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    box-shadow: var(--accent-glow);
+}
+
+.section {
+    background: rgba(25, 25, 35, 0.7);
+    border-left: 3px solid var(--primary);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.section:hover {
+    border-left: 3px solid var(--accent);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Estilos para entrada de coordenadas XY */
+.coord-input {
+    display: flex;
+    align-items: center;
+    background: rgba(45, 45, 65, 0.5);
+    border-radius: 8px;
+    padding: 5px 10px;
+    margin: 5px 0;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.coord-input label {
+    color: var(--secondary);
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 0.8rem;
+}
+
+.coord-input span {
+    margin: 0 5px;
+    color: var(--secondary);
+    font-weight: bold;
+}
+
+.coord-input input {
+    width: 60px;
+    text-align: center;
+    background: rgba(20, 20, 30, 0.6);
+    border: 1px solid rgba(102, 51, 204, 0.3);
+    border-radius: 5px;
+    color: white;
+    padding: 4px 6px;
+    transition: all 0.2s ease;
+}
+
+.coord-input input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(189, 93, 255, 0.25);
+    outline: none;
+}
+
+/* Estilos para entradas de tamaño */
+.size-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.size-input input {
+    width: 70px;
+    padding: 4px 6px;
+    text-align: center;
+    background: rgba(20, 20, 30, 0.6);
+    border: 1px solid rgba(102, 51, 204, 0.3);
+    border-radius: 5px;
+    color: white;
+}
+
+/* Mejoras para la previsualización */
+.preview-container {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.preview-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Estilos para botones */
+.btn {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn-generate {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+}
+
+.btn-generate:hover {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+}
+
+/* Estilo para el contenedor de la URL de API */
+#apiUrlContainer {
+    background: rgba(25, 25, 35, 0.8);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+#apiUrlOutput {
+    background: rgba(10, 10, 20, 0.7);
+    border: 1px solid rgba(189, 93, 255, 0.3);
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    padding: 12px;
+    color: #d9d9ff;
+    max-height: 150px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) rgba(40, 40, 60, 0.5);
+}
+
 .site-link {
     padding: 8px 15px;
     background: rgba(0, 0, 0, 0.3);
