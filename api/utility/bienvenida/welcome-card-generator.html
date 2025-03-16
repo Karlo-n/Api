@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Tarjetas de Bienvenida</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/api/utility/bienvenida/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Generador de Tarjetas de Bienvenida</h1>
+            <p>Personaliza y crea tarjetas de bienvenida para tu servidor de Discord</p>
+            <div class="site-links">
+                <a href="#" class="site-link"><i class="fas fa-home"></i> Inicio</a>
+                <a href="#" class="site-link"><i class="fas fa-info-circle"></i> Ayuda</a>
+                <a href="#" class="site-link"><i class="fas fa-code"></i> API</a>
+            </div>
+        </header>
+        
+        <main>
+            <div class="controls">
+                <div class="tabs">
+                    <div class="tab active" data-tab="basic">Básico</div>
+                    <div class="tab" data-tab="avatars">Avatares</div>
+                    <div class="tab" data-tab="text">Textos</div>
+                    <div class="tab" data-tab="effects">Efectos</div>
+                </div>
+                
+                <!-- Pestaña de configuración básica -->
+                <div id="basic-tab" class="tab-content active">
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Dimensiones del Canvas</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="canvasWidth">Ancho:</label>
+                                <input type="number" id="canvasWidth" min="400" max="1200" value="800">
+                            </div>
+                            <div class="form-group">
+                                <label for="canvasHeight">Alto:</label>
+                                <input type="number" id="canvasHeight" min="200" max="800" value="400">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Fondo</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="bgType">Tipo de fondo:</label>
+                                <select id="bgType">
+                                    <option value="color">Color sólido</option>
+                                    <option value="gradient">Gradiente</option>
+                                    <option value="image">Imagen</option>
+                                </select>
+                            </div>
+                            
+                            <div id="bgColorOptions">
+                                <div class="form-group">
+                                    <label for="bgColor">Color de fondo:</label>
+                                    <input type="color" id="bgColor" value="#1e1e2e">
+                                </div>
+                            </div>
+                            
+                            <div id="bgGradientOptions" style="display: none;">
+                                <div class="form-group">
+                                    <label for="bgGradientStart">Color inicial:</label>
+                                    <input type="color" id="bgGradientStart" value="#1e1e2e">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bgGradientEnd">Color final:</label>
+                                    <input type="color" id="bgGradientEnd" value="#2d2b42">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bgGradientDirection">Dirección:</label>
+                                    <select id="bgGradientDirection">
+                                        <option value="to right">Derecha</option>
+                                        <option value="to left">Izquierda</option>
+                                        <option value="to bottom">Abajo</option>
+                                        <option value="to top">Arriba</option>
+                                        <option value="to bottom right">Diagonal derecha-abajo</option>
+                                        <option value="to bottom left">Diagonal izquierda-abajo</option>
+                                        <option value="to top right">Diagonal derecha-arriba</option>
+                                        <option value="to top left">Diagonal izquierda-arriba</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="bgImageOptions" style="display: none;">
+                                <div class="form-group">
+                                    <label for="bgImageUrl">URL de la imagen:</label>
+                                    <input type="text" id="bgImageUrl" placeholder="https://ejemplo.com/imagen.jpg">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bgImageOpacity">Opacidad:</label>
+                                    <input type="range" id="bgImageOpacity" min="0.1" max="1" step="0.1" value="0.5">
+                                    <div class="range-value">0.5</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Borde</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="borderRadius">Radio de borde:</label>
+                                <input type="range" id="borderRadius" min="0" max="50" value="25">
+                                <div class="range-value">25px</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="borderColor">Color de borde:</label>
+                                <input type="color" id="borderColor" value="#bd5dff">
+                            </div>
+                            <div class="form-group">
+                                <label for="borderWidth">Grosor de borde:</label>
+                                <input type="range" id="borderWidth" min="0" max="10" value="3">
+                                <div class="range-value">3px</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pestaña de configuración de avatares -->
+                <div id="avatars-tab" class="tab-content">
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Avatar Principal</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="mainAvatarUrl">URL del avatar:</label>
+                                <input type="text" id="mainAvatarUrl" placeholder="https://ejemplo.com/avatar.jpg">
+                            </div>
+                            <div class="form-group">
+                                <label for="mainAvatarX">Posición X:</label>
+                                <input type="range" id="mainAvatarX" min="0" max="800" value="400">
+                                <div class="range-value">400px</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="mainAvatarY">Posición Y:</label>
+                                <input type="range" id="mainAvatarY" min="0" max="400" value="133">
+                                <div class="range-value">133px</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="mainAvatarSize">Tamaño:</label>
+                                <input type="range" id="mainAvatarSize" min="20" max="150" value="80">
+                                <div class="range-value">80px</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="mainAvatarShape">Forma:</label>
+                                <select id="mainAvatarShape">
+                                    <option value="circle">Círculo</option>
+                                    <option value="square">Cuadrado</option>
+                                    <option value="triangle">Triángulo</option>
+                                    <option value="pentagon">Pentágono</option>
+                                    <option value="hexagon">Hexágono</option>
+                                    <option value="octagon">Octágono</option>
+                                    <option value="star">Estrella</option>
+                                    <option value="heart">Corazón</option>
+                                    <option value="diamond">Diamante</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="mainAvatarBorderColor">Color del borde:</label>
+                                <input type="color" id="mainAvatarBorderColor" value="#ffffff">
+                            </div>
+                            <div class="form-group">
+                                <label for="mainAvatarGlow">Efecto resplandor:</label>
+                                <input type="checkbox" id="mainAvatarGlow" checked>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Avatares Adicionales</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="avatar-container">
+                                <h4>Avatar 1</h4>
+                                <div class="form-group">
+                                    <label for="avatarUrl1">URL del avatar:</label>
+                                    <input type="text" id="avatarUrl1" placeholder="https://ejemplo.com/avatar1.jpg">
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarX1">Posición X:</label>
+                                    <input type="range" id="avatarX1" min="0" max="800" value="200">
+                                    <div class="range-value">200px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarY1">Posición Y:</label>
+                                    <input type="range" id="avatarY1" min="0" max="400" value="200">
+                                    <div class="range-value">200px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarSize1">Tamaño:</label>
+                                    <input type="range" id="avatarSize1" min="20" max="100" value="50">
+                                    <div class="range-value">50px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarShape1">Forma:</label>
+                                    <select id="avatarShape1">
+                                        <option value="circle">Círculo</option>
+                                        <option value="square">Cuadrado</option>
+                                        <option value="triangle">Triángulo</option>
+                                        <option value="pentagon">Pentágono</option>
+                                        <option value="hexagon">Hexágono</option>
+                                        <option value="star">Estrella</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="avatar-container">
+                                <h4>Avatar 2</h4>
+                                <div class="form-group">
+                                    <label for="avatarUrl2">URL del avatar:</label>
+                                    <input type="text" id="avatarUrl2" placeholder="https://ejemplo.com/avatar2.jpg">
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarX2">Posición X:</label>
+                                    <input type="range" id="avatarX2" min="0" max="800" value="300">
+                                    <div class="range-value">300px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarY2">Posición Y:</label>
+                                    <input type="range" id="avatarY2" min="0" max="400" value="300">
+                                    <div class="range-value">300px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarSize2">Tamaño:</label>
+                                    <input type="range" id="avatarSize2" min="20" max="100" value="50">
+                                    <div class="range-value">50px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarShape2">Forma:</label>
+                                    <select id="avatarShape2">
+                                        <option value="circle">Círculo</option>
+                                        <option value="square">Cuadrado</option>
+                                        <option value="triangle">Triángulo</option>
+                                        <option value="pentagon">Pentágono</option>
+                                        <option value="hexagon">Hexágono</option>
+                                        <option value="star">Estrella</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="avatar-container">
+                                <h4>Avatar 3</h4>
+                                <div class="form-group">
+                                    <label for="avatarUrl3">URL del avatar:</label>
+                                    <input type="text" id="avatarUrl3" placeholder="https://ejemplo.com/avatar3.jpg">
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarX3">Posición X:</label>
+                                    <input type="range" id="avatarX3" min="0" max="800" value="500">
+                                    <div class="range-value">500px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarY3">Posición Y:</label>
+                                    <input type="range" id="avatarY3" min="0" max="400" value="300">
+                                    <div class="range-value">300px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarSize3">Tamaño:</label>
+                                    <input type="range" id="avatarSize3" min="20" max="100" value="50">
+                                    <div class="range-value">50px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarShape3">Forma:</label>
+                                    <select id="avatarShape3">
+                                        <option value="circle">Círculo</option>
+                                        <option value="square">Cuadrado</option>
+                                        <option value="triangle">Triángulo</option>
+                                        <option value="pentagon">Pentágono</option>
+                                        <option value="hexagon">Hexágono</option>
+                                        <option value="star">Estrella</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="avatar-container">
+                                <h4>Avatar 4</h4>
+                                <div class="form-group">
+                                    <label for="avatarUrl4">URL del avatar:</label>
+                                    <input type="text" id="avatarUrl4" placeholder="https://ejemplo.com/avatar4.jpg">
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarX4">Posición X:</label>
+                                    <input type="range" id="avatarX4" min="0" max="800" value="600">
+                                    <div class="range-value">600px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarY4">Posición Y:</label>
+                                    <input type="range" id="avatarY4" min="0" max="400" value="200">
+                                    <div class="range-value">200px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarSize4">Tamaño:</label>
+                                    <input type="range" id="avatarSize4" min="20" max="100" value="50">
+                                    <div class="range-value">50px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="avatarShape4">Forma:</label>
+                                    <select id="avatarShape4">
+                                        <option value="circle">Círculo</option>
+                                        <option value="square">Cuadrado</option>
+                                        <option value="triangle">Triángulo</option>
+                                        <option value="pentagon">Pentágono</option>
+                                        <option value="hexagon">Hexágono</option>
+                                        <option value="star">Estrella</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pestaña de configuración de textos -->
+                <div id="text-tab" class="tab-content">
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Elementos de Texto</h3>
+                        </div>
+                        <div id="textElements">
+                            <!-- Aquí se mostrarán los elementos de texto dinámicamente -->
+                        </div>
+                        <button id="addTextBtn" class="add-text-btn">+ Añadir Texto</button>
+                    </div>
+                </div>
+                
+                <!-- Pestaña de configuración de efectos -->
+                <div id="effects-tab" class="tab-content">
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Efectos Visuales</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="globalEffect">Efecto global:</label>
+                                <select id="globalEffect">
+                                    <option value="none">Ninguno</option>
+                                    <option value="glow">Resplandor</option>
+                                    <option value="sparkle">Destellos</option>
+                                    <option value="gradient">Superposición de Gradiente</option>
+                                    <option value="noise">Ruido</option>
+                                    <option value="vignette">Viñeta</option>
+                                    <option value="rays">Rayos</option>
+                                    <option value="grid">Cuadrícula</option>
+                                    <option value="cyberpunk">Cyberpunk</option>
+                                    <option value="retro">Retrowave</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="effectIntensitySlider">Intensidad:</label>
+                                <input type="range" id="effectIntensitySlider" min="0.1" max="1" step="0.1" value="0.5">
+                                <div class="range-value">0.5</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="effectColor1">Color primario:</label>
+                                <input type="color" id="effectColor1" value="#9966ff">
+                            </div>
+                            <div class="form-group">
+                                <label for="effectColor2">Color secundario:</label>
+                                <input type="color" id="effectColor2" value="#66ccff">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="preview">
+                <div class="preview-container">
+                    <div id="previewCanvas">
+                        <div id="previewBackground"></div>
+                        <div id="previewEffects"></div>
+                        <div id="imageEffectOverlay"></div>
+                        <div id="previewAvatars"></div>
+                        <div id="previewTexts"></div>
+                    </div>
+                </div>
+                
+                <div class="buttons">
+                    <button id="undoBtn" class="btn btn-undo" disabled>
+                        <i class="fas fa-undo"></i> Deshacer
+                    </button>
+                    <button id="generateBtn" class="btn btn-generate">
+                        <i class="fas fa-magic"></i> Generar API URL
+                    </button>
+                    <button id="redoBtn" class="btn btn-redo" disabled>
+                        <i class="fas fa-redo"></i> Rehacer
+                    </button>
+                </div>
+                
+                <div id="apiUrlContainer">
+                    <h3>URL de API Generada:</h3>
+                    <pre id="apiUrlOutput"></pre>
+                    <button id="copyBtn" class="btn">
+                        <i class="fas fa-copy"></i> Copiar URL
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/api/utility/bienvenida/script.js"></script>
+</body>
+</html>
