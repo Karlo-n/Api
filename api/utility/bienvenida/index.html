@@ -211,7 +211,7 @@
             display: none;
             margin-top: 20px;
             padding: 15px;
-            background-color: rgba(30, 30, 46, 0.8);
+            background-color: rgba(45, 43, 66, 0.9);
             border-radius: 10px;
             border-left: 3px solid var(--accent);
         }
@@ -226,8 +226,10 @@
             word-break: break-all;
             margin-bottom: 10px;
             font-family: monospace;
-            max-height: 150px;
+            max-height: 200px;
             overflow-y: auto;
+            white-space: pre;
+            line-height: 1.5;
         }
 
         .copy-btn {
@@ -288,6 +290,18 @@
 
         .coord-input span {
             color: var(--secondary);
+        }
+
+        /* Estilos adicionales para mejorar resultados */
+        #resultContainer h3 {
+            color: var(--accent);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #resultContainer h4 {
+            color: var(--secondary);
+            margin: 15px 0 10px 0;
         }
     </style>
 </head>
