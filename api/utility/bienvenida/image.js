@@ -154,8 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para generar la URL de la API
     function generateApiUrl() {
-        // Usar URL relativa que funcionará independientemente del dominio
-        const baseUrl = '/api/utility/bienvenida/generate';
+        // Usar el dominio correcto con la ruta apropiada
+        const baseUrl = 'https://api.apikarl.com/api/utility/bienvenida/generate';
         const params = new URLSearchParams();
         
         // Añadir parámetros de fondo
@@ -180,11 +180,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Construir URL completa
         const apiUrl = `${baseUrl}?${params.toString()}`;
         
-        // Para mostrar con el dominio completo en la interfaz
-        const displayBaseUrl = `https://apikarl.com${baseUrl}`;
-        
         // Formatear URL para mostrarla en el contenedor de forma más legible
-        const formattedUrl = `${displayBaseUrl}?\n` + 
+        const formattedUrl = `${baseUrl}?\n` + 
             `bg=${document.getElementById('bgColor').value.replace('#', '')}\n` +
             (avatarUrl ? `avatar=${encodeURIComponent(avatarUrl)}\n` : '') +
             (avatarUrl ? `x=${document.getElementById('avatarX').value}\n` : '') +
@@ -199,8 +196,20 @@ document.addEventListener('DOMContentLoaded', () => {
         apiUrlOutput.textContent = formattedUrl;
         resultContainer.style.display = 'block';
         
-        // Guardar la URL completa (con dominio) para copiar
-        apiUrlOutput.dataset.fullUrl = `https://apikarl.com${apiUrl}`;
+        // Guardar la URL completa para copiar
+        apiUrlOutput.dataset.fullUrl = apiUrl;
+        
+        // Mostrar la imagen en la sección de resultados
+        generatedImageContainer.innerHTML = '';
+        const imgElement = document.createElement('img');
+        imgElement.src = apiUrl;
+        imgElement.style.maxWidth = '100%';
+        imgElement.style.borderRadius = '8px';
+        generatedImageContainer.appendChild(imgElement);
+        
+        // Actualizar enlace de descarga
+        downloadImageBtn.href = apiUrl;
+        downloadImageBtn.download = 'tarjeta-bienvenida.png';
     }
 
     // Función para copiar la URL de la API al portapapeles
