@@ -43,6 +43,160 @@ header {
     margin-bottom: 10px;
 }
 
+/* Nuevos estilos para menu-desplegable.css */
+
+.dropdown-menu {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.dropdown-toggle {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.dropdown-toggle i {
+    transition: transform 0.3s;
+}
+
+.dropdown-toggle.active i {
+    transform: rotate(180deg);
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: rgba(30, 30, 46, 0.95);
+    width: 100%;
+    z-index: 10;
+    border-radius: 10px;
+    margin-top: 5px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-content a {
+    color: white;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    transition: background-color 0.3s;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-content a:hover {
+    background-color: rgba(102, 51, 204, 0.2);
+}
+
+.dropdown-content a i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+.dropdown-content a.active {
+    background-color: rgba(102, 51, 204, 0.3);
+    border-left: 3px solid var(--accent);
+}
+
+.show {
+    display: block;
+}
+
+/* Mejoras responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    main {
+        flex-direction: column;
+    }
+    
+    .controls, .preview {
+        width: 100%;
+    }
+    
+    .form-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .site-links {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    .dropdown-menu {
+        display: block;
+    }
+}
+
+/* Estilos específicos para la sección de efectos */
+.effects-guide {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: var(--secondary);
+}
+
+.effects-row {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 15px;
+    gap: 15px;
+}
+
+.effect-item {
+    text-align: center;
+    min-width: 120px;
+    padding: 10px;
+    background-color: rgba(30, 30, 46, 0.5);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.effect-preview {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1e1e2e, #2d2b42);
+    border: 2px solid var(--accent);
+    margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8em;
+}
+
 .site-link {
     padding: 8px 15px;
     background: rgba(0, 0, 0, 0.3);
