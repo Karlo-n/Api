@@ -46,7 +46,7 @@ async function generateWelcomeCard() {
             ctx.clip();
         }
         
-        // Dibujar el fondo
+        // Dibujar el fondo - CORREGIDO
         switch (config.background.type) {
             case 'color':
                 ctx.fillStyle = config.background.color;
@@ -63,14 +63,14 @@ async function generateWelcomeCard() {
                 break;
                 
             case 'image':
+                // Primero llenar con un color de fondo oscuro para evitar transparencias no deseadas
+                ctx.fillStyle = '#1e1e2e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
                 if (config.background.imageUrl) {
                     await drawImageWithOpacity(ctx, config.background.imageUrl, 
                                             0, 0, canvas.width, canvas.height, 
                                             config.background.imageOpacity);
-                } else {
-                    // Si no hay imagen, usamos un color de respaldo
-                    ctx.fillStyle = '#1e1e2e';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
                 break;
         }
@@ -102,7 +102,7 @@ async function generateWelcomeCard() {
             finalCanvas.height = canvas.height + (config.border.width * 2);
             const finalCtx = finalCanvas.getContext('2d');
             
-            // Dibujar el borde
+            // Dibujar el borde - CORREGIDO
             finalCtx.fillStyle = config.border.color;
             
             if (config.border.radius > 0) {
@@ -311,7 +311,7 @@ function applyAvatarShape(ctx, x, y, width, height, shape) {
     ctx.closePath();
 }
 
-// Función para dibujar un avatar
+// Función para dibujar un avatar - CORREGIDA
 async function drawAvatar(ctx, avatar, isMain = false) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -341,19 +341,23 @@ async function drawAvatar(ctx, avatar, isMain = false) {
             ctx.stroke();
             ctx.restore();
             
-            // Añadir resplandor si es el avatar principal y tiene resplandor activado
+            // Añadir resplandor si es el avatar principal y tiene resplandor activado - CORREGIDO
             if (isMain && avatar.glow) {
                 ctx.save();
-                ctx.shadowColor = 'rgba(153, 102, 255, 0.7)';
-                ctx.shadowBlur = 15;
-                ctx.strokeStyle = 'rgba(153, 102, 255, 0.1)';
-                ctx.lineWidth = 1;
+                
+                // Primer resplandor (blanco)
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+                ctx.shadowBlur = 20;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 2;
                 
                 applyAvatarShape(ctx, x, y, width, height, avatar.shape);
                 ctx.stroke();
                 
-                ctx.shadowColor = 'rgba(102, 204, 255, 0.5)';
-                ctx.shadowBlur = 30;
+                // Segundo resplandor (azulado)
+                ctx.shadowColor = 'rgba(102, 204, 255, 0.7)';
+                ctx.shadowBlur = 15;
+                ctx.strokeStyle = 'rgba(102, 204, 255, 0.2)';
                 
                 applyAvatarShape(ctx, x, y, width, height, avatar.shape);
                 ctx.stroke();
@@ -377,7 +381,7 @@ async function drawAvatar(ctx, avatar, isMain = false) {
     });
 }
 
-// Función para dibujar un texto
+// Función para dibujar un texto - CORREGIDO
 function drawText(ctx, text) {
     ctx.save();
     
@@ -393,9 +397,9 @@ function drawText(ctx, text) {
     
     ctx.font = `${fontStyle}${text.size}px "${text.font}"`;
     
-    // Aplicar sombra si está activada
+    // Aplicar sombra si está activada - CORREGIDO
     if (text.shadow) {
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
         ctx.shadowBlur = 4;
         ctx.shadowOffsetX = 2;
         ctx.shadowOffsetY = 2;
@@ -407,7 +411,7 @@ function drawText(ctx, text) {
     ctx.restore();
 }
 
-// Función para aplicar efectos visuales al canvas
+// Función para aplicar efectos visuales al canvas - CORREGIDO
 function applyEffects(ctx, effects, width, height) {
     if (effects.type === 'none') return;
     
@@ -415,24 +419,24 @@ function applyEffects(ctx, effects, width, height) {
     
     switch (effects.type) {
         case 'glow':
-            // Aplicar resplandor con sombra interna
+            // Aplicar resplandor con sombra interna - CORREGIDO
             ctx.shadowColor = effects.color1;
-            ctx.shadowBlur = 30 * effects.intensity;
+            ctx.shadowBlur = 40 * effects.intensity; // Aumentado para mayor visibilidad
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 2;
             ctx.strokeRect(5, 5, width - 10, height - 10);
             
             // Segunda sombra para efecto dual
             ctx.shadowColor = effects.color2;
-            ctx.shadowBlur = 20 * effects.intensity;
+            ctx.shadowBlur = 30 * effects.intensity; // Aumentado para mayor visibilidad
             ctx.strokeRect(5, 5, width - 10, height - 10);
             break;
             
         case 'gradient':
-            // Superposición de gradiente con opacidad
-            const intensity = Math.floor(effects.intensity * 80).toString(16).padStart(2, '0');
+            // Superposición de gradiente con opacidad - CORREGIDA
+            const intensity = Math.floor(effects.intensity * 100).toString(16).padStart(2, '0'); // Corregido para mayor intensidad
             const grad = ctx.createLinearGradient(0, 0, width, height);
             grad.addColorStop(0, effects.color1 + intensity);
             grad.addColorStop(1, effects.color2 + intensity);
@@ -443,38 +447,38 @@ function applyEffects(ctx, effects, width, height) {
             break;
             
         case 'vignette':
-            // Efecto viñeta
+            // Efecto viñeta - CORREGIDO
             const radialGrad = ctx.createRadialGradient(
                 width / 2, height / 2, 0,
                 width / 2, height / 2, Math.max(width, height) / 1.5
             );
             radialGrad.addColorStop(0, 'rgba(0,0,0,0)');
-            radialGrad.addColorStop(1, `rgba(0,0,0,${effects.intensity * 0.8})`);
+            radialGrad.addColorStop(1, `rgba(0,0,0,${effects.intensity * 0.9})`); // Aumentado para mayor visibilidad
             
             ctx.fillStyle = radialGrad;
             ctx.fillRect(0, 0, width, height);
             break;
             
         case 'cyberpunk':
-            // Efecto cyberpunk con líneas de escaneo
-            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            // Efecto cyberpunk con líneas de escaneo - CORREGIDO
+            ctx.fillStyle = 'rgba(0,0,0,0.2)'; // Oscurecido para mejor contraste
             const scanlineHeight = 4;
             for (let y = 0; y < height; y += scanlineHeight * 2) {
                 ctx.fillRect(0, y, width, scanlineHeight);
             }
             
-            // Barras de colores horizontales
+            // Barras de colores horizontales más brillantes
             ctx.fillStyle = effects.color1;
-            ctx.globalAlpha = 0.7 * effects.intensity;
+            ctx.globalAlpha = 0.9 * effects.intensity; // Aumentado para mayor visibilidad
             ctx.fillRect(0, Math.random() * height, width, 5);
             
             ctx.fillStyle = effects.color2;
-            ctx.globalAlpha = 0.5 * effects.intensity;
+            ctx.globalAlpha = 0.7 * effects.intensity; // Aumentado para mayor visibilidad
             ctx.fillRect(0, Math.random() * height, width, 3);
             break;
             
         case 'retro':
-            // Sol retrowave
+            // Sol retrowave - CORREGIDO
             const sunGrad = ctx.createRadialGradient(
                 width / 2, height, 0,
                 width / 2, height, 200
@@ -482,14 +486,14 @@ function applyEffects(ctx, effects, width, height) {
             sunGrad.addColorStop(0, effects.color1);
             sunGrad.addColorStop(1, 'transparent');
             
-            ctx.globalAlpha = effects.intensity;
+            ctx.globalAlpha = effects.intensity * 1.2; // Aumentado para mayor visibilidad
             ctx.fillStyle = sunGrad;
             ctx.fillRect(0, 0, width, height);
             
-            // Rejilla en perspectiva
-            ctx.globalAlpha = 0.3 * effects.intensity;
+            // Rejilla en perspectiva con mayor contraste
+            ctx.globalAlpha = 0.5 * effects.intensity; // Aumentado para mayor visibilidad
             ctx.strokeStyle = effects.color2;
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 2; // Líneas más gruesas
             
             // Dibujar líneas horizontales en perspectiva
             const horizonY = height * 0.6;
@@ -513,6 +517,115 @@ function applyEffects(ctx, effects, width, height) {
                 ctx.moveTo(startX, horizonY);
                 ctx.lineTo(vanishingPointX, height);
                 ctx.stroke();
+            }
+            break;
+            
+        case 'sparkle':
+            // Nuevo efecto de destellos - AÑADIDO
+            for (let i = 0; i < 30 * effects.intensity; i++) {
+                const x = Math.random() * width;
+                const y = Math.random() * height;
+                const size = Math.random() * 3 + 1;
+                
+                ctx.fillStyle = Math.random() > 0.5 ? effects.color1 : effects.color2;
+                ctx.globalAlpha = Math.random() * 0.8 + 0.2;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Añadir brillo
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = size * 3;
+                ctx.beginPath();
+                ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            break;
+            
+        case 'noise':
+            // Efecto de ruido - MEJORADO
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const noise = Math.random() * 30 - 15;
+                
+                data[i] = Math.min(255, Math.max(0, data[i] + noise * effects.intensity));
+                data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise * effects.intensity));
+                data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise * effects.intensity));
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            break;
+            
+        case 'rays':
+            // Efecto de rayos - MEJORADO
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const rayCount = Math.floor(12 * effects.intensity) + 4;
+            
+            for (let i = 0; i < rayCount; i++) {
+                const angle = (i / rayCount) * Math.PI * 2;
+                const rayColor = i % 2 === 0 ? effects.color1 : effects.color2;
+                
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle);
+                
+                const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                gradient.addColorStop(0, rayColor);
+                gradient.addColorStop(1, 'transparent');
+                
+                ctx.fillStyle = gradient;
+                ctx.globalAlpha = 0.5 * effects.intensity;
+                
+                ctx.beginPath();
+                ctx.moveTo(-10, 0);
+                ctx.lineTo(10, 0);
+                ctx.lineTo(30, height);
+                ctx.lineTo(-30, height);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+            }
+            break;
+            
+        case 'grid':
+            // Efecto de cuadrícula - MEJORADO
+            ctx.strokeStyle = effects.color1;
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.4 * effects.intensity;
+            
+            const gridSize = Math.floor(30 - 20 * effects.intensity);
+            
+            // Líneas verticales
+            for (let x = 0; x <= width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            
+            // Líneas horizontales
+            for (let y = 0; y <= height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+            
+            // Añadir puntos de intersección brillantes
+            ctx.fillStyle = effects.color2;
+            ctx.globalAlpha = 0.8 * effects.intensity;
+            
+            for (let x = 0; x <= width; x += gridSize) {
+                for (let y = 0; y <= height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 1, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             }
             break;
     }
