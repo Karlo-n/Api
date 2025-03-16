@@ -9,7 +9,6 @@ const router = express.Router();
 const HTML_PATH = path.join(__dirname, "welcome-card-generator.html");
 const CSS_PATH = path.join(__dirname, "styles.css");
 const JS_PATH = path.join(__dirname, "script.js");
-const JS_PATH = path.join(__dirname, "generador.js");
 
 // Ruta principal - Sirve el HTML
 router.get("/", (req, res) => {
@@ -20,12 +19,6 @@ router.get("/", (req, res) => {
 router.get("/styles.css", (req, res) => {
     res.setHeader("Content-Type", "text/css");
     res.sendFile(CSS_PATH);
-});
-
-// Ruta para servir el generador
-router.get("/generador.js", (req, res) => {
-    res.setHeader("Content-Type", "application/javascript");
-    res.sendFile(JS_PATH);
 });
 
 // Ruta para servir el JavaScript
