@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 
-// Servir los archivos estáticos desde este directorio
+// Servir archivos estáticos desde este directorio
 router.use(express.static(path.join(__dirname)));
 
 // Ruta principal que muestra el HTML
