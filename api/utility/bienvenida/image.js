@@ -154,8 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para generar la URL de la API
     function generateApiUrl() {
-        // Construir URL base de la API con el dominio y ruta correctos
-        const baseUrl = 'https://apikarl.com/api/utility/bienvenida/generate';
+        // Usar URL relativa que funcionará independientemente del dominio
+        const baseUrl = '/api/utility/bienvenida/generate';
         const params = new URLSearchParams();
         
         // Añadir parámetros de fondo
@@ -180,8 +180,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Construir URL completa
         const apiUrl = `${baseUrl}?${params.toString()}`;
         
+        // Para mostrar con el dominio completo en la interfaz
+        const displayBaseUrl = `https://apikarl.com${baseUrl}`;
+        
         // Formatear URL para mostrarla en el contenedor de forma más legible
-        const formattedUrl = `${baseUrl}?\n` + 
+        const formattedUrl = `${displayBaseUrl}?\n` + 
             `bg=${document.getElementById('bgColor').value.replace('#', '')}\n` +
             (avatarUrl ? `avatar=${encodeURIComponent(avatarUrl)}\n` : '') +
             (avatarUrl ? `x=${document.getElementById('avatarX').value}\n` : '') +
@@ -196,8 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
         apiUrlOutput.textContent = formattedUrl;
         resultContainer.style.display = 'block';
         
-        // Guardar la URL completa para copiar
-        apiUrlOutput.dataset.fullUrl = apiUrl;
+        // Guardar la URL completa (con dominio) para copiar
+        apiUrlOutput.dataset.fullUrl = `https://apikarl.com${apiUrl}`;
     }
 
     // Función para copiar la URL de la API al portapapeles
