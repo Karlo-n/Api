@@ -1,18 +1,17 @@
-// index.js - Punto de entrada mínimo para Railway
+// index.js - Archivo básico para servir el HTML
 const express = require('express');
-const path = require('path');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 
-// Servir archivos estáticos desde el directorio actual
-app.use(express.static(__dirname));
+// Servir archivos estáticos
+app.use(express.static('.'));
 
-// Ruta principal que sirve el HTML
+// Ruta principal
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(__dirname + '/index.html');
 });
 
-// Iniciar el servidor
-app.listen(PORT, () => {
-  console.log(`Servidor iniciado en puerto ${PORT}`);
+// Iniciar servidor
+app.listen(port, () => {
+  console.log(`Servidor iniciado en puerto ${port}`);
 });
