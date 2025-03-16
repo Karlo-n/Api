@@ -20,11 +20,11 @@ router.get("/", (req, res) => {
 });
 
 // Routes for CSS and JS
-router.get("/styles.css", (req, res) => {
+router.get("styles.css", (req, res) => {
     res.sendFile(path.join(__dirname, 'styles.css'));
 });
 
-router.get("/script.js", (req, res) => {
+router.get("script.js", (req, res) => {
     res.sendFile(path.join(__dirname, 'script.js'));
 });
 
