@@ -46,7 +46,7 @@ async function generateWelcomeCard() {
             ctx.clip();
         }
         
-        // Dibujar el fondo - CORREGIDO
+        // Dibujar el fondo
         switch (config.background.type) {
             case 'color':
                 ctx.fillStyle = config.background.color;
@@ -63,7 +63,7 @@ async function generateWelcomeCard() {
                 break;
                 
             case 'image':
-                // Primero llenar con un color de fondo oscuro para evitar transparencias no deseadas
+                // Primero llenar con un color de fondo oscuro para evitar transparencias
                 ctx.fillStyle = '#1e1e2e';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
@@ -102,7 +102,7 @@ async function generateWelcomeCard() {
             finalCanvas.height = canvas.height + (config.border.width * 2);
             const finalCtx = finalCanvas.getContext('2d');
             
-            // Dibujar el borde - CORREGIDO
+            // Dibujar el borde
             finalCtx.fillStyle = config.border.color;
             
             if (config.border.radius > 0) {
@@ -318,13 +318,16 @@ async function drawAvatar(ctx, avatar, isMain = false) {
         img.crossOrigin = "Anonymous";
         
         img.onload = () => {
-            // Aplicar la forma del avatar
-            ctx.save();
-            const x = avatar.x - avatar.size;
+            // CORRECCIÓN IMPORTANTE: cálculo de posición
+            // Utilizamos transform: translate(-50%, -50%) en la vista previa,
+            // por lo que necesitamos calcular la posición del mismo modo aquí
+            const x = avatar.x - avatar.size; // Centrar el avatar
             const y = avatar.y - avatar.size;
             const width = avatar.size * 2;
             const height = avatar.size * 2;
             
+            // Aplicar la forma del avatar
+            ctx.save();
             applyAvatarShape(ctx, x, y, width, height, avatar.shape);
             ctx.clip();
             
@@ -341,13 +344,13 @@ async function drawAvatar(ctx, avatar, isMain = false) {
             ctx.stroke();
             ctx.restore();
             
-            // Añadir resplandor si es el avatar principal y tiene resplandor activado - CORREGIDO
+            // Añadir resplandor si es el avatar principal y tiene resplandor activado - MEJORADO
             if (isMain && avatar.glow) {
                 ctx.save();
                 
-                // Primer resplandor (blanco)
-                ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
-                ctx.shadowBlur = 20;
+                // Primer resplandor (blanco brillante)
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
+                ctx.shadowBlur = 15;
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
                 ctx.lineWidth = 2;
                 
@@ -355,9 +358,9 @@ async function drawAvatar(ctx, avatar, isMain = false) {
                 ctx.stroke();
                 
                 // Segundo resplandor (azulado)
-                ctx.shadowColor = 'rgba(102, 204, 255, 0.7)';
-                ctx.shadowBlur = 15;
-                ctx.strokeStyle = 'rgba(102, 204, 255, 0.2)';
+                ctx.shadowColor = 'rgba(102, 204, 255, 0.8)';
+                ctx.shadowBlur = 20;
+                ctx.strokeStyle = 'rgba(102, 204, 255, 0.3)';
                 
                 applyAvatarShape(ctx, x, y, width, height, avatar.shape);
                 ctx.stroke();
@@ -381,7 +384,7 @@ async function drawAvatar(ctx, avatar, isMain = false) {
     });
 }
 
-// Función para dibujar un texto - CORREGIDO
+// Función para dibujar un texto
 function drawText(ctx, text) {
     ctx.save();
     
@@ -397,7 +400,7 @@ function drawText(ctx, text) {
     
     ctx.font = `${fontStyle}${text.size}px "${text.font}"`;
     
-    // Aplicar sombra si está activada - CORREGIDO
+    // Aplicar sombra si está activada
     if (text.shadow) {
         ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
         ctx.shadowBlur = 4;
@@ -411,7 +414,7 @@ function drawText(ctx, text) {
     ctx.restore();
 }
 
-// Función para aplicar efectos visuales al canvas - CORREGIDO
+// Función para aplicar efectos visuales al canvas
 function applyEffects(ctx, effects, width, height) {
     if (effects.type === 'none') return;
     
@@ -419,9 +422,9 @@ function applyEffects(ctx, effects, width, height) {
     
     switch (effects.type) {
         case 'glow':
-            // Aplicar resplandor con sombra interna - CORREGIDO
+            // Aplicar resplandor con sombra interna
             ctx.shadowColor = effects.color1;
-            ctx.shadowBlur = 40 * effects.intensity; // Aumentado para mayor visibilidad
+            ctx.shadowBlur = 40 * effects.intensity;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
@@ -430,13 +433,13 @@ function applyEffects(ctx, effects, width, height) {
             
             // Segunda sombra para efecto dual
             ctx.shadowColor = effects.color2;
-            ctx.shadowBlur = 30 * effects.intensity; // Aumentado para mayor visibilidad
+            ctx.shadowBlur = 30 * effects.intensity;
             ctx.strokeRect(5, 5, width - 10, height - 10);
             break;
             
         case 'gradient':
-            // Superposición de gradiente con opacidad - CORREGIDA
-            const intensity = Math.floor(effects.intensity * 100).toString(16).padStart(2, '0'); // Corregido para mayor intensidad
+            // Superposición de gradiente con opacidad
+            const intensity = Math.floor(effects.intensity * 100).toString(16).padStart(2, '0');
             const grad = ctx.createLinearGradient(0, 0, width, height);
             grad.addColorStop(0, effects.color1 + intensity);
             grad.addColorStop(1, effects.color2 + intensity);
@@ -447,38 +450,38 @@ function applyEffects(ctx, effects, width, height) {
             break;
             
         case 'vignette':
-            // Efecto viñeta - CORREGIDO
+            // Efecto viñeta
             const radialGrad = ctx.createRadialGradient(
                 width / 2, height / 2, 0,
                 width / 2, height / 2, Math.max(width, height) / 1.5
             );
             radialGrad.addColorStop(0, 'rgba(0,0,0,0)');
-            radialGrad.addColorStop(1, `rgba(0,0,0,${effects.intensity * 0.9})`); // Aumentado para mayor visibilidad
+            radialGrad.addColorStop(1, `rgba(0,0,0,${effects.intensity * 0.9})`);
             
             ctx.fillStyle = radialGrad;
             ctx.fillRect(0, 0, width, height);
             break;
             
         case 'cyberpunk':
-            // Efecto cyberpunk con líneas de escaneo - CORREGIDO
-            ctx.fillStyle = 'rgba(0,0,0,0.2)'; // Oscurecido para mejor contraste
+            // Efecto cyberpunk con líneas de escaneo
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
             const scanlineHeight = 4;
             for (let y = 0; y < height; y += scanlineHeight * 2) {
                 ctx.fillRect(0, y, width, scanlineHeight);
             }
             
-            // Barras de colores horizontales más brillantes
+            // Barras de colores horizontales
             ctx.fillStyle = effects.color1;
-            ctx.globalAlpha = 0.9 * effects.intensity; // Aumentado para mayor visibilidad
+            ctx.globalAlpha = 0.9 * effects.intensity;
             ctx.fillRect(0, Math.random() * height, width, 5);
             
             ctx.fillStyle = effects.color2;
-            ctx.globalAlpha = 0.7 * effects.intensity; // Aumentado para mayor visibilidad
+            ctx.globalAlpha = 0.7 * effects.intensity;
             ctx.fillRect(0, Math.random() * height, width, 3);
             break;
             
         case 'retro':
-            // Sol retrowave - CORREGIDO
+            // Sol retrowave
             const sunGrad = ctx.createRadialGradient(
                 width / 2, height, 0,
                 width / 2, height, 200
@@ -486,22 +489,20 @@ function applyEffects(ctx, effects, width, height) {
             sunGrad.addColorStop(0, effects.color1);
             sunGrad.addColorStop(1, 'transparent');
             
-            ctx.globalAlpha = effects.intensity * 1.2; // Aumentado para mayor visibilidad
+            ctx.globalAlpha = effects.intensity * 1.2;
             ctx.fillStyle = sunGrad;
             ctx.fillRect(0, 0, width, height);
             
-            // Rejilla en perspectiva con mayor contraste
-            ctx.globalAlpha = 0.5 * effects.intensity; // Aumentado para mayor visibilidad
+            // Rejilla en perspectiva
+            ctx.globalAlpha = 0.5 * effects.intensity;
             ctx.strokeStyle = effects.color2;
-            ctx.lineWidth = 2; // Líneas más gruesas
+            ctx.lineWidth = 2;
             
             // Dibujar líneas horizontales en perspectiva
             const horizonY = height * 0.6;
             const vanishingPointX = width / 2;
             
             for (let y = horizonY; y <= height; y += 20) {
-                const t = (y - horizonY) / (height - horizonY);
-                
                 ctx.beginPath();
                 ctx.moveTo(0, y);
                 ctx.lineTo(width, y);
@@ -521,7 +522,7 @@ function applyEffects(ctx, effects, width, height) {
             break;
             
         case 'sparkle':
-            // Nuevo efecto de destellos - AÑADIDO
+            // Efecto de destellos
             for (let i = 0; i < 30 * effects.intensity; i++) {
                 const x = Math.random() * width;
                 const y = Math.random() * height;
@@ -544,7 +545,7 @@ function applyEffects(ctx, effects, width, height) {
             break;
             
         case 'noise':
-            // Efecto de ruido - MEJORADO
+            // Efecto de ruido
             const imageData = ctx.getImageData(0, 0, width, height);
             const data = imageData.data;
             
@@ -560,7 +561,7 @@ function applyEffects(ctx, effects, width, height) {
             break;
             
         case 'rays':
-            // Efecto de rayos - MEJORADO
+            // Efecto de rayos
             const centerX = width / 2;
             const centerY = height / 2;
             const rayCount = Math.floor(12 * effects.intensity) + 4;
@@ -593,7 +594,7 @@ function applyEffects(ctx, effects, width, height) {
             break;
             
         case 'grid':
-            // Efecto de cuadrícula - MEJORADO
+            // Efecto de cuadrícula
             ctx.strokeStyle = effects.color1;
             ctx.lineWidth = 1;
             ctx.globalAlpha = 0.4 * effects.intensity;
@@ -667,12 +668,26 @@ async function generateAndDisplayImage() {
         // Crear un contenedor para la previsualización
         const previewContainer = document.getElementById('apiUrlContainer');
         if (previewContainer) {
+            // Verificar si ya existe una vista previa y eliminarla
+            const existingTitle = previewContainer.querySelector('h3[data-preview-title]');
+            if (existingTitle) {
+                let nextElement = existingTitle.nextElementSibling;
+                previewContainer.removeChild(existingTitle);
+                
+                while (nextElement && (nextElement.tagName === 'IMG' || nextElement.classList.contains('btn'))) {
+                    const elementToRemove = nextElement;
+                    nextElement = nextElement.nextElementSibling;
+                    previewContainer.removeChild(elementToRemove);
+                }
+            }
+            
             // Añadir título
             const title = document.createElement('h3');
             title.innerHTML = '<i class="fas fa-image"></i> Vista Previa Exacta';
             title.style.marginTop = '20px';
+            title.setAttribute('data-preview-title', 'true');
             
-            // Limpiar contenedor y añadir elementos
+            // Añadir elementos
             previewContainer.appendChild(title);
             previewContainer.appendChild(previewImg);
             previewContainer.appendChild(downloadLink);
@@ -684,6 +699,11 @@ async function generateAndDisplayImage() {
 
 // Botón para generar la imagen exacta
 function addExactImageButton() {
+    // Verificar si el botón ya existe
+    if (document.getElementById('generateExactBtn')) {
+        return; // El botón ya existe, no crear otro
+    }
+    
     // Crear el botón
     const exactButton = document.createElement('button');
     exactButton.id = 'generateExactBtn';
@@ -691,6 +711,7 @@ function addExactImageButton() {
     exactButton.innerHTML = '<i class="fas fa-image"></i> Generar Imagen Exacta';
     exactButton.style.backgroundColor = '#33aaff';
     exactButton.style.marginLeft = '10px';
+    exactButton.style.color = 'white';
     
     // Añadir evento
     exactButton.addEventListener('click', generateAndDisplayImage);
