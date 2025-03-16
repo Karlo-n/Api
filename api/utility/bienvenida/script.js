@@ -209,10 +209,21 @@ function rebuildTextElements() {
                 <input type="range" id="textY${index}" min="0" max="${state.currentState.canvas.height}" value="${textEl.y}">
                 <div class="range-value">${textEl.y}px</div>
             </div>
+            <div class="coord-input">
+                <label>Posición X,Y:</label>
+                <input type="number" id="textX${index}Input" min="0" max="${state.currentState.canvas.width}" value="${textEl.x}">
+                <span>,</span>
+                <input type="number" id="textY${index}Input" min="0" max="${state.currentState.canvas.height}" value="${textEl.y}">
+            </div>
             <div class="form-group">
                 <label for="textSize${index}">Tamaño:</label>
                 <input type="range" id="textSize${index}" min="10" max="80" value="${textEl.size}">
                 <div class="range-value">${textEl.size}px</div>
+            </div>
+            <div class="size-input">
+                <label>Tamaño:</label>
+                <input type="number" id="textSize${index}Input" min="10" max="80" value="${textEl.size}">
+                <span>px</span>
             </div>
             <div class="form-group">
                 <label for="textColor${index}">Color:</label>
@@ -278,6 +289,20 @@ function rebuildTextElements() {
             saveState();
         });
         
+        // Coordenada X numérica
+        const textXInput = document.getElementById(`textX${index}Input`);
+        textXInput.addEventListener('input', () => {
+            textX.value = textXInput.value;
+            textX.dispatchEvent(new Event('input'));
+        });
+        
+        // Coordenada Y numérica
+        const textYInput = document.getElementById(`textY${index}Input`);
+        textYInput.addEventListener('input', () => {
+            textY.value = textYInput.value;
+            textY.dispatchEvent(new Event('input'));
+        });
+        
         const textSize = document.getElementById(`textSize${index}`);
         textSize.addEventListener('input', () => {
             state.currentState.textElements[index].size = parseInt(textSize.value);
@@ -286,6 +311,13 @@ function rebuildTextElements() {
         });
         textSize.addEventListener('change', () => {
             saveState();
+        });
+        
+        // Tamaño numérico
+        const textSizeInput = document.getElementById(`textSize${index}Input`);
+        textSizeInput.addEventListener('input', () => {
+            textSize.value = textSizeInput.value;
+            textSize.dispatchEvent(new Event('input'));
         });
         
         const textColor = document.getElementById(`textColor${index}`);
@@ -505,7 +537,7 @@ function applyAvatarShape(element, shape) {
     }
 }
 
-// Generate the API URL
+// Generate the API URL with mejor formato para evitar líneas largas
 function generateApiUrl() {
     // URL base con el dominio completo
     let baseUrl = 'https://api.apikarl.com/api/utility/bienvenida/bienvenida-styled?';
@@ -604,7 +636,23 @@ function generateApiUrl() {
         params.push(`apikey=${encodeURIComponent(apiKey.value)}`);
     }
     
-    const apiUrl = baseUrl + params.join('&');
+    // Generar la URL con saltos de línea cada ~80 caracteres para mejor legibilidad
+    let apiUrl = baseUrl;
+    let lineLength = baseUrl.length;
+    const MAX_LINE_LENGTH = 80;
+    
+    params.forEach((param, index) => {
+        // Si la línea ya es muy larga, añadir un salto de línea
+        if (lineLength + param.length + 1 > MAX_LINE_LENGTH) {
+            apiUrl += '\n';
+            lineLength = 0;
+        }
+        
+        // Añadir '&' si no es el primer parámetro, o nada si es el primero
+        const separator = index === 0 ? '' : '&';
+        apiUrl += separator + param;
+        lineLength += param.length + separator.length;
+    });
     
     // Show the generated URL
     const apiUrlOutput = document.getElementById('apiUrlOutput');
@@ -789,23 +837,23 @@ function updateEffects() {
     }
 }
 
-// Copy API URL to clipboard
+// Copy API URL to clipboard - Modificado para preservar los saltos de línea
 function copyApiUrl() {
     const apiUrl = document.getElementById('apiUrlOutput').textContent;
     
-    // Create a temporary input element
-    const tempInput = document.createElement('input');
-    tempInput.value = apiUrl;
-    document.body.appendChild(tempInput);
+    // Crear un elemento textarea temporal para conservar los saltos de línea
+    const tempTextarea = document.createElement('textarea');
+    tempTextarea.value = apiUrl;
+    document.body.appendChild(tempTextarea);
     
-    // Select and copy the URL
-    tempInput.select();
+    // Seleccionar y copiar el texto
+    tempTextarea.select();
     document.execCommand('copy');
     
-    // Remove the temporary input element
-    document.body.removeChild(tempInput);
+    // Eliminar el elemento temporal
+    document.body.removeChild(tempTextarea);
     
-    // Change button text temporarily
+    // Cambiar texto del botón temporalmente
     const copyBtn = document.getElementById('copyBtn');
     const originalText = copyBtn.textContent;
     copyBtn.textContent = '¡Copiado!';
@@ -1118,6 +1166,68 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Initialize the app
+    // Sincronizar campos numéricos con sliders
+    // Dimensiones del canvas
+    if (document.getElementById('canvasWidthInput')) {
+        document.getElementById('canvasWidthInput').addEventListener('input', function() {
+            document.getElementById('canvasWidth').value = this.value;
+            document.getElementById('canvasWidth').dispatchEvent(new Event('change'));
+        });
+    }
+    
+    if (document.getElementById('canvasHeightInput')) {
+        document.getElementById('canvasHeightInput').addEventListener('input', function() {
+            document.getElementById('canvasHeight').value = this.value;
+            document.getElementById('canvasHeight').dispatchEvent(new Event('change'));
+        });
+    }
+    
+    // Coordenadas de avatar principal
+    if (document.getElementById('mainAvatarXInput')) {
+        document.getElementById('mainAvatarXInput').addEventListener('input', function() {
+            document.getElementById('mainAvatarX').value = this.value;
+            document.getElementById('mainAvatarX').dispatchEvent(new Event('input'));
+        });
+    }
+    
+    if (document.getElementById('mainAvatarYInput')) {
+        document.getElementById('mainAvatarYInput').addEventListener('input', function() {
+            document.getElementById('mainAvatarY').value = this.value;
+            document.getElementById('mainAvatarY').dispatchEvent(new Event('input'));
+        });
+    }
+    
+    if (document.getElementById('mainAvatarSizeInput')) {
+        document.getElementById('mainAvatarSizeInput').addEventListener('input', function() {
+            document.getElementById('mainAvatarSize').value = this.value;
+            document.getElementById('mainAvatarSize').dispatchEvent(new Event('input'));
+        });
+    }
+    
+    // Avatares adicionales
+    for (let i = 1; i <= 4; i++) {
+        if (document.getElementById(`avatarX${i}Input`)) {
+            document.getElementById(`avatarX${i}Input`).addEventListener('input', function() {
+                document.getElementById(`avatarX${i}`).value = this.value;
+                document.getElementById(`avatarX${i}`).dispatchEvent(new Event('input'));
+            });
+        }
+        
+        if (document.getElementById(`avatarY${i}Input`)) {
+            document.getElementById(`avatarY${i}Input`).addEventListener('input', function() {
+                document.getElementById(`avatarY${i}`).value = this.value;
+                document.getElementById(`avatarY${i}`).dispatchEvent(new Event('input'));
+            });
+        }
+        
+        if (document.getElementById(`avatarSize${i}Input`)) {
+            document.getElementById(`avatarSize${i}Input`).addEventListener('input', function() {
+                document.getElementById(`avatarSize${i}`).value = this.value;
+                document.getElementById(`avatarSize${i}`).dispatchEvent(new Event('input'));
+            });
+        }
+    }
+    
+    // Inicializar app
     initializeState();
 });
