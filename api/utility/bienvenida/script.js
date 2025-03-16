@@ -592,6 +592,18 @@ function generateApiUrl() {
         }
     });
     
+    // Get output format from the form
+    const outputFormat = document.getElementById('outputFormat');
+    if (outputFormat && outputFormat.value) {
+        params.push(`format=${outputFormat.value}`);
+    }
+    
+    // Get API key if available
+    const apiKey = document.getElementById('apiKey');
+    if (apiKey && apiKey.value) {
+        params.push(`apikey=${encodeURIComponent(apiKey.value)}`);
+    }
+    
     const apiUrl = baseUrl + params.join('&');
     
     // Show the generated URL
@@ -803,6 +815,38 @@ function copyApiUrl() {
     }, 2000);
 }
 
+// Dropdown menu functionality
+function toggleDropdown() {
+    document.getElementById("dropdown-content").classList.toggle("show");
+    document.querySelector(".dropdown-toggle").classList.toggle("active");
+}
+
+function selectSection(element) {
+    // Actualizar el texto seleccionado en el botón del menú
+    document.getElementById("current-section").innerHTML = element.innerHTML;
+    
+    // Actualizar clases activas en el menú
+    const links = document.querySelectorAll(".section-link");
+    links.forEach(link => link.classList.remove("active"));
+    element.classList.add("active");
+    
+    // Ocultar el menú desplegable
+    document.getElementById("dropdown-content").classList.remove("show");
+    document.querySelector(".dropdown-toggle").classList.remove("active");
+    
+    // Mostrar la sección correspondiente
+    const tabId = element.getAttribute("data-section");
+    const tabContents = document.querySelectorAll(".tab-content");
+    tabContents.forEach(content => content.classList.remove("active"));
+    document.getElementById(tabId).classList.add("active");
+    
+    // Sincronizar con las pestañas normales
+    const tabName = tabId.replace("-tab", "");
+    const tabs = document.querySelectorAll(".tab");
+    tabs.forEach(tab => tab.classList.remove("active"));
+    document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add("active");
+}
+
 // === Event listeners setup ===
 document.addEventListener('DOMContentLoaded', function() {
     // Tab navigation
@@ -820,6 +864,16 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show the corresponding tab content
             const tabId = tab.dataset.tab + '-tab';
             document.getElementById(tabId).classList.add('active');
+            
+            // Update dropdown menu indicator
+            const sectionLink = document.querySelector(`.section-link[data-section="${tabId}"]`);
+            if (sectionLink) {
+                document.getElementById("current-section").innerHTML = sectionLink.innerHTML;
+                
+                // Update active class on menu links
+                document.querySelectorAll('.section-link').forEach(link => link.classList.remove('active'));
+                sectionLink.classList.add('active');
+            }
         });
     });
     
@@ -1052,6 +1106,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('redoBtn').addEventListener('click', redo);
     document.getElementById('generateBtn').addEventListener('click', generateApiUrl);
     document.getElementById('copyBtn').addEventListener('click', copyApiUrl);
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.matches('.dropdown-toggle') && !event.target.closest('.dropdown-toggle')) {
+            const dropdown = document.getElementById('dropdown-content');
+            if (dropdown && dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+                document.querySelector('.dropdown-toggle').classList.remove('active');
+            }
+        }
+    });
     
     // Initialize the app
     initializeState();
