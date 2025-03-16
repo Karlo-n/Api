@@ -28,7 +28,7 @@ router.get("/script.js", (req, res) => {
     res.sendFile(JS_PATH);
 });
 
-// Ruta para servir el generador.js - AÑADIDA
+// Ruta para servir el generador.js
 router.get("/generador.js", (req, res) => {
     res.setHeader("Content-Type", "application/javascript");
     res.sendFile(GENERADOR_PATH);
@@ -324,6 +324,7 @@ router.get("/bienvenida-styled", async (req, res) => {
         try {
             const avatarImage = await loadImageFromURL(avatar);
             const avSize = parseInt(avatarSize);
+            // CORREGIDO: Cálculo de posición de avatar para la generación de API
             const avX = parseInt(req.query.mainAvatarX) || width / 2 - avSize;
             const avY = parseInt(req.query.mainAvatarY) || 133 - avSize;
             
@@ -358,8 +359,26 @@ router.get("/bienvenida-styled", async (req, res) => {
                 // Añadir resplandor si está habilitado
                 if (req.query.mainAvatarGlow === 'true') {
                     ctx.save();
-                    ctx.shadowColor = '#9966ff';
+                    // MEJORADO: Efecto de resplandor más visible
+                    ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
                     ctx.shadowBlur = 15;
+                    
+                    switch (avatarShape) {
+                        case 'circle':
+                            ctx.beginPath();
+                            ctx.arc(avX + avSize, avY + avSize, avSize, 0, Math.PI * 2);
+                            ctx.closePath();
+                            ctx.stroke();
+                            break;
+                        case 'square':
+                            ctx.strokeRect(avX, avY, avSize * 2, avSize * 2);
+                            break;
+                    }
+                    
+                    // Segundo resplandor (azulado)
+                    ctx.shadowColor = 'rgba(102, 204, 255, 0.7)';
+                    ctx.shadowBlur = 20;
+                    ctx.strokeStyle = 'rgba(102, 204, 255, 0.2)';
                     
                     switch (avatarShape) {
                         case 'circle':
