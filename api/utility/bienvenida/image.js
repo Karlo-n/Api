@@ -161,8 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para generar la URL de la API
     function generateApiUrl() {
-        // Construir URL base de la API
-        const baseUrl = '/api/utility/bienvenida/generate';
+        // Construir URL base de la API con el dominio correcto
+        const baseUrl = 'https://apikarl.com/api/welcome';
         const params = new URLSearchParams();
         
         // Añadir parámetros de fondo
@@ -172,27 +172,45 @@ document.addEventListener('DOMContentLoaded', () => {
         const avatarUrl = document.getElementById('avatarUrl').value;
         if (avatarUrl) {
             params.append('avatar', encodeURIComponent(avatarUrl));
-            params.append('avatar_x', document.getElementById('avatarX').value);
-            params.append('avatar_y', document.getElementById('avatarY').value);
-            params.append('avatar_size', document.getElementById('avatarSize').value);
-            params.append('avatar_shape', document.getElementById('avatarShape').value);
-            params.append('avatar_glow', document.getElementById('avatarGlow').checked ? '1' : '0');
+            params.append('x', document.getElementById('avatarX').value);
+            params.append('y', document.getElementById('avatarY').value);
+            params.append('size', document.getElementById('avatarSize').value);
+            params.append('shape', document.getElementById('avatarShape').value);
+            params.append('glow', document.getElementById('avatarGlow').checked ? '1' : '0');
         }
         
         // Añadir parámetros de borde
-        params.append('border_radius', document.getElementById('borderRadius').value);
-        params.append('border_color', document.getElementById('borderColor').value.replace('#', ''));
-        params.append('border_width', document.getElementById('borderWidth').value);
+        params.append('radius', document.getElementById('borderRadius').value);
+        params.append('color', document.getElementById('borderColor').value.replace('#', ''));
+        params.append('width', document.getElementById('borderWidth').value);
         
         // Construir URL completa
         const apiUrl = `${baseUrl}?${params.toString()}`;
-        apiUrlOutput.textContent = apiUrl;
+        
+        // Formatear URL para mostrarla en el contenedor de forma más legible
+        const formattedUrl = `${baseUrl}?\n` + 
+            `bg=${document.getElementById('bgColor').value.replace('#', '')}\n` +
+            (avatarUrl ? `avatar=${encodeURIComponent(avatarUrl)}\n` : '') +
+            (avatarUrl ? `x=${document.getElementById('avatarX').value}\n` : '') +
+            (avatarUrl ? `y=${document.getElementById('avatarY').value}\n` : '') +
+            (avatarUrl ? `size=${document.getElementById('avatarSize').value}\n` : '') +
+            (avatarUrl ? `shape=${document.getElementById('avatarShape').value}\n` : '') +
+            (avatarUrl ? `glow=${document.getElementById('avatarGlow').checked ? '1' : '0'}\n` : '') +
+            `radius=${document.getElementById('borderRadius').value}\n` +
+            `color=${document.getElementById('borderColor').value.replace('#', '')}\n` +
+            `width=${document.getElementById('borderWidth').value}`;
+        
+        apiUrlOutput.textContent = formattedUrl;
         resultContainer.style.display = 'block';
+        
+        // Guardar la URL completa para copiar
+        apiUrlOutput.dataset.fullUrl = apiUrl;
     }
 
     // Función para copiar la URL de la API al portapapeles
     function copyApiUrl() {
-        const apiUrl = apiUrlOutput.textContent;
+        // Usamos la URL completa guardada en el dataset, no el texto formateado
+        const apiUrl = apiUrlOutput.dataset.fullUrl || apiUrlOutput.textContent;
         navigator.clipboard.writeText(apiUrl)
             .then(() => {
                 alert('URL copiada al portapapeles');
