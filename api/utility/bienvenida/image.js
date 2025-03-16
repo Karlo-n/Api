@@ -116,53 +116,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.restore();
                 }
                 
-                // Convertir canvas a imagen
-                const imageUrl = canvas.toDataURL('image/png');
-                
-                // Mostrar la imagen generada
-                generatedImageContainer.innerHTML = '';
-                const imgElement = document.createElement('img');
-                imgElement.src = imageUrl;
-                imgElement.style.maxWidth = '100%';
-                imgElement.style.borderRadius = '8px';
-                generatedImageContainer.appendChild(imgElement);
-                
-                // Actualizar enlace de descarga
-                downloadImageBtn.href = imageUrl;
-                
-                // Mostrar contenedor de resultados
-                resultContainer.style.display = 'block';
+                finishImageGeneration(canvas);
             };
             
             img.onerror = () => {
                 alert('Error al cargar la imagen del avatar. Verifica la URL.');
+                finishImageGeneration(canvas);
             };
             
             img.src = config.avatar.url;
         } else {
             // Si no hay avatar, mostrar solo la tarjeta con fondo y borde
-            const imageUrl = canvas.toDataURL('image/png');
-            
-            // Mostrar la imagen generada
-            generatedImageContainer.innerHTML = '';
-            const imgElement = document.createElement('img');
-            imgElement.src = imageUrl;
-            imgElement.style.maxWidth = '100%';
-            imgElement.style.borderRadius = '8px';
-            generatedImageContainer.appendChild(imgElement);
-            
-            // Actualizar enlace de descarga
-            downloadImageBtn.href = imageUrl;
-            
-            // Mostrar contenedor de resultados
-            resultContainer.style.display = 'block';
+            finishImageGeneration(canvas);
         }
+    }
+    
+    // Función para finalizar la generación de la imagen y mostrarla
+    function finishImageGeneration(canvas) {
+        // Convertir canvas a imagen
+        const imageUrl = canvas.toDataURL('image/png');
+        
+        // Mostrar la imagen generada
+        generatedImageContainer.innerHTML = '';
+        const imgElement = document.createElement('img');
+        imgElement.src = imageUrl;
+        imgElement.style.maxWidth = '100%';
+        imgElement.style.borderRadius = '8px';
+        generatedImageContainer.appendChild(imgElement);
+        
+        // Actualizar enlace de descarga
+        downloadImageBtn.href = imageUrl;
+        downloadImageBtn.download = 'tarjeta-bienvenida.png';  // Establecer nombre de archivo
+        
+        // Mostrar contenedor de resultados
+        resultContainer.style.display = 'block';
     }
 
     // Función para generar la URL de la API
     function generateApiUrl() {
-        // Construir URL base de la API con el dominio correcto
-        const baseUrl = 'https://apikarl.com/api/welcome';
+        // Construir URL base de la API con el dominio y ruta correctos
+        const baseUrl = 'https://apikarl.com/api/utility/bienvenida';
         const params = new URLSearchParams();
         
         // Añadir parámetros de fondo
