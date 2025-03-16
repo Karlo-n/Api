@@ -6,135 +6,27 @@
     <title>Generador de Tarjetas de Bienvenida</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/api/utility/bienvenida/styles.css">
-    <style>
-        /* Estilos adicionales para responsividad y menú desplegable */
-        .dropdown-menu {
-            position: relative;
-            display: inline-block;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        .dropdown-toggle {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            width: 100%;
-            text-align: left;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .dropdown-toggle i {
-            transition: transform 0.3s;
-        }
-
-        .dropdown-toggle.active i {
-            transform: rotate(180deg);
-        }
-
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: rgba(30, 30, 46, 0.95);
-            width: 100%;
-            z-index: 10;
-            border-radius: 10px;
-            margin-top: 5px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .dropdown-content a {
-            color: white;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            transition: background-color 0.3s;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .dropdown-content a:hover {
-            background-color: rgba(102, 51, 204, 0.2);
-        }
-
-        .dropdown-content a i {
-            margin-right: 10px;
-            width: 20px;
-            text-align: center;
-        }
-
-        .dropdown-content a.active {
-            background-color: rgba(102, 51, 204, 0.3);
-            border-left: 3px solid var(--accent);
-        }
-
-        .show {
-            display: block;
-        }
-
-        /* Para dispositivos móviles */
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            main {
-                flex-direction: column;
-            }
-            
-            .controls, .preview {
-                width: 100%;
-            }
-            
-            .form-group {
-                grid-template-columns: 1fr;
-            }
-            
-            .site-links {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .buttons {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .btn {
-                width: 100%;
-            }
-            
-            .dropdown-menu {
-                display: block;
-            }
-        }
-    </style>
+    <meta name="description" content="Generador de tarjetas de bienvenida para servidores de Discord - Personaliza y crea tarjetas de bienvenida fácilmente">
+    <meta name="keywords" content="discord, bienvenida, tarjeta, generador, bot, customización">
+    <meta name="author" content="APIKarl">
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Generador de Tarjetas de Bienvenida</h1>
+            <h1><i class="fas fa-id-card"></i> Generador de Tarjetas de Bienvenida</h1>
             <p>Personaliza y crea tarjetas de bienvenida para tu servidor de Discord</p>
             <div class="site-links">
-                <a href="https://bot.apikarl.com" class="site-link"><i class="fas fa-robot"></i> Venta Bot</a>
-                <a href="https://apikarl.com" class="site-link"><i class="fas fa-list-alt"></i> Ver APIs</a>
-                <a href="https://api.apikarl.com" class="site-link"><i class="fas fa-code"></i> Usar APIs</a>
+                <a href="https://bot.apikarl.com" class="site-link" target="_blank"><i class="fas fa-robot"></i> Venta Bot</a>
+                <a href="https://apikarl.com" class="site-link" target="_blank"><i class="fas fa-list-alt"></i> Ver APIs</a>
+                <a href="https://api.apikarl.com" class="site-link" target="_blank"><i class="fas fa-code"></i> Usar APIs</a>
             </div>
         </header>
         
         <main>
             <div class="controls">
-                <!-- Menú desplegable para móviles y mejor navegación -->
+                <!-- Menú desplegable para móviles -->
                 <div class="dropdown-menu">
                     <button class="dropdown-toggle" onclick="toggleDropdown()">
                         <span id="current-section"><i class="fas fa-sliders-h"></i> Configuración Básica</span>
@@ -278,6 +170,7 @@
                             <div class="form-group">
                                 <label for="mainAvatarUrl">URL del avatar:</label>
                                 <input type="text" id="mainAvatarUrl" placeholder="https://ejemplo.com/avatar.jpg">
+                                <small class="form-help">También acepta variables BDFD como $authorAvatar</small>
                             </div>
                             <div class="form-group">
                                 <label for="mainAvatarX">Posición X:</label>
@@ -468,6 +361,10 @@
                     <div class="section">
                         <div class="section-title">
                             <h3><i class="fas fa-font"></i> Elementos de Texto</h3>
+                            <div class="text-help-tip">
+                                <i class="fas fa-info-circle"></i>
+                                <div class="tooltip">Los textos admiten variables BDFD como $username, $serverName, etc.</div>
+                            </div>
                         </div>
                         <div id="textElements">
                             <!-- Aquí se mostrarán los elementos de texto dinámicamente -->
@@ -512,6 +409,41 @@
                                 <input type="color" id="effectColor2" value="#66ccff">
                             </div>
                         </div>
+                        
+                        <!-- Ejemplos visuales de los efectos -->
+                        <div class="effects-guide">
+                            <p>Ejemplos de efectos disponibles:</p>
+                            <div class="effects-row">
+                                <div class="effect-item">
+                                    <div class="effect-preview glow-example">Glow</div>
+                                    <div>Resplandor</div>
+                                </div>
+                                <div class="effect-item">
+                                    <div class="effect-preview sparkle-example">Sparkle</div>
+                                    <div>Destellos</div>
+                                </div>
+                                <div class="effect-item">
+                                    <div class="effect-preview gradient-example">Gradient</div>
+                                    <div>Gradiente</div>
+                                </div>
+                                <div class="effect-item">
+                                    <div class="effect-preview noise-example">Noise</div>
+                                    <div>Ruido</div>
+                                </div>
+                                <div class="effect-item">
+                                    <div class="effect-preview vignette-example">Vignette</div>
+                                    <div>Viñeta</div>
+                                </div>
+                                <div class="effect-item">
+                                    <div class="effect-preview cyber-example">Cyber</div>
+                                    <div>Cyberpunk</div>
+                                </div>
+                                <div class="effect-item">
+                                    <div class="effect-preview retro-example">Retro</div>
+                                    <div>Retrowave</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -537,6 +469,45 @@
                                     <option value="jpg">JPG</option>
                                     <option value="webp">WebP</option>
                                 </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="outputQuality">Calidad de imagen:</label>
+                                <select id="outputQuality">
+                                    <option value="high">Alta</option>
+                                    <option value="medium" selected>Media</option>
+                                    <option value="low">Baja</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sección de guía rápida -->
+                    <div class="section">
+                        <div class="section-title">
+                            <h3><i class="fas fa-question-circle"></i> Ayuda Rápida</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="help-item">
+                                <h4><i class="fas fa-code"></i> Variables BDFD soportadas</h4>
+                                <p>Puedes usar variables de Bot Designer For Discord en textos y URLs:</p>
+                                <ul class="help-list">
+                                    <li><code>$username</code> - Nombre del usuario</li>
+                                    <li><code>$nickname</code> - Apodo en el servidor</li>
+                                    <li><code>$serverName</code> - Nombre del servidor</li>
+                                    <li><code>$memberCount</code> - Conteo de miembros</li>
+                                    <li><code>$authorAvatar</code> - Avatar del usuario</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="help-item">
+                                <h4><i class="fas fa-lightbulb"></i> Consejos</h4>
+                                <ul class="help-list">
+                                    <li>Usa fondos con degradado para un aspecto más profesional</li>
+                                    <li>Combina efectos con opacidad baja para mejores resultados</li>
+                                    <li>Usa texto con sombra para mejorar la legibilidad</li>
+                                    <li>No sobrecargues la tarjeta con demasiados elementos</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -572,85 +543,350 @@
                     <button id="copyBtn" class="btn">
                         <i class="fas fa-copy"></i> Copiar URL
                     </button>
+                    
+                    <div class="api-preview">
+                        <h4><i class="fas fa-image"></i> Previsualización de la API</h4>
+                        <p>Así se verá tu tarjeta en Discord:</p>
+                        <div class="discord-preview">
+                            <div class="discord-message">
+                                <div class="discord-avatar"></div>
+                                <div class="discord-content">
+                                    <div class="discord-author">BotAPIKarl</div>
+                                    <div class="discord-image-container">
+                                        <img id="apiPreviewImage" src="" alt="Vista previa de la tarjeta">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="api-test-buttons">
+                            <button id="testApiBtn" class="btn btn-test">
+                                <i class="fas fa-eye"></i> Probar API
+                            </button>
+                            <button id="downloadImageBtn" class="btn btn-download">
+                                <i class="fas fa-download"></i> Descargar Imagen
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
+        
+        <footer>
+            <div class="footer-content">
+                <p>&copy; 2025 APIKarl - Generador de Tarjetas de Bienvenida</p>
+                <div class="footer-links">
+                    <a href="https://apikarl.com/terms" target="_blank">Términos de Uso</a>
+                    <a href="https://apikarl.com/privacy" target="_blank">Política de Privacidad</a>
+                    <a href="https://apikarl.com/contact" target="_blank">Contacto</a>
+                </div>
+            </div>
+        </footer>
     </div>
 
-    <script src="/api/utility/bienvenida/script.js"></script>
+    <!-- Estilos adicionales para los ejemplos de efectos y la vista previa de Discord -->
+    <style>
+        .form-help {
+            font-size: 0.8rem;
+            color: var(--secondary);
+            margin-top: 2px;
+        }
+        
+        .help-list {
+            list-style-type: none;
+            padding-left: 10px;
+        }
+        
+        .help-list li {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .help-list code {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        
+        .help-item {
+            margin-bottom: 15px;
+        }
+        
+        .help-item h4 {
+            margin-bottom: 8px;
+            color: var(--secondary);
+        }
+        
+        /* Estilos para los ejemplos de efectos */
+        .glow-example {
+            box-shadow: inset 0 0 15px #9966ff, 0 0 10px #66ccff;
+        }
+        
+        .sparkle-example {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sparkle-example::before {
+            content: "✨";
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #9966ff;
+            font-size: 12px;
+        }
+        
+        .sparkle-example::after {
+            content: "✨";
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: #66ccff;
+            font-size: 12px;
+        }
+        
+        .gradient-example {
+            background: linear-gradient(135deg, #9966ff40, #66ccff40);
+            mix-blend-mode: overlay;
+        }
+        
+        .noise-example {
+            position: relative;
+        }
+        
+        .noise-example::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/png;base64,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');
+            opacity: 0.3;
+        }
+        
+        .vignette-example {
+            box-shadow: inset 0 0 75px rgba(0,0,0,0.8);
+        }
+        
+        .cyber-example {
+            background: linear-gradient(transparent 50%, rgba(0,0,0,0.1) 50%),
+                        linear-gradient(90deg, #9966ff10, #66ccff10);
+            background-size: 100% 4px, 100% 100%;
+        }
+        
+        .cyber-example::after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background-color: #66ccff;
+            opacity: 0.5;
+            top: 40%;
+        }
+        
+        .retro-example {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .retro-example::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 50%;
+            bottom: 0;
+            background: repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(102, 204, 255, 0.2) 2px, rgba(102, 204, 255, 0.2) 4px);
+            transform: perspective(100px) rotateX(60deg);
+            transform-origin: center bottom;
+        }
+        
+        .retro-example::after {
+            content: "";
+            position: absolute;
+            width: 60px;
+            height: 30px;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: radial-gradient(ellipse at center, #9966ff 0%, transparent 70%);
+            opacity: 0.5;
+        }
+        
+        /* Estilos para la vista previa de Discord */
+        .discord-preview {
+            background-color: #36393f;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .discord-message {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .discord-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #7289da;
+            flex-shrink: 0;
+        }
+        
+        .discord-content {
+            flex-grow: 1;
+        }
+        
+        .discord-author {
+            color: #fff;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .discord-image-container {
+            max-width: 100%;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .discord-image-container img {
+            max-width: 100%;
+            display: block;
+        }
+        
+        .api-test-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-test, .btn-download {
+            flex: 1;
+            background-color: #555;
+        }
+        
+        .btn-test:hover, .btn-download:hover {
+            background-color: #666;
+        }
+        
+        .text-help-tip {
+            position: relative;
+            display: inline-block;
+            margin-left: 10px;
+            cursor: help;
+        }
+        
+        .tooltip {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            background-color: #333;
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .text-help-tip:hover .tooltip {
+            display: block;
+        }
+        
+        footer {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: rgba(30, 30, 46, 0.8);
+            border-radius: 10px;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .footer-links a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .footer-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+            }
+        }
+    </style>
+
+    <!-- Script para la vista previa de Discord y funcionalidad adicional -->
     <script>
-        // Funciones adicionales para el menú desplegable y la navegación móvil
-        function toggleDropdown() {
-            document.getElementById("dropdown-content").classList.toggle("show");
-            document.querySelector(".dropdown-toggle").classList.toggle("active");
-        }
-
-        function selectSection(element) {
-            // Actualizar el texto seleccionado en el botón del menú
-            document.getElementById("current-section").innerHTML = element.innerHTML;
-            
-            // Actualizar clases activas en el menú
-            const links = document.querySelectorAll(".section-link");
-            links.forEach(link => link.classList.remove("active"));
-            element.classList.add("active");
-            
-            // Ocultar el menú desplegable
-            document.getElementById("dropdown-content").classList.remove("show");
-            document.querySelector(".dropdown-toggle").classList.remove("active");
-            
-            // Mostrar la sección correspondiente
-            const tabId = element.getAttribute("data-section");
-            const tabContents = document.querySelectorAll(".tab-content");
-            tabContents.forEach(content => content.classList.remove("active"));
-            document.getElementById(tabId).classList.add("active");
-            
-            // Sincronizar con las pestañas normales
-            const tabName = tabId.replace("-tab", "");
-            const tabs = document.querySelectorAll(".tab");
-            tabs.forEach(tab => tab.classList.remove("active"));
-            document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add("active");
-        }
-
-        // Sincronización entre las pestañas normales y el menú desplegable
-        document.addEventListener("DOMContentLoaded", function() {
-            // Función para actualizar el menú desplegable cuando se haga clic en una pestaña
-            const tabs = document.querySelectorAll(".tab");
-            tabs.forEach(tab => {
-                tab.addEventListener("click", function() {
-                    const tabName = this.getAttribute("data-tab");
-                    const sectionLink = document.querySelector(`.section-link[data-section="${tabName}-tab"]`);
-                    if (sectionLink) {
-                        document.getElementById("current-section").innerHTML = sectionLink.innerHTML;
-                    
-                    // Actualizar clases activas en el menú
-                    const links = document.querySelectorAll(".section-link");
-                    links.forEach(link => link.classList.remove("active"));
-                    sectionLink.classList.add("active");
+        function updateApiPreview() {
+            // Actualizar la imagen de vista previa cuando se genera la URL de la API
+            document.getElementById('testApiBtn').addEventListener('click', function() {
+                const apiUrl = document.getElementById('apiUrlOutput').textContent;
+                if (apiUrl) {
+                    const previewImage = document.getElementById('apiPreviewImage');
+                    previewImage.src = apiUrl;
+                    previewImage.alt = "Tarjeta de bienvenida generada";
                 }
             });
             
-            // Cerrar el menú desplegable al hacer clic fuera
-            window.addEventListener("click", function(event) {
-                if (!event.target.matches('.dropdown-toggle') && !event.target.closest('.dropdown-toggle')) {
-                    const dropdown = document.getElementById("dropdown-content");
-                    if (dropdown.classList.contains("show")) {
-                        dropdown.classList.remove("show");
-                        document.querySelector(".dropdown-toggle").classList.remove("active");
-                    }
+            // Función para descargar la imagen
+            document.getElementById('downloadImageBtn').addEventListener('click', function() {
+                const apiUrl = document.getElementById('apiUrlOutput').textContent;
+                if (apiUrl) {
+                    const link = document.createElement('a');
+                    link.href = apiUrl;
+                    link.download = 'bienvenida-' + new Date().getTime() + '.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                 }
             });
+        }
+        
+        // Agregar este listener al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            updateApiPreview();
             
-            // Asegurar que los efectos se vean correctamente
-            document.querySelector('.tab[data-tab="effects"]').addEventListener("click", function() {
-                // Forzar actualización del CSS para los efectos
-                setTimeout(() => {
-                    const effectsTab = document.getElementById("effects-tab");
-                    effectsTab.style.display = "none";
-                    effectsTab.offsetHeight; // Forzar un reflow
-                    effectsTab.style.display = "";
-                }, 50);
+            // Mostrar/ocultar tooltip
+            const helpTips = document.querySelectorAll('.text-help-tip');
+            helpTips.forEach(tip => {
+                tip.addEventListener('mouseover', function() {
+                    tip.querySelector('.tooltip').style.display = 'block';
+                });
+                
+                tip.addEventListener('mouseout', function() {
+                    tip.querySelector('.tooltip').style.display = 'none';
+                });
             });
         });
     </script>
+
+    <!-- Script principal del generador -->
+    <script src="/api/utility/bienvenida/script.js"></script>
 </body>
 </html>
