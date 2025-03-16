@@ -6,65 +6,60 @@
     <title>Generador de Tarjetas de Bienvenida</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/api/utility/bienvenida/styles.css">
-    <meta name="description" content="Generador de tarjetas de bienvenida para servidores de Discord - Personaliza y crea tarjetas de bienvenida fácilmente">
-    <meta name="keywords" content="discord, bienvenida, tarjeta, generador, bot, customización">
-    <meta name="author" content="APIKarl">
-    <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-id-card"></i> Generador de Tarjetas de Bienvenida</h1>
-            <p>Personaliza y crea tarjetas de bienvenida para tu servidor de Discord</p>
+            <h1>Generador de Tarjetas de Bienvenida</h1>
+            <p>Crea tarjetas personalizadas para tu servidor de Discord</p>
             <div class="site-links">
-                <a href="https://bot.apikarl.com" class="site-link" target="_blank"><i class="fas fa-robot"></i> Venta Bot</a>
-                <a href="https://apikarl.com" class="site-link" target="_blank"><i class="fas fa-list-alt"></i> Ver APIs</a>
-                <a href="https://api.apikarl.com" class="site-link" target="_blank"><i class="fas fa-code"></i> Usar APIs</a>
+                <a href="https://bot.apikarl.com" class="site-link"><i class="fas fa-robot"></i> Bot</a>
+                <a href="https://apikarl.com" class="site-link"><i class="fas fa-list-alt"></i> APIs</a>
+                <a href="https://api.apikarl.com" class="site-link"><i class="fas fa-code"></i> Docs</a>
             </div>
         </header>
         
         <main>
             <div class="controls">
-                <!-- Menú desplegable para móviles -->
+                <!-- Menú móvil -->
                 <div class="dropdown-menu">
-                    <button class="dropdown-toggle" onclick="toggleDropdown()">
-                        <span id="current-section"><i class="fas fa-sliders-h"></i> Configuración Básica</span>
+                    <button class="dropdown-toggle">
+                        <span id="current-section"><i class="fas fa-sliders-h"></i> Básico</span>
                         <i class="fas fa-chevron-down"></i>
                     </button>
                     <div id="dropdown-content" class="dropdown-content">
-                        <a href="javascript:void(0)" class="section-link active" data-section="basic-tab" onclick="selectSection(this)">
-                            <i class="fas fa-sliders-h"></i> Configuración Básica
+                        <a href="#" class="section-link active" data-section="basic-tab">
+                            <i class="fas fa-sliders-h"></i> Básico
                         </a>
-                        <a href="javascript:void(0)" class="section-link" data-section="avatars-tab" onclick="selectSection(this)">
+                        <a href="#" class="section-link" data-section="avatars-tab">
                             <i class="fas fa-user-circle"></i> Avatares
                         </a>
-                        <a href="javascript:void(0)" class="section-link" data-section="text-tab" onclick="selectSection(this)">
+                        <a href="#" class="section-link" data-section="text-tab">
                             <i class="fas fa-font"></i> Textos
                         </a>
-                        <a href="javascript:void(0)" class="section-link" data-section="effects-tab" onclick="selectSection(this)">
+                        <a href="#" class="section-link" data-section="effects-tab">
                             <i class="fas fa-magic"></i> Efectos
                         </a>
-                        <a href="javascript:void(0)" class="section-link" data-section="advanced-tab" onclick="selectSection(this)">
-                            <i class="fas fa-cogs"></i> Configuración Avanzada
+                        <a href="#" class="section-link" data-section="advanced-tab">
+                            <i class="fas fa-cogs"></i> Avanzado
                         </a>
                     </div>
                 </div>
 
-                <!-- Pestañas estándar para escritorio -->
+                <!-- Pestañas de navegación -->
                 <div class="tabs">
-                    <div class="tab active" data-tab="basic"><i class="fas fa-sliders-h"></i> Básico</div>
-                    <div class="tab" data-tab="avatars"><i class="fas fa-user-circle"></i> Avatares</div>
-                    <div class="tab" data-tab="text"><i class="fas fa-font"></i> Textos</div>
-                    <div class="tab" data-tab="effects"><i class="fas fa-magic"></i> Efectos</div>
-                    <div class="tab" data-tab="advanced"><i class="fas fa-cogs"></i> Avanzado</div>
+                    <div class="tab active" data-tab="basic"><i class="fas fa-sliders-h"></i></div>
+                    <div class="tab" data-tab="avatars"><i class="fas fa-user-circle"></i></div>
+                    <div class="tab" data-tab="text"><i class="fas fa-font"></i></div>
+                    <div class="tab" data-tab="effects"><i class="fas fa-magic"></i></div>
+                    <div class="tab" data-tab="advanced"><i class="fas fa-cogs"></i></div>
                 </div>
                 
-                <!-- Pestaña de configuración básica -->
+                <!-- Contenido de las pestañas -->
                 <div id="basic-tab" class="tab-content active">
                     <div class="section">
                         <div class="section-title">
-                            <h3><i class="fas fa-expand"></i> Dimensiones del Canvas</h3>
+                            <h3>Dimensiones</h3>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
@@ -80,11 +75,11 @@
                     
                     <div class="section">
                         <div class="section-title">
-                            <h3><i class="fas fa-fill-drip"></i> Fondo</h3>
+                            <h3>Fondo</h3>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
-                                <label for="bgType">Tipo de fondo:</label>
+                                <label for="bgType">Tipo:</label>
                                 <select id="bgType">
                                     <option value="color">Color sólido</option>
                                     <option value="gradient">Gradiente</option>
@@ -94,7 +89,7 @@
                             
                             <div id="bgColorOptions">
                                 <div class="form-group">
-                                    <label for="bgColor">Color de fondo:</label>
+                                    <label for="bgColor">Color:</label>
                                     <input type="color" id="bgColor" value="#1e1e2e">
                                 </div>
                             </div>
@@ -111,21 +106,21 @@
                                 <div class="form-group">
                                     <label for="bgGradientDirection">Dirección:</label>
                                     <select id="bgGradientDirection">
-                                        <option value="to right">Derecha</option>
-                                        <option value="to left">Izquierda</option>
-                                        <option value="to bottom">Abajo</option>
-                                        <option value="to top">Arriba</option>
-                                        <option value="to bottom right">Diagonal derecha-abajo</option>
-                                        <option value="to bottom left">Diagonal izquierda-abajo</option>
-                                        <option value="to top right">Diagonal derecha-arriba</option>
-                                        <option value="to top left">Diagonal izquierda-arriba</option>
+                                        <option value="to right">→</option>
+                                        <option value="to left">←</option>
+                                        <option value="to bottom">↓</option>
+                                        <option value="to top">↑</option>
+                                        <option value="to bottom right">↘</option>
+                                        <option value="to bottom left">↙</option>
+                                        <option value="to top right">↗</option>
+                                        <option value="to top left">↖</option>
                                     </select>
                                 </div>
                             </div>
                             
                             <div id="bgImageOptions" style="display: none;">
                                 <div class="form-group">
-                                    <label for="bgImageUrl">URL de la imagen:</label>
+                                    <label for="bgImageUrl">URL de imagen:</label>
                                     <input type="text" id="bgImageUrl" placeholder="https://ejemplo.com/imagen.jpg">
                                 </div>
                                 <div class="form-group">
@@ -139,20 +134,20 @@
                     
                     <div class="section">
                         <div class="section-title">
-                            <h3><i class="fas fa-border-style"></i> Borde</h3>
+                            <h3>Borde</h3>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
-                                <label for="borderRadius">Radio de borde:</label>
+                                <label for="borderRadius">Radio:</label>
                                 <input type="range" id="borderRadius" min="0" max="50" value="25">
                                 <div class="range-value">25px</div>
                             </div>
                             <div class="form-group">
-                                <label for="borderColor">Color de borde:</label>
+                                <label for="borderColor">Color:</label>
                                 <input type="color" id="borderColor" value="#bd5dff">
                             </div>
                             <div class="form-group">
-                                <label for="borderWidth">Grosor de borde:</label>
+                                <label for="borderWidth">Grosor:</label>
                                 <input type="range" id="borderWidth" min="0" max="10" value="3">
                                 <div class="range-value">3px</div>
                             </div>
@@ -160,17 +155,16 @@
                     </div>
                 </div>
                 
-                <!-- Pestaña de configuración de avatares -->
+                <!-- Sección de Avatares -->
                 <div id="avatars-tab" class="tab-content">
                     <div class="section">
                         <div class="section-title">
-                            <h3><i class="fas fa-user"></i> Avatar Principal</h3>
+                            <h3>Avatar Principal</h3>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
-                                <label for="mainAvatarUrl">URL del avatar:</label>
+                                <label for="mainAvatarUrl">URL:</label>
                                 <input type="text" id="mainAvatarUrl" placeholder="https://ejemplo.com/avatar.jpg">
-                                <small class="form-help">También acepta variables BDFD como $authorAvatar</small>
                             </div>
                             <div class="form-group">
                                 <label for="mainAvatarX">Posición X:</label>
@@ -197,16 +191,15 @@
                                     <option value="hexagon">Hexágono</option>
                                     <option value="octagon">Octágono</option>
                                     <option value="star">Estrella</option>
-                                    <option value="heart">Corazón</option>
                                     <option value="diamond">Diamante</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="mainAvatarBorderColor">Color del borde:</label>
+                                <label for="mainAvatarBorderColor">Color de borde:</label>
                                 <input type="color" id="mainAvatarBorderColor" value="#ffffff">
                             </div>
                             <div class="form-group">
-                                <label for="mainAvatarGlow">Efecto resplandor:</label>
+                                <label for="mainAvatarGlow">Resplandor:</label>
                                 <input type="checkbox" id="mainAvatarGlow" checked>
                             </div>
                         </div>
@@ -214,13 +207,14 @@
                     
                     <div class="section">
                         <div class="section-title">
-                            <h3><i class="fas fa-users"></i> Avatares Adicionales</h3>
+                            <h3>Avatares Adicionales</h3>
                         </div>
                         <div class="section-content">
+                            <!-- Avatar 1 -->
                             <div class="avatar-container">
                                 <h4>Avatar 1</h4>
                                 <div class="form-group">
-                                    <label for="avatarUrl1">URL del avatar:</label>
+                                    <label for="avatarUrl1">URL:</label>
                                     <input type="text" id="avatarUrl1" placeholder="https://ejemplo.com/avatar1.jpg">
                                 </div>
                                 <div class="form-group">
@@ -251,10 +245,11 @@
                                 </div>
                             </div>
                             
+                            <!-- Avatar 2 -->
                             <div class="avatar-container">
                                 <h4>Avatar 2</h4>
                                 <div class="form-group">
-                                    <label for="avatarUrl2">URL del avatar:</label>
+                                    <label for="avatarUrl2">URL:</label>
                                     <input type="text" id="avatarUrl2" placeholder="https://ejemplo.com/avatar2.jpg">
                                 </div>
                                 <div class="form-group">
@@ -285,10 +280,11 @@
                                 </div>
                             </div>
                             
+                            <!-- Avatar 3 -->
                             <div class="avatar-container">
                                 <h4>Avatar 3</h4>
                                 <div class="form-group">
-                                    <label for="avatarUrl3">URL del avatar:</label>
+                                    <label for="avatarUrl3">URL:</label>
                                     <input type="text" id="avatarUrl3" placeholder="https://ejemplo.com/avatar3.jpg">
                                 </div>
                                 <div class="form-group">
@@ -319,10 +315,11 @@
                                 </div>
                             </div>
                             
+                            <!-- Avatar 4 -->
                             <div class="avatar-container">
                                 <h4>Avatar 4</h4>
                                 <div class="form-group">
-                                    <label for="avatarUrl4">URL del avatar:</label>
+                                    <label for="avatarUrl4">URL:</label>
                                     <input type="text" id="avatarUrl4" placeholder="https://ejemplo.com/avatar4.jpg">
                                 </div>
                                 <div class="form-group">
@@ -356,37 +353,35 @@
                     </div>
                 </div>
                 
-                <!-- Pestaña de configuración de textos -->
+                <!-- Sección de Textos -->
                 <div id="text-tab" class="tab-content">
                     <div class="section">
                         <div class="section-title">
-                            <h3><i class="fas fa-font"></i> Elementos de Texto</h3>
-                            <div class="text-help-tip">
-                                <i class="fas fa-info-circle"></i>
-                                <div class="tooltip">Los textos admiten variables BDFD como $username, $serverName, etc.</div>
-                            </div>
+                            <h3>Elementos de Texto</h3>
                         </div>
                         <div id="textElements">
                             <!-- Aquí se mostrarán los elementos de texto dinámicamente -->
                         </div>
-                        <button id="addTextBtn" class="add-text-btn"><i class="fas fa-plus-circle"></i> Añadir Texto</button>
+                        <button id="addTextBtn" class="add-text-btn">
+                            <i class="fas fa-plus"></i> Añadir Texto
+                        </button>
                     </div>
                 </div>
                 
-                <!-- Pestaña de configuración de efectos -->
+                <!-- Sección de Efectos -->
                 <div id="effects-tab" class="tab-content">
                     <div class="section">
                         <div class="section-title">
-                            <h3><i class="fas fa-magic"></i> Efectos Visuales</h3>
+                            <h3>Efectos Visuales</h3>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
-                                <label for="globalEffect">Tipo de efecto:</label>
+                                <label for="globalEffect">Tipo:</label>
                                 <select id="globalEffect">
                                     <option value="none">Ninguno</option>
                                     <option value="glow">Resplandor</option>
                                     <option value="sparkle">Destellos</option>
-                                    <option value="gradient">Superposición de Gradiente</option>
+                                    <option value="gradient">Superposición</option>
                                     <option value="noise">Ruido</option>
                                     <option value="vignette">Viñeta</option>
                                     <option value="rays">Rayos</option>
@@ -409,105 +404,46 @@
                                 <input type="color" id="effectColor2" value="#66ccff">
                             </div>
                         </div>
-                        
-                        <!-- Ejemplos visuales de los efectos -->
-                        <div class="effects-guide">
-                            <p>Ejemplos de efectos disponibles:</p>
-                            <div class="effects-row">
-                                <div class="effect-item">
-                                    <div class="effect-preview glow-example">Glow</div>
-                                    <div>Resplandor</div>
-                                </div>
-                                <div class="effect-item">
-                                    <div class="effect-preview sparkle-example">Sparkle</div>
-                                    <div>Destellos</div>
-                                </div>
-                                <div class="effect-item">
-                                    <div class="effect-preview gradient-example">Gradient</div>
-                                    <div>Gradiente</div>
-                                </div>
-                                <div class="effect-item">
-                                    <div class="effect-preview noise-example">Noise</div>
-                                    <div>Ruido</div>
-                                </div>
-                                <div class="effect-item">
-                                    <div class="effect-preview vignette-example">Vignette</div>
-                                    <div>Viñeta</div>
-                                </div>
-                                <div class="effect-item">
-                                    <div class="effect-preview cyber-example">Cyber</div>
-                                    <div>Cyberpunk</div>
-                                </div>
-                                <div class="effect-item">
-                                    <div class="effect-preview retro-example">Retro</div>
-                                    <div>Retrowave</div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
                 
-                <!-- Nueva pestaña para configuración avanzada -->
+                <!-- Sección Avanzada -->
                 <div id="advanced-tab" class="tab-content">
                     <div class="section">
                         <div class="section-title">
-                            <h3><i class="fas fa-cogs"></i> Configuración Avanzada</h3>
+                            <h3>Configuración API</h3>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
-                                <label for="apiEndpoint">URL Base de API:</label>
+                                <label for="apiEndpoint">Base URL:</label>
                                 <input type="text" id="apiEndpoint" value="https://api.apikarl.com/api/utility/bienvenida/bienvenida-styled" readonly>
                             </div>
                             <div class="form-group">
-                                <label for="apiKey">Clave API (opcional):</label>
-                                <input type="text" id="apiKey" placeholder="Introduce tu clave API si la tienes">
+                                <label for="apiKey">Clave API:</label>
+                                <input type="text" id="apiKey" placeholder="Clave API (opcional)">
                             </div>
                             <div class="form-group">
-                                <label for="outputFormat">Formato de salida:</label>
+                                <label for="outputFormat">Formato:</label>
                                 <select id="outputFormat">
                                     <option value="png">PNG</option>
                                     <option value="jpg">JPG</option>
                                     <option value="webp">WebP</option>
                                 </select>
                             </div>
-                            
-                            <div class="form-group">
-                                <label for="outputQuality">Calidad de imagen:</label>
-                                <select id="outputQuality">
-                                    <option value="high">Alta</option>
-                                    <option value="medium" selected>Media</option>
-                                    <option value="low">Baja</option>
-                                </select>
-                            </div>
                         </div>
                     </div>
                     
-                    <!-- Sección de guía rápida -->
                     <div class="section">
                         <div class="section-title">
-                            <h3><i class="fas fa-question-circle"></i> Ayuda Rápida</h3>
+                            <h3>Variables BDFD</h3>
                         </div>
                         <div class="section-content">
-                            <div class="help-item">
-                                <h4><i class="fas fa-code"></i> Variables BDFD soportadas</h4>
-                                <p>Puedes usar variables de Bot Designer For Discord en textos y URLs:</p>
-                                <ul class="help-list">
-                                    <li><code>$username</code> - Nombre del usuario</li>
-                                    <li><code>$nickname</code> - Apodo en el servidor</li>
-                                    <li><code>$serverName</code> - Nombre del servidor</li>
-                                    <li><code>$memberCount</code> - Conteo de miembros</li>
-                                    <li><code>$authorAvatar</code> - Avatar del usuario</li>
-                                </ul>
-                            </div>
-                            
-                            <div class="help-item">
-                                <h4><i class="fas fa-lightbulb"></i> Consejos</h4>
-                                <ul class="help-list">
-                                    <li>Usa fondos con degradado para un aspecto más profesional</li>
-                                    <li>Combina efectos con opacidad baja para mejores resultados</li>
-                                    <li>Usa texto con sombra para mejorar la legibilidad</li>
-                                    <li>No sobrecargues la tarjeta con demasiados elementos</li>
-                                </ul>
+                            <div class="var-list">
+                                <div class="var-item">$username</div>
+                                <div class="var-item">$nickname</div>
+                                <div class="var-item">$serverName</div>
+                                <div class="var-item">$memberCount</div>
+                                <div class="var-item">$authorAvatar</div>
                             </div>
                         </div>
                     </div>
@@ -527,366 +463,27 @@
                 
                 <div class="buttons">
                     <button id="undoBtn" class="btn btn-undo" disabled>
-                        <i class="fas fa-undo"></i> Deshacer
+                        <i class="fas fa-undo"></i>
                     </button>
                     <button id="generateBtn" class="btn btn-generate">
-                        <i class="fas fa-magic"></i> Generar API URL
+                        <i class="fas fa-code"></i> Generar API URL
                     </button>
                     <button id="redoBtn" class="btn btn-redo" disabled>
-                        <i class="fas fa-redo"></i> Rehacer
+                        <i class="fas fa-redo"></i>
                     </button>
                 </div>
                 
                 <div id="apiUrlContainer">
-                    <h3><i class="fas fa-link"></i> URL de API Generada:</h3>
+                    <h3>URL de API Generada</h3>
                     <pre id="apiUrlOutput"></pre>
                     <button id="copyBtn" class="btn">
                         <i class="fas fa-copy"></i> Copiar URL
                     </button>
-                    
-                    <div class="api-preview">
-                        <h4><i class="fas fa-image"></i> Previsualización de la API</h4>
-                        <p>Así se verá tu tarjeta en Discord:</p>
-                        <div class="discord-preview">
-                            <div class="discord-message">
-                                <div class="discord-avatar"></div>
-                                <div class="discord-content">
-                                    <div class="discord-author">BotAPIKarl</div>
-                                    <div class="discord-image-container">
-                                        <img id="apiPreviewImage" src="" alt="Vista previa de la tarjeta">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="api-test-buttons">
-                            <button id="testApiBtn" class="btn btn-test">
-                                <i class="fas fa-eye"></i> Probar API
-                            </button>
-                            <button id="downloadImageBtn" class="btn btn-download">
-                                <i class="fas fa-download"></i> Descargar Imagen
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </main>
-        
-        <footer>
-            <div class="footer-content">
-                <p>&copy; 2025 APIKarl - Generador de Tarjetas de Bienvenida</p>
-                <div class="footer-links">
-                    <a href="https://apikarl.com/terms" target="_blank">Términos de Uso</a>
-                    <a href="https://apikarl.com/privacy" target="_blank">Política de Privacidad</a>
-                    <a href="https://apikarl.com/contact" target="_blank">Contacto</a>
-                </div>
-            </div>
-        </footer>
     </div>
 
-    <!-- Estilos adicionales para los ejemplos de efectos y la vista previa de Discord -->
-    <style>
-        .form-help {
-            font-size: 0.8rem;
-            color: var(--secondary);
-            margin-top: 2px;
-        }
-        
-        .help-list {
-            list-style-type: none;
-            padding-left: 10px;
-        }
-        
-        .help-list li {
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-        }
-        
-        .help-list code {
-            background-color: rgba(0, 0, 0, 0.2);
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-family: monospace;
-        }
-        
-        .help-item {
-            margin-bottom: 15px;
-        }
-        
-        .help-item h4 {
-            margin-bottom: 8px;
-            color: var(--secondary);
-        }
-        
-        /* Estilos para los ejemplos de efectos */
-        .glow-example {
-            box-shadow: inset 0 0 15px #9966ff, 0 0 10px #66ccff;
-        }
-        
-        .sparkle-example {
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .sparkle-example::before {
-            content: "✨";
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: #9966ff;
-            font-size: 12px;
-        }
-        
-        .sparkle-example::after {
-            content: "✨";
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            color: #66ccff;
-            font-size: 12px;
-        }
-        
-        .gradient-example {
-            background: linear-gradient(135deg, #9966ff40, #66ccff40);
-            mix-blend-mode: overlay;
-        }
-        
-        .noise-example {
-            position: relative;
-        }
-        
-        .noise-example::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('data:image/png;base64,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');
-            opacity: 0.3;
-        }
-        
-        .vignette-example {
-            box-shadow: inset 0 0 75px rgba(0,0,0,0.8);
-        }
-        
-        .cyber-example {
-            background: linear-gradient(transparent 50%, rgba(0,0,0,0.1) 50%),
-                        linear-gradient(90deg, #9966ff10, #66ccff10);
-            background-size: 100% 4px, 100% 100%;
-        }
-        
-        .cyber-example::after {
-            content: "";
-            position: absolute;
-            width: 100%;
-            height: 3px;
-            background-color: #66ccff;
-            opacity: 0.5;
-            top: 40%;
-        }
-        
-        .retro-example {
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .retro-example::before {
-            content: "";
-            position: absolute;
-            width: 100%;
-            height: 50%;
-            bottom: 0;
-            background: repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(102, 204, 255, 0.2) 2px, rgba(102, 204, 255, 0.2) 4px);
-            transform: perspective(100px) rotateX(60deg);
-            transform-origin: center bottom;
-        }
-        
-        .retro-example::after {
-            content: "";
-            position: absolute;
-            width: 60px;
-            height: 30px;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            background: radial-gradient(ellipse at center, #9966ff 0%, transparent 70%);
-            opacity: 0.5;
-        }
-        
-        /* Estilos para la vista previa de Discord */
-        .discord-preview {
-            background-color: #36393f;
-            border-radius: 5px;
-            padding: 15px;
-            margin: 15px 0;
-        }
-        
-        .discord-message {
-            display: flex;
-            gap: 15px;
-        }
-        
-        .discord-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #7289da;
-            flex-shrink: 0;
-        }
-        
-        .discord-content {
-            flex-grow: 1;
-        }
-        
-        .discord-author {
-            color: #fff;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .discord-image-container {
-            max-width: 100%;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .discord-image-container img {
-            max-width: 100%;
-            display: block;
-        }
-        
-        .api-test-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .btn-test, .btn-download {
-            flex: 1;
-            background-color: #555;
-        }
-        
-        .btn-test:hover, .btn-download:hover {
-            background-color: #666;
-        }
-        
-        .text-help-tip {
-            position: relative;
-            display: inline-block;
-            margin-left: 10px;
-            cursor: help;
-        }
-        
-        .tooltip {
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            background-color: #333;
-            color: white;
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            z-index: 10;
-            display: none;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        }
-        
-        .text-help-tip:hover .tooltip {
-            display: block;
-        }
-        
-        footer {
-            margin-top: 30px;
-            padding: 20px;
-            background-color: rgba(30, 30, 46, 0.8);
-            border-radius: 10px;
-        }
-        
-        .footer-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .footer-links {
-            display: flex;
-            gap: 15px;
-        }
-        
-        .footer-links a {
-            color: var(--secondary);
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        .footer-links a:hover {
-            color: var(--accent);
-            text-decoration: underline;
-        }
-        
-        @media (max-width: 768px) {
-            .footer-content {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .footer-links {
-                flex-direction: column;
-                align-items: center;
-                gap: 5px;
-            }
-        }
-    </style>
-
-    <!-- Script para la vista previa de Discord y funcionalidad adicional -->
-    <script>
-        function updateApiPreview() {
-            // Actualizar la imagen de vista previa cuando se genera la URL de la API
-            document.getElementById('testApiBtn').addEventListener('click', function() {
-                const apiUrl = document.getElementById('apiUrlOutput').textContent;
-                if (apiUrl) {
-                    const previewImage = document.getElementById('apiPreviewImage');
-                    previewImage.src = apiUrl;
-                    previewImage.alt = "Tarjeta de bienvenida generada";
-                }
-            });
-            
-            // Función para descargar la imagen
-            document.getElementById('downloadImageBtn').addEventListener('click', function() {
-                const apiUrl = document.getElementById('apiUrlOutput').textContent;
-                if (apiUrl) {
-                    const link = document.createElement('a');
-                    link.href = apiUrl;
-                    link.download = 'bienvenida-' + new Date().getTime() + '.png';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
-            });
-        }
-        
-        // Agregar este listener al cargar la página
-        document.addEventListener('DOMContentLoaded', function() {
-            updateApiPreview();
-            
-            // Mostrar/ocultar tooltip
-            const helpTips = document.querySelectorAll('.text-help-tip');
-            helpTips.forEach(tip => {
-                tip.addEventListener('mouseover', function() {
-                    tip.querySelector('.tooltip').style.display = 'block';
-                });
-                
-                tip.addEventListener('mouseout', function() {
-                    tip.querySelector('.tooltip').style.display = 'none';
-                });
-            });
-        });
-    </script>
-
-    <!-- Script principal del generador -->
     <script src="/api/utility/bienvenida/script.js"></script>
 </body>
 </html>
