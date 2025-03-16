@@ -6,6 +6,119 @@
     <title>Generador de Tarjetas de Bienvenida</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/api/utility/bienvenida/styles.css">
+    <style>
+        /* Estilos adicionales para responsividad y menú desplegable */
+        .dropdown-menu {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .dropdown-toggle {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .dropdown-toggle i {
+            transition: transform 0.3s;
+        }
+
+        .dropdown-toggle.active i {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: rgba(30, 30, 46, 0.95);
+            width: 100%;
+            z-index: 10;
+            border-radius: 10px;
+            margin-top: 5px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-content a {
+            color: white;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.3s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .dropdown-content a:hover {
+            background-color: rgba(102, 51, 204, 0.2);
+        }
+
+        .dropdown-content a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .dropdown-content a.active {
+            background-color: rgba(102, 51, 204, 0.3);
+            border-left: 3px solid var(--accent);
+        }
+
+        .show {
+            display: block;
+        }
+
+        /* Para dispositivos móviles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            main {
+                flex-direction: column;
+            }
+            
+            .controls, .preview {
+                width: 100%;
+            }
+            
+            .form-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .site-links {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .dropdown-menu {
+                display: block;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -21,11 +134,38 @@
         
         <main>
             <div class="controls">
+                <!-- Menú desplegable para móviles y mejor navegación -->
+                <div class="dropdown-menu">
+                    <button class="dropdown-toggle" onclick="toggleDropdown()">
+                        <span id="current-section"><i class="fas fa-sliders-h"></i> Configuración Básica</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div id="dropdown-content" class="dropdown-content">
+                        <a href="javascript:void(0)" class="section-link active" data-section="basic-tab" onclick="selectSection(this)">
+                            <i class="fas fa-sliders-h"></i> Configuración Básica
+                        </a>
+                        <a href="javascript:void(0)" class="section-link" data-section="avatars-tab" onclick="selectSection(this)">
+                            <i class="fas fa-user-circle"></i> Avatares
+                        </a>
+                        <a href="javascript:void(0)" class="section-link" data-section="text-tab" onclick="selectSection(this)">
+                            <i class="fas fa-font"></i> Textos
+                        </a>
+                        <a href="javascript:void(0)" class="section-link" data-section="effects-tab" onclick="selectSection(this)">
+                            <i class="fas fa-magic"></i> Efectos
+                        </a>
+                        <a href="javascript:void(0)" class="section-link" data-section="advanced-tab" onclick="selectSection(this)">
+                            <i class="fas fa-cogs"></i> Configuración Avanzada
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Pestañas estándar para escritorio -->
                 <div class="tabs">
                     <div class="tab active" data-tab="basic"><i class="fas fa-sliders-h"></i> Básico</div>
                     <div class="tab" data-tab="avatars"><i class="fas fa-user-circle"></i> Avatares</div>
                     <div class="tab" data-tab="text"><i class="fas fa-font"></i> Textos</div>
                     <div class="tab" data-tab="effects"><i class="fas fa-magic"></i> Efectos</div>
+                    <div class="tab" data-tab="advanced"><i class="fas fa-cogs"></i> Avanzado</div>
                 </div>
                 
                 <!-- Pestaña de configuración básica -->
@@ -342,9 +482,9 @@
                         <div class="section-title">
                             <h3><i class="fas fa-magic"></i> Efectos Visuales</h3>
                         </div>
-                        <div class="section-content" style="overflow-x: auto;">
+                        <div class="section-content">
                             <div class="form-group">
-                                <label for="globalEffect">Efecto global:</label>
+                                <label for="globalEffect">Tipo de efecto:</label>
                                 <select id="globalEffect">
                                     <option value="none">Ninguno</option>
                                     <option value="glow">Resplandor</option>
@@ -373,37 +513,30 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Guía visual de efectos - solo referencia -->
+                </div>
+                
+                <!-- Nueva pestaña para configuración avanzada -->
+                <div id="advanced-tab" class="tab-content">
                     <div class="section">
                         <div class="section-title">
-                            <h3><i class="fas fa-info-circle"></i> Guía de Efectos</h3>
+                            <h3><i class="fas fa-cogs"></i> Configuración Avanzada</h3>
                         </div>
                         <div class="section-content">
-                            <p style="text-align: center; margin-bottom: 10px;">
-                                <i class="fas fa-arrows-alt-h"></i> Desliza horizontalmente para ver todos los efectos disponibles
-                            </p>
-                            <div style="overflow-x: auto; padding-bottom: 10px;">
-                                <div style="display: flex; min-width: max-content; gap: 10px;">
-                                    <div>
-                                        <strong>Resplandor:</strong> Añade un brillo alrededor de los avatares
-                                    </div>
-                                    <div>
-                                        <strong>Destellos:</strong> Añade partículas brillantes animadas
-                                    </div>
-                                    <div>
-                                        <strong>Gradiente:</strong> Superpone un gradiente de color
-                                    </div>
-                                    <div>
-                                        <strong>Ruido:</strong> Añade textura tipo granulado
-                                    </div>
-                                    <div>
-                                        <strong>Viñeta:</strong> Oscurece los bordes de la imagen
-                                    </div>
-                                    <div>
-                                        <strong>Rayos:</strong> Crea líneas que emanan del centro
-                                    </div>
-                                </div>
+                            <div class="form-group">
+                                <label for="apiEndpoint">URL Base de API:</label>
+                                <input type="text" id="apiEndpoint" value="https://api.apikarl.com/api/utility/bienvenida/bienvenida-styled" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="apiKey">Clave API (opcional):</label>
+                                <input type="text" id="apiKey" placeholder="Introduce tu clave API si la tienes">
+                            </div>
+                            <div class="form-group">
+                                <label for="outputFormat">Formato de salida:</label>
+                                <select id="outputFormat">
+                                    <option value="png">PNG</option>
+                                    <option value="jpg">JPG</option>
+                                    <option value="webp">WebP</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -434,7 +567,7 @@
                 </div>
                 
                 <div id="apiUrlContainer">
-                    <h3>URL de API Generada:</h3>
+                    <h3><i class="fas fa-link"></i> URL de API Generada:</h3>
                     <pre id="apiUrlOutput"></pre>
                     <button id="copyBtn" class="btn">
                         <i class="fas fa-copy"></i> Copiar URL
@@ -445,5 +578,79 @@
     </div>
 
     <script src="/api/utility/bienvenida/script.js"></script>
+    <script>
+        // Funciones adicionales para el menú desplegable y la navegación móvil
+        function toggleDropdown() {
+            document.getElementById("dropdown-content").classList.toggle("show");
+            document.querySelector(".dropdown-toggle").classList.toggle("active");
+        }
+
+        function selectSection(element) {
+            // Actualizar el texto seleccionado en el botón del menú
+            document.getElementById("current-section").innerHTML = element.innerHTML;
+            
+            // Actualizar clases activas en el menú
+            const links = document.querySelectorAll(".section-link");
+            links.forEach(link => link.classList.remove("active"));
+            element.classList.add("active");
+            
+            // Ocultar el menú desplegable
+            document.getElementById("dropdown-content").classList.remove("show");
+            document.querySelector(".dropdown-toggle").classList.remove("active");
+            
+            // Mostrar la sección correspondiente
+            const tabId = element.getAttribute("data-section");
+            const tabContents = document.querySelectorAll(".tab-content");
+            tabContents.forEach(content => content.classList.remove("active"));
+            document.getElementById(tabId).classList.add("active");
+            
+            // Sincronizar con las pestañas normales
+            const tabName = tabId.replace("-tab", "");
+            const tabs = document.querySelectorAll(".tab");
+            tabs.forEach(tab => tab.classList.remove("active"));
+            document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add("active");
+        }
+
+        // Sincronización entre las pestañas normales y el menú desplegable
+        document.addEventListener("DOMContentLoaded", function() {
+            // Función para actualizar el menú desplegable cuando se haga clic en una pestaña
+            const tabs = document.querySelectorAll(".tab");
+            tabs.forEach(tab => {
+                tab.addEventListener("click", function() {
+                    const tabName = this.getAttribute("data-tab");
+                    const sectionLink = document.querySelector(`.section-link[data-section="${tabName}-tab"]`);
+                    if (sectionLink) {
+                        document.getElementById("current-section").innerHTML = sectionLink.innerHTML;
+                    
+                    // Actualizar clases activas en el menú
+                    const links = document.querySelectorAll(".section-link");
+                    links.forEach(link => link.classList.remove("active"));
+                    sectionLink.classList.add("active");
+                }
+            });
+            
+            // Cerrar el menú desplegable al hacer clic fuera
+            window.addEventListener("click", function(event) {
+                if (!event.target.matches('.dropdown-toggle') && !event.target.closest('.dropdown-toggle')) {
+                    const dropdown = document.getElementById("dropdown-content");
+                    if (dropdown.classList.contains("show")) {
+                        dropdown.classList.remove("show");
+                        document.querySelector(".dropdown-toggle").classList.remove("active");
+                    }
+                }
+            });
+            
+            // Asegurar que los efectos se vean correctamente
+            document.querySelector('.tab[data-tab="effects"]').addEventListener("click", function() {
+                // Forzar actualización del CSS para los efectos
+                setTimeout(() => {
+                    const effectsTab = document.getElementById("effects-tab");
+                    effectsTab.style.display = "none";
+                    effectsTab.offsetHeight; // Forzar un reflow
+                    effectsTab.style.display = "";
+                }, 50);
+            });
+        });
+    </script>
 </body>
 </html>
