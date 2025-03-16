@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creador de Tarjetas Ranked</title>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
@@ -19,10 +19,268 @@
         </header>
         
         <main>
-            <!-- [Content remains the same as in your current index.html] -->
+            <div class="controls">
+                <div class="tabs">
+                    <div class="tab active" data-tab="general">General</div>
+                    <div class="tab" data-tab="style">Estilo</div>
+                    <div class="tab" data-tab="content">Contenido</div>
+                    <div class="tab" data-tab="advanced">Avanzado</div>
+                </div>
+                
+                <div class="tab-content active" id="general-tab">
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Tipo de Tarjeta</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="cardType">Tipo:</label>
+                                <select id="cardType">
+                                    <option value="level">Nivel (XP)</option>
+                                    <option value="classification">Clasificación</option>
+                                    <option value="rank">Rango</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Tamaño de Tarjeta</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="cardWidth">Ancho:</label>
+                                <input type="number" id="cardWidth" value="800" min="400" max="1200">
+                            </div>
+                            <div class="form-group">
+                                <label for="cardHeight">Alto:</label>
+                                <input type="number" id="cardHeight" value="250" min="150" max="500">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Información de Usuario</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="username">Nombre:</label>
+                                <input type="text" id="username" value="Usuario" placeholder="Nombre de usuario">
+                            </div>
+                            <div class="form-group">
+                                <label for="avatarUrl">URL del Avatar:</label>
+                                <input type="text" id="avatarUrl" placeholder="https://ejemplo.com/avatar.png">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="style-tab">
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Fondo</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="backgroundType">Tipo:</label>
+                                <select id="backgroundType">
+                                    <option value="color">Color Sólido</option>
+                                    <option value="image">Imagen Predefinida</option>
+                                    <option value="custom">Imagen Personalizada</option>
+                                </select>
+                            </div>
+                            
+                            <div id="backgroundColorOptions">
+                                <div class="form-group">
+                                    <label for="backgroundColor">Color de Fondo:</label>
+                                    <input type="color" id="backgroundColor" value="#1e1e2e">
+                                </div>
+                            </div>
+                            
+                            <div id="backgroundImageOptions" style="display: none;">
+                                <div class="form-group">
+                                    <label>Seleccionar Fondo:</label>
+                                    <div class="bg-image-grid">
+                                        <!-- Las imágenes se cargarán dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="customBgOptions" style="display: none;">
+                                <div class="form-group">
+                                    <label for="customBgUrl">URL de Imagen:</label>
+                                    <input type="text" id="customBgUrl" placeholder="https://ejemplo.com/imagen.jpg">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Colores</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="textColor">Color de Texto:</label>
+                                <input type="color" id="textColor" value="#ffffff">
+                            </div>
+                            <div class="form-group">
+                                <label for="accentColor">Color de Acento:</label>
+                                <input type="color" id="accentColor" value="#bd5dff">
+                            </div>
+                            <div class="form-group">
+                                <label for="progressColor">Color de Progreso:</label>
+                                <input type="color" id="progressColor" value="#6633cc">
+                            </div>
+                            <div class="form-group">
+                                <label for="progressBgColor">Fondo de Progreso:</label>
+                                <input type="color" id="progressBgColor" value="#333333">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="content-tab">
+                    <div id="levelOptions">
+                        <div class="section">
+                            <div class="section-title">
+                                <h3>Información de Nivel</h3>
+                            </div>
+                            <div class="section-content">
+                                <div class="form-group">
+                                    <label for="level">Nivel:</label>
+                                    <input type="number" id="level" value="1" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="xp">XP Actual:</label>
+                                    <input type="number" id="xp" value="50" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="nextLevel">XP para Siguiente:</label>
+                                    <input type="number" id="nextLevel" value="100" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="rank">Rango:</label>
+                                    <input type="text" id="rank" value="Novato" placeholder="Nombre del rango">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="classificationOptions" style="display: none;">
+                        <div class="section">
+                            <div class="section-title">
+                                <h3>Información de Clasificación</h3>
+                            </div>
+                            <div class="section-content">
+                                <div class="form-group">
+                                    <label for="classification">Clasificación:</label>
+                                    <input type="text" id="classification" value="Oro" placeholder="Ej: Bronce, Plata, Oro">
+                                </div>
+                                <div class="form-group">
+                                    <label for="classLevel">Nivel:</label>
+                                    <input type="number" id="classLevel" value="3" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="classRank">Rango:</label>
+                                    <input type="text" id="classRank" value="Oro III" placeholder="Ej: Oro III">
+                                </div>
+                                <div class="form-group">
+                                    <label for="badgeUrl">URL de Insignia:</label>
+                                    <input type="text" id="badgeUrl" placeholder="https://ejemplo.com/insignia.png">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="rankOptions" style="display: none;">
+                        <div class="section">
+                            <div class="section-title">
+                                <h3>Información de Rango</h3>
+                            </div>
+                            <div class="section-content">
+                                <div class="form-group">
+                                    <label for="rankName">Rango:</label>
+                                    <input type="text" id="rankName" value="Diamante" placeholder="Nombre del rango">
+                                </div>
+                                <div class="form-group">
+                                    <label for="rankLevel">Nivel:</label>
+                                    <input type="number" id="rankLevel" value="5" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="customText">Texto Adicional:</label>
+                                    <textarea id="customText" placeholder="Texto adicional para mostrar">Jugador destacado</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="advanced-tab">
+                    <div class="section">
+                        <div class="section-title">
+                            <h3>Opciones Avanzadas</h3>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label for="borderRadius">Radio de Borde:</label>
+                                <input type="range" id="borderRadius" min="0" max="20" value="10">
+                                <div class="range-value">10px</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="borderWidth">Ancho de Borde:</label>
+                                <input type="range" id="borderWidth" min="0" max="10" value="0">
+                                <div class="range-value">0px</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="borderColor">Color de Borde:</label>
+                                <input type="color" id="borderColor" value="#ffffff">
+                            </div>
+                            <div class="form-group">
+                                <label for="shadowEnabled">Habilitar Sombra:</label>
+                                <input type="checkbox" id="shadowEnabled">
+                            </div>
+                            <div id="shadowOptions" style="display: none;">
+                                <div class="form-group">
+                                    <label for="shadowColor">Color de Sombra:</label>
+                                    <input type="color" id="shadowColor" value="#000000">
+                                </div>
+                                <div class="form-group">
+                                    <label for="shadowBlur">Desenfoque:</label>
+                                    <input type="range" id="shadowBlur" min="0" max="20" value="10">
+                                    <div class="range-value">10px</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="preview">
+                <div class="preview-container">
+                    <div id="previewCanvas" style="position: relative; width: 800px; height: 250px; background-color: #1e1e2e; border-radius: 10px; overflow: hidden;">
+                        <!-- El contenido de previsualización se renderizará aquí -->
+                        <div id="previewContent"></div>
+                    </div>
+                </div>
+                
+                <div class="buttons">
+                    <button id="undoBtn" class="btn btn-undo" disabled>↩ Deshacer</button>
+                    <button id="generateBtn" class="btn btn-generate">Generar URL de API</button>
+                    <button id="redoBtn" class="btn btn-redo" disabled>Rehacer ↪</button>
+                </div>
+                
+                <div id="apiUrlContainer" class="api-url" style="display: none;">
+                    <p>URL de la API:</p>
+                    <code id="apiUrlOutput"></code>
+                    <button id="copyBtn" class="copy-btn">Copiar al Portapapeles</button>
+                </div>
+            </div>
         </main>
     </div>
 
-    <script src="/script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
