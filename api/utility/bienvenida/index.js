@@ -4,8 +4,8 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Servir archivos estáticos
-app.use(express.static('./'));
+// Servir archivos estáticos desde el directorio actual
+app.use(express.static(__dirname));
 
 // Ruta principal que sirve el HTML
 app.get('/', (req, res) => {
