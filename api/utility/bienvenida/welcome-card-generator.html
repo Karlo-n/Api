@@ -6,17 +6,6 @@
     <title>Generador de Tarjetas de Bienvenida</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/api/utility/bienvenida/styles.css">
-    <style>
-        .coord-input {
-            display: flex;
-            gap: 5px;
-            margin-top: 5px;
-        }
-        .coord-input input {
-            width: 50px;
-            text-align: center;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -81,6 +70,12 @@
                                 <label for="canvasHeight">Alto:</label>
                                 <input type="number" id="canvasHeight" min="200" max="800" value="400">
                             </div>
+                            <div class="coord-input">
+                                <label>Dimensiones (W,H):</label>
+                                <input type="number" id="canvasWidthInput" min="400" max="1200" value="800">
+                                <span>×</span>
+                                <input type="number" id="canvasHeightInput" min="200" max="800" value="400">
+                            </div>
                         </div>
                     </div>
                     
@@ -139,6 +134,10 @@
                                     <input type="range" id="bgImageOpacity" min="0.1" max="1" step="0.1" value="0.5">
                                     <div class="range-value">0.5</div>
                                 </div>
+                                <div class="size-input">
+                                    <label>Opacidad:</label>
+                                    <input type="number" id="bgImageOpacityInput" min="0.1" max="1" step="0.1" value="0.5">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -153,6 +152,11 @@
                                 <input type="range" id="borderRadius" min="0" max="50" value="25">
                                 <div class="range-value">25px</div>
                             </div>
+                            <div class="size-input">
+                                <label>Radio:</label>
+                                <input type="number" id="borderRadiusInput" min="0" max="50" value="25">
+                                <span>px</span>
+                            </div>
                             <div class="form-group">
                                 <label for="borderColor">Color:</label>
                                 <input type="color" id="borderColor" value="#bd5dff">
@@ -161,6 +165,11 @@
                                 <label for="borderWidth">Grosor:</label>
                                 <input type="range" id="borderWidth" min="0" max="10" value="3">
                                 <div class="range-value">3px</div>
+                            </div>
+                            <div class="size-input">
+                                <label>Grosor:</label>
+                                <input type="number" id="borderWidthInput" min="0" max="10" value="3">
+                                <span>px</span>
                             </div>
                         </div>
                     </div>
@@ -182,21 +191,26 @@
                                 <input type="range" id="mainAvatarX" min="0" max="800" value="400">
                                 <div class="range-value">400px</div>
                             </div>
-                            <div class="coord-input">
-                                <label>X,Y:</label>
-                                <input type="number" id="mainAvatarXInput" min="0" max="800" value="400">
-                                <span>,</span>
-                                <input type="number" id="mainAvatarYInput" min="0" max="400" value="133">
-                            </div>
                             <div class="form-group">
                                 <label for="mainAvatarY">Posición Y:</label>
                                 <input type="range" id="mainAvatarY" min="0" max="400" value="133">
                                 <div class="range-value">133px</div>
                             </div>
+                            <div class="coord-input">
+                                <label>Posición X,Y:</label>
+                                <input type="number" id="mainAvatarXInput" min="0" max="800" value="400">
+                                <span>,</span>
+                                <input type="number" id="mainAvatarYInput" min="0" max="400" value="133">
+                            </div>
                             <div class="form-group">
                                 <label for="mainAvatarSize">Tamaño:</label>
                                 <input type="range" id="mainAvatarSize" min="20" max="150" value="80">
                                 <div class="range-value">80px</div>
+                            </div>
+                            <div class="size-input">
+                                <label>Tamaño:</label>
+                                <input type="number" id="mainAvatarSizeInput" min="20" max="150" value="80">
+                                <span>px</span>
                             </div>
                             <div class="form-group">
                                 <label for="mainAvatarShape">Forma:</label>
@@ -239,21 +253,26 @@
                                     <input type="range" id="avatarX1" min="0" max="800" value="200">
                                     <div class="range-value">200px</div>
                                 </div>
-                                <div class="coord-input">
-                                    <label>X,Y:</label>
-                                    <input type="number" id="avatarX1Input" min="0" max="800" value="200">
-                                    <span>,</span>
-                                    <input type="number" id="avatarY1Input" min="0" max="400" value="200">
-                                </div>
                                 <div class="form-group">
                                     <label for="avatarY1">Posición Y:</label>
                                     <input type="range" id="avatarY1" min="0" max="400" value="200">
                                     <div class="range-value">200px</div>
                                 </div>
+                                <div class="coord-input">
+                                    <label>Posición X,Y:</label>
+                                    <input type="number" id="avatarX1Input" min="0" max="800" value="200">
+                                    <span>,</span>
+                                    <input type="number" id="avatarY1Input" min="0" max="400" value="200">
+                                </div>
                                 <div class="form-group">
                                     <label for="avatarSize1">Tamaño:</label>
                                     <input type="range" id="avatarSize1" min="20" max="100" value="50">
                                     <div class="range-value">50px</div>
+                                </div>
+                                <div class="size-input">
+                                    <label>Tamaño:</label>
+                                    <input type="number" id="avatarSize1Input" min="20" max="100" value="50">
+                                    <span>px</span>
                                 </div>
                                 <div class="form-group">
                                     <label for="avatarShape1">Forma:</label>
@@ -280,21 +299,26 @@
                                     <input type="range" id="avatarX2" min="0" max="800" value="300">
                                     <div class="range-value">300px</div>
                                 </div>
-                                <div class="coord-input">
-                                    <label>X,Y:</label>
-                                    <input type="number" id="avatarX2Input" min="0" max="800" value="300">
-                                    <span>,</span>
-                                    <input type="number" id="avatarY2Input" min="0" max="400" value="300">
-                                </div>
                                 <div class="form-group">
                                     <label for="avatarY2">Posición Y:</label>
                                     <input type="range" id="avatarY2" min="0" max="400" value="300">
                                     <div class="range-value">300px</div>
                                 </div>
+                                <div class="coord-input">
+                                    <label>Posición X,Y:</label>
+                                    <input type="number" id="avatarX2Input" min="0" max="800" value="300">
+                                    <span>,</span>
+                                    <input type="number" id="avatarY2Input" min="0" max="400" value="300">
+                                </div>
                                 <div class="form-group">
                                     <label for="avatarSize2">Tamaño:</label>
                                     <input type="range" id="avatarSize2" min="20" max="100" value="50">
                                     <div class="range-value">50px</div>
+                                </div>
+                                <div class="size-input">
+                                    <label>Tamaño:</label>
+                                    <input type="number" id="avatarSize2Input" min="20" max="100" value="50">
+                                    <span>px</span>
                                 </div>
                                 <div class="form-group">
                                     <label for="avatarShape2">Forma:</label>
@@ -321,21 +345,26 @@
                                     <input type="range" id="avatarX3" min="0" max="800" value="500">
                                     <div class="range-value">500px</div>
                                 </div>
-                                <div class="coord-input">
-                                    <label>X,Y:</label>
-                                    <input type="number" id="avatarX3Input" min="0" max="800" value="500">
-                                    <span>,</span>
-                                    <input type="number" id="avatarY3Input" min="0" max="400" value="300">
-                                </div>
                                 <div class="form-group">
                                     <label for="avatarY3">Posición Y:</label>
                                     <input type="range" id="avatarY3" min="0" max="400" value="300">
                                     <div class="range-value">300px</div>
                                 </div>
+                                <div class="coord-input">
+                                    <label>Posición X,Y:</label>
+                                    <input type="number" id="avatarX3Input" min="0" max="800" value="500">
+                                    <span>,</span>
+                                    <input type="number" id="avatarY3Input" min="0" max="400" value="300">
+                                </div>
                                 <div class="form-group">
                                     <label for="avatarSize3">Tamaño:</label>
                                     <input type="range" id="avatarSize3" min="20" max="100" value="50">
                                     <div class="range-value">50px</div>
+                                </div>
+                                <div class="size-input">
+                                    <label>Tamaño:</label>
+                                    <input type="number" id="avatarSize3Input" min="20" max="100" value="50">
+                                    <span>px</span>
                                 </div>
                                 <div class="form-group">
                                     <label for="avatarShape3">Forma:</label>
@@ -362,21 +391,26 @@
                                     <input type="range" id="avatarX4" min="0" max="800" value="600">
                                     <div class="range-value">600px</div>
                                 </div>
-                                <div class="coord-input">
-                                    <label>X,Y:</label>
-                                    <input type="number" id="avatarX4Input" min="0" max="800" value="600">
-                                    <span>,</span>
-                                    <input type="number" id="avatarY4Input" min="0" max="400" value="200">
-                                </div>
                                 <div class="form-group">
                                     <label for="avatarY4">Posición Y:</label>
                                     <input type="range" id="avatarY4" min="0" max="400" value="200">
                                     <div class="range-value">200px</div>
                                 </div>
+                                <div class="coord-input">
+                                    <label>Posición X,Y:</label>
+                                    <input type="number" id="avatarX4Input" min="0" max="800" value="600">
+                                    <span>,</span>
+                                    <input type="number" id="avatarY4Input" min="0" max="400" value="200">
+                                </div>
                                 <div class="form-group">
                                     <label for="avatarSize4">Tamaño:</label>
                                     <input type="range" id="avatarSize4" min="20" max="100" value="50">
                                     <div class="range-value">50px</div>
+                                </div>
+                                <div class="size-input">
+                                    <label>Tamaño:</label>
+                                    <input type="number" id="avatarSize4Input" min="20" max="100" value="50">
+                                    <span>px</span>
                                 </div>
                                 <div class="form-group">
                                     <label for="avatarShape4">Forma:</label>
@@ -401,7 +435,78 @@
                             <h3>Elementos de Texto</h3>
                         </div>
                         <div id="textElements">
-                            <!-- Aquí se mostrarán los elementos de texto dinámicamente -->
+                            <!-- Los elementos de texto se generan dinámicamente por JavaScript -->
+                            <!-- Aquí un ejemplo de cómo debe quedar un elemento cuando se añade: -->
+                            <!--
+                            <div class="text-element">
+                                <div class="text-element-header">
+                                    <h4>Texto 1</h4>
+                                    <button class="remove-btn" data-index="0">×</button>
+                                </div>
+                                <div class="form-group">
+                                    <label for="textContent0">Contenido:</label>
+                                    <input type="text" id="textContent0" value="Texto 1" placeholder="Contenido del texto">
+                                </div>
+                                <div class="form-group">
+                                    <label for="textX0">Posición X:</label>
+                                    <input type="range" id="textX0" min="0" max="800" value="400">
+                                    <div class="range-value">400px</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="textY0">Posición Y:</label>
+                                    <input type="range" id="textY0" min="0" max="400" value="200">
+                                    <div class="range-value">200px</div>
+                                </div>
+                                <div class="coord-input">
+                                    <label>Posición X,Y:</label>
+                                    <input type="number" id="textX0Input" min="0" max="800" value="400">
+                                    <span>,</span>
+                                    <input type="number" id="textY0Input" min="0" max="400" value="200">
+                                </div>
+                                <div class="form-group">
+                                    <label for="textSize0">Tamaño:</label>
+                                    <input type="range" id="textSize0" min="10" max="80" value="30">
+                                    <div class="range-value">30px</div>
+                                </div>
+                                <div class="size-input">
+                                    <label>Tamaño:</label>
+                                    <input type="number" id="textSize0Input" min="10" max="80" value="30">
+                                    <span>px</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="textColor0">Color:</label>
+                                    <input type="color" id="textColor0" value="#ffffff">
+                                </div>
+                                <div class="form-group">
+                                    <label for="textFont0">Fuente:</label>
+                                    <select id="textFont0">
+                                        <option value="Arial">Arial</option>
+                                        <option value="Verdana">Verdana</option>
+                                        <option value="Georgia">Georgia</option>
+                                        <option value="Times New Roman">Times New Roman</option>
+                                        <option value="Courier New">Courier New</option>
+                                        <option value="Impact">Impact</option>
+                                        <option value="Comic Sans MS">Comic Sans MS</option>
+                                        <option value="Oswald">Oswald</option>
+                                        <option value="Roboto">Roboto</option>
+                                        <option value="Montserrat">Montserrat</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="textStyle0">Estilo:</label>
+                                    <select id="textStyle0">
+                                        <option value="normal">Normal</option>
+                                        <option value="italic">Cursiva</option>
+                                        <option value="bold">Negrita</option>
+                                        <option value="bold italic">Negrita Cursiva</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="textShadow0">Sombra:</label>
+                                    <input type="checkbox" id="textShadow0">
+                                </div>
+                            </div>
+                            -->
                         </div>
                         <button id="addTextBtn" class="add-text-btn">
                             <i class="fas fa-plus"></i> Añadir Texto
@@ -435,6 +540,10 @@
                                 <label for="effectIntensitySlider">Intensidad:</label>
                                 <input type="range" id="effectIntensitySlider" min="0.1" max="1" step="0.1" value="0.5">
                                 <div class="range-value">0.5</div>
+                            </div>
+                            <div class="size-input">
+                                <label>Intensidad:</label>
+                                <input type="number" id="effectIntensityInput" min="0.1" max="1" step="0.1" value="0.5">
                             </div>
                             <div class="form-group">
                                 <label for="effectColor1">Color primario:</label>
@@ -527,60 +636,107 @@
 
     <script src="/api/utility/bienvenida/script.js"></script>
     <script>
-        // Script para la sincronización de entrada XY
+        // Script para la sincronización de entradas numéricas
         document.addEventListener('DOMContentLoaded', function() {
-            // Sincronizar para el avatar principal
-            const mainAvatarX = document.getElementById('mainAvatarX');
-            const mainAvatarY = document.getElementById('mainAvatarY');
-            const mainAvatarXInput = document.getElementById('mainAvatarXInput');
-            const mainAvatarYInput = document.getElementById('mainAvatarYInput');
-            
-            mainAvatarX.addEventListener('input', function() {
-                mainAvatarXInput.value = this.value;
-            });
-            
-            mainAvatarY.addEventListener('input', function() {
-                mainAvatarYInput.value = this.value;
-            });
-            
-            mainAvatarXInput.addEventListener('input', function() {
-                mainAvatarX.value = this.value;
-                mainAvatarX.dispatchEvent(new Event('input'));
-            });
-            
-            mainAvatarYInput.addEventListener('input', function() {
-                mainAvatarY.value = this.value;
-                mainAvatarY.dispatchEvent(new Event('input'));
-            });
-            
-            // Sincronizar para avatares adicionales (1-4)
-            for (let i = 1; i <= 4; i++) {
-                const avatarX = document.getElementById(`avatarX${i}`);
-                const avatarY = document.getElementById(`avatarY${i}`);
-                const avatarXInput = document.getElementById(`avatarX${i}Input`);
-                const avatarYInput = document.getElementById(`avatarY${i}Input`);
+            // Función para vincular un slider con un input numérico
+            function bindSliderToInput(sliderId, inputId) {
+                const slider = document.getElementById(sliderId);
+                const input = document.getElementById(inputId);
                 
-                if (avatarX && avatarY && avatarXInput && avatarYInput) {
-                    avatarX.addEventListener('input', function() {
-                        avatarXInput.value = this.value;
+                if (slider && input) {
+                    slider.addEventListener('input', function() {
+                        input.value = this.value;
                     });
                     
-                    avatarY.addEventListener('input', function() {
-                        avatarYInput.value = this.value;
-                    });
-                    
-                    avatarXInput.addEventListener('input', function() {
-                        avatarX.value = this.value;
-                        avatarX.dispatchEvent(new Event('input'));
-                    });
-                    
-                    avatarYInput.addEventListener('input', function() {
-                        avatarY.value = this.value;
-                        avatarY.dispatchEvent(new Event('input'));
+                    input.addEventListener('input', function() {
+                        slider.value = this.value;
+                        slider.dispatchEvent(new Event('input'));
                     });
                 }
             }
+            
+            // Dimensiones del canvas
+            bindSliderToInput('canvasWidth', 'canvasWidthInput');
+            bindSliderToInput('canvasHeight', 'canvasHeightInput');
+            
+            // Borde
+            bindSliderToInput('borderRadius', 'borderRadiusInput');
+            bindSliderToInput('borderWidth', 'borderWidthInput');
+            
+            // Opacidad de imagen de fondo
+            bindSliderToInput('bgImageOpacity', 'bgImageOpacityInput');
+            
+            // Avatar principal
+            bindSliderToInput('mainAvatarX', 'mainAvatarXInput');
+            bindSliderToInput('mainAvatarY', 'mainAvatarYInput');
+            bindSliderToInput('mainAvatarSize', 'mainAvatarSizeInput');
+            
+            // Avatares adicionales
+            for (let i = 1; i <= 4; i++) {
+                bindSliderToInput(`avatarX${i}`, `avatarX${i}Input`);
+                bindSliderToInput(`avatarY${i}`, `avatarY${i}Input`);
+                bindSliderToInput(`avatarSize${i}`, `avatarSize${i}Input`);
+            }
+            
+            // Intensidad de efectos
+            bindSliderToInput('effectIntensitySlider', 'effectIntensityInput');
+            
+            // Agregar funcionalidad para elementos de texto dinámicos
+            const addTextButton = document.getElementById('addTextBtn');
+            if (addTextButton) {
+                // Cuando se genera un nuevo texto dinámicamente
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.addedNodes.length) {
+                            mutation.addedNodes.forEach(function(node) {
+                                if (node.nodeType === 1 && node.classList.contains('text-element')) {
+                                    const index = node.dataset.index;
+                                    if (index !== undefined) {
+                                        bindSliderToInput(`textX${index}`, `textX${index}Input`);
+                                        bindSliderToInput(`textY${index}`, `textY${index}Input`);
+                                        bindSliderToInput(`textSize${index}`, `textSize${index}Input`);
+                                    }
+                                }
+                            });
+                        }
+                    });
+                });
+                
+                observer.observe(document.getElementById('textElements'), { childList: true });
+            }
         });
+        
+        // Modificar la función rebuildTextElements para incluir inputs de coordenadas
+        // Esta función debe ser añadida o reemplazada en script.js
+        function addCoordinateInputsToTextElement(element, index, state) {
+            // Solo añadimos esto si no existe ya una función similar en script.js
+            // Para que sea incluido cuando script.js lo reconstruya
+            const coordInput = document.createElement('div');
+            coordInput.className = 'coord-input';
+            coordInput.innerHTML = `
+                <label>Posición X,Y:</label>
+                <input type="number" id="textX${index}Input" min="0" max="${state.currentState.canvas.width}" value="${state.currentState.textElements[index].x}">
+                <span>,</span>
+                <input type="number" id="textY${index}Input" min="0" max="${state.currentState.canvas.height}" value="${state.currentState.textElements[index].y}">
+            `;
+            
+            // Insertar después del slider de posición Y
+            const textYRangeGroup = element.querySelector(`#textY${index}`).parentNode;
+            textYRangeGroup.parentNode.insertBefore(coordInput, textYRangeGroup.nextSibling);
+            
+            // Añadir input para tamaño
+            const sizeInput = document.createElement('div');
+            sizeInput.className = 'size-input';
+            sizeInput.innerHTML = `
+                <label>Tamaño:</label>
+                <input type="number" id="textSize${index}Input" min="10" max="80" value="${state.currentState.textElements[index].size}">
+                <span>px</span>
+            `;
+            
+            // Insertar después del slider de tamaño
+            const textSizeRangeGroup = element.querySelector(`#textSize${index}`).parentNode;
+            textSizeRangeGroup.parentNode.insertBefore(sizeInput, textSizeRangeGroup.nextSibling);
+        }
     </script>
 </body>
 </html>
