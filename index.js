@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 3000;
+const path = require("path"); // Asegúrate de tener esta importación
 
 // Servir archivos estáticos desde la carpeta public
 app.use(express.static('public'));
@@ -96,6 +97,22 @@ app.get("/", (req, res) => {
     "/api/utility/captcha"
 ]
     }, null, 4)); // <--- Aquí está bien formateado
+});
+
+// NUEVO: Manejador de errores 404
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    // Para rutas de API, devuelve error JSON
+    return res.status(404).json({
+      error: true,
+      code: 404,
+      message: "El endpoint solicitado no existe",
+      documentacion: "https://apikarl.com/docs"
+    });
+  }
+  
+  // Para rutas web, sirve la página 404
+  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
 
 // Iniciar servidor
