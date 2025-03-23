@@ -25,7 +25,11 @@ router.get("/styles.css", (req, res) => {
 });
 
 router.get("/script.js", (req, res) => {
-    res.sendFile(path.join(ROOT_DIR, 'script.js'));
+    res.sendFile(path.join(__dirname, 'script.js'));
+});
+
+router.get("/bienvenida/script.js", (req, res) => {
+    res.sendFile(path.join(__dirname, 'script.js'));
 });
 
 // Endpoint para generar imágenes de bienvenida
