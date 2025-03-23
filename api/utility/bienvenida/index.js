@@ -32,6 +32,9 @@ router.get("/bienvenida/script.js", (req, res) => {
     res.sendFile(path.join(__dirname, 'script.js'));
 });
 
+// Servir imágenes generadas como recursos estáticos
+router.use('/temp', express.static(path.join(__dirname, 'temp')));
+
 // Endpoint para generar imágenes de bienvenida
 router.get("/bienvenida-styled", async (req, res) => {
     try {
@@ -47,6 +50,11 @@ router.get("/bienvenida-styled", async (req, res) => {
             message: error.message 
         });
     }
+});
+
+// Endpoint adicional para compatibilidad
+router.get("/bienvenida", async (req, res) => {
+    res.redirect(`/api/utility/bienvenida/bienvenida-styled?${new URLSearchParams(req.query).toString()}`);
 });
 
 // Exportar el router
