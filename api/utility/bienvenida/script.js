@@ -666,12 +666,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
         }
         
-        // Borde
+        // Borde - CORREGIDO
         params.append('borderRadius', document.getElementById('borderRadius').value);
         params.append('borderColor', document.getElementById('borderColor').value.replace('#', ''));
         params.append('borderWidth', document.getElementById('borderWidth').value);
         
-        // Textos
+        // Textos - CORREGIDO para que coincida con imageGenerator.js
         activeTextElements.forEach((textElement, index) => {
             const num = index + 1;
             params.append(`texto${num}`, textElement.text);
@@ -686,7 +686,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Avatar principal
+        // Avatar principal - CORREGIDO
         const mainAvatarUrl = document.getElementById('mainAvatarUrl').value;
         if (mainAvatarUrl) {
             params.append('avatar', mainAvatarUrl);
@@ -712,11 +712,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Efectos
+        // Efectos - CORREGIDO
         const effectType = document.getElementById('globalEffect').value;
         if (effectType !== 'none') {
             params.append('effectType', effectType);
             params.append('effectIntensity', document.getElementById('effectIntensitySlider').value);
+            // Añadir colores de efectos también para algunos tipos de efectos
+            if (['gradient', 'sparkle', 'rays', 'cyberpunk', 'retro', 'grid'].includes(effectType)) {
+                params.append('effectColor1', document.getElementById('effectColor1').value.replace('#', ''));
+                params.append('effectColor2', document.getElementById('effectColor2').value.replace('#', ''));
+            }
         }
         
         // Generar la URL
