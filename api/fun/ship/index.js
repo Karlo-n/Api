@@ -4,36 +4,18 @@ const axios = require("axios");
 const path = require("path");
 const router = express.Router();
 
-// Background arrays for different styles
-const animeBackgrounds = [
-  "https://wallpapers.com/images/hd/cute-anime-couple-holding-hands-sunset-6st7c0vnw0wffssj.jpg",
-  "https://img.freepik.com/premium-photo/anime-couple-holding-hands-field-flowers-generative-ai_974533-22369.jpg",
-  "https://i.pinimg.com/originals/a8/63/92/a86392cee24f5fc5d332c1b20c207e3f.jpg",
-  "https://i.pinimg.com/originals/a2/b2/dc/a2b2dc3d15e9d9a9db7797efe93a451f.jpg",
-  "https://i.pinimg.com/originals/78/3f/be/783fbe31b8c76a7513afef166c491d99.jpg"
+// Simplified background array - anime sunset/scenery backgrounds
+const backgrounds = [
+  "https://wallpaperaccess.com/full/1154341.jpg", // Anime sunset
+  "https://i.pinimg.com/originals/ea/00/0c/ea000cc6fb9375b14a7b21d55dcf9745.jpg", // Night sky anime
+  "https://wallpaperaccess.com/full/3137677.jpg", // Anime beach sunset
+  "https://wallpapercave.com/wp/wp5986661.jpg", // Anime evening
+  "https://i.pinimg.com/originals/02/ba/86/02ba867e545f953631148c89629412b1.jpg" // Purple anime sky
 ];
-
-const esteticoBackgrounds = [
-  "https://i.pinimg.com/originals/e0/46/75/e04675f3c7c4e3b18f4a9790d2e1d353.jpg",
-  "https://i.pinimg.com/originals/9e/08/11/9e0811614f40078b7fd163c95fa77d85.jpg",
-  "https://i.pinimg.com/originals/1a/c9/a9/1ac9a9e5d59062a431f8a1bcf7795376.jpg",
-  "https://i.pinimg.com/originals/f2/bd/63/f2bd63ff46a690aa7f11979c97e8d79c.jpg",
-  "https://i.pinimg.com/originals/9f/70/73/9f70731bf7eb6481e16e12bfbc35c624.jpg"
-];
-
-// Default backgrounds
-const defaultBackgrounds = [
-  "https://wallpapers.com/images/hd/cute-anime-couple-holding-hands-sunset-6st7c0vnw0wffssj.jpg",
-  "https://img.freepik.com/premium-photo/anime-couple-holding-hands-field-flowers-generative-ai_974533-22369.jpg",
-  "https://th.bing.com/th/id/OIP.RI5mDg5pyJBQjtotMJ4YIgHaEK?rs=1&pid=ImgDetMain"
-];
-
-// Ruta del corazón en la carpeta /api/fun/ship
-const heartPath = path.join(__dirname, "corazon.png");
 
 router.get("/", async (req, res) => {
   try {
-    const { avatar1, avatar2, json, numero, estilo } = req.query;
+    const { avatar1, avatar2, json, numero } = req.query;
 
     // Validate required parameters
     if (!avatar1 || !avatar2 || !numero) {
@@ -44,14 +26,6 @@ router.get("/", async (req, res) => {
 
     // Parse ship percentage (ensure it's between 0-100)
     const shipPercentage = Math.min(100, Math.max(0, parseInt(numero) || 0));
-
-    // Get backgrounds based on style
-    let backgroundsArray = defaultBackgrounds;
-    if (estilo === "anime") {
-      backgroundsArray = animeBackgrounds;
-    } else if (estilo === "estetico") {
-      backgroundsArray = esteticoBackgrounds;
-    }
     
     // If user wants JSON response only
     if (json === "true") {
@@ -59,16 +33,15 @@ router.get("/", async (req, res) => {
         message: "❤️ Compatibilidad de pareja ❤️",
         avatar1: avatar1,
         avatar2: avatar2,
-        love_percentage: `${shipPercentage}%`,
-        estilo: estilo || "default"
+        love_percentage: `${shipPercentage}%`
       });
     }
 
     // Select a random background
-    const backgroundUrl = backgroundsArray[Math.floor(Math.random() * backgroundsArray.length)];
+    const backgroundUrl = backgrounds[Math.floor(Math.random() * backgrounds.length)];
 
-    // Create canvas
-    const canvas = Canvas.createCanvas(800, 400);
+    // Create canvas with 16:9 ratio to match the reference image
+    const canvas = Canvas.createCanvas(900, 450);
     const ctx = canvas.getContext("2d");
 
     // Load images safely with axios
@@ -86,128 +59,186 @@ router.get("/", async (req, res) => {
     const background = await loadImage(backgroundUrl);
     const avatarImg1 = await loadImage(avatar1);
     const avatarImg2 = await loadImage(avatar2);
-    const heartImg = await Canvas.loadImage(heartPath);
 
-    if (!background || !avatarImg1 || !avatarImg2 || !heartImg) {
+    if (!background || !avatarImg1 || !avatarImg2) {
       return res.status(500).json({ error: "Error loading images." });
     }
 
     // Draw background
     ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
-    // Add semi-transparent overlay for better text visibility
-    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillRect(0, 0, canvas.width, 70); // Top bar
+    // Add semi-transparent overlay for better text visibility at top
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.fillRect(0, 0, canvas.width, 70); 
 
-    // Draw title
-    ctx.font = "bold 40px Arial";
+    // Draw "Cupido" title
+    ctx.font = "bold 48px Arial";
     ctx.fillStyle = "#ff6b6b";
     ctx.textAlign = "center";
     ctx.fillText("Anny Cupido:", canvas.width / 2, 50);
 
     // Draw avatars with circular borders
     // Draw left avatar
-    const avatarSize = 150;
+    const avatarSize = 140;
+    const avatarRadius = avatarSize / 2;
+    const leftAvatarX = canvas.width * 0.25;
+    const rightAvatarX = canvas.width * 0.75;
+    const avatarY = canvas.height * 0.4;
+
+    // Left avatar with circular mask
     ctx.save();
     ctx.beginPath();
-    ctx.arc(180, 200, avatarSize/2, 0, Math.PI * 2);
+    ctx.arc(leftAvatarX, avatarY, avatarRadius, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
-    ctx.drawImage(avatarImg1, 180 - avatarSize/2, 200 - avatarSize/2, avatarSize, avatarSize);
+    ctx.drawImage(avatarImg1, leftAvatarX - avatarRadius, avatarY - avatarRadius, avatarSize, avatarSize);
     ctx.restore();
 
-    // Add red border to avatar 1
-    ctx.strokeStyle = "#ff6b6b";
-    ctx.lineWidth = 5;
+    // Left avatar red circle border
+    ctx.strokeStyle = "#ff3b3b";
+    ctx.lineWidth = 6;
     ctx.beginPath();
-    ctx.arc(180, 200, avatarSize/2 + 5, 0, Math.PI * 2);
+    ctx.arc(leftAvatarX, avatarY, avatarRadius + 3, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Add white outer border to avatar 1
+    // Left avatar white outer border
     ctx.strokeStyle = "white";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(180, 200, avatarSize/2 + 10, 0, Math.PI * 2);
+    ctx.arc(leftAvatarX, avatarY, avatarRadius + 10, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Draw right avatar
+    // Right avatar with circular mask
     ctx.save();
     ctx.beginPath();
-    ctx.arc(620, 200, avatarSize/2, 0, Math.PI * 2);
+    ctx.arc(rightAvatarX, avatarY, avatarRadius, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
-    ctx.drawImage(avatarImg2, 620 - avatarSize/2, 200 - avatarSize/2, avatarSize, avatarSize);
+    ctx.drawImage(avatarImg2, rightAvatarX - avatarRadius, avatarY - avatarRadius, avatarSize, avatarSize);
     ctx.restore();
 
-    // Add red border to avatar 2
-    ctx.strokeStyle = "#ff6b6b";
-    ctx.lineWidth = 5;
+    // Right avatar red circle border
+    ctx.strokeStyle = "#ff3b3b";
+    ctx.lineWidth = 6;
     ctx.beginPath();
-    ctx.arc(620, 200, avatarSize/2 + 5, 0, Math.PI * 2);
+    ctx.arc(rightAvatarX, avatarY, avatarRadius + 3, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Add white outer border to avatar 2
+    // Right avatar white outer border
     ctx.strokeStyle = "white";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(620, 200, avatarSize/2 + 10, 0, Math.PI * 2);
+    ctx.arc(rightAvatarX, avatarY, avatarRadius + 10, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Draw heart in the center
-    const heartSize = 100;
-    ctx.drawImage(heartImg, 400 - heartSize/2, 200 - heartSize/2, heartSize, heartSize);
+    // Draw a better heart in the center
+    const heartX = canvas.width / 2;
+    const heartY = avatarY;
+    const heartSize = 90;
+    
+    // Custom heart drawing with gradient fill
+    ctx.beginPath();
+    // Left curve of heart
+    ctx.moveTo(heartX, heartY + heartSize/4);
+    ctx.bezierCurveTo(
+      heartX - heartSize/2, heartY - heartSize/2, 
+      heartX - heartSize, heartY + heartSize/4, 
+      heartX, heartY + heartSize/1.5
+    );
+    // Right curve of heart
+    ctx.bezierCurveTo(
+      heartX + heartSize, heartY + heartSize/4, 
+      heartX + heartSize/2, heartY - heartSize/2, 
+      heartX, heartY + heartSize/4
+    );
+    ctx.closePath();
+    
+    // Heart gradient fill
+    const heartGradient = ctx.createLinearGradient(
+      heartX - heartSize/2, heartY - heartSize/2,
+      heartX + heartSize/2, heartY + heartSize/2
+    );
+    heartGradient.addColorStop(0, "#ff3b3b");
+    heartGradient.addColorStop(1, "#ff0000");
+    ctx.fillStyle = heartGradient;
+    ctx.fill();
+    
+    // Heart outline
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Add shine effect to heart
+    ctx.beginPath();
+    ctx.moveTo(heartX - heartSize/3, heartY - heartSize/4);
+    ctx.quadraticCurveTo(
+      heartX - heartSize/6, heartY - heartSize/3,
+      heartX - heartSize/8, heartY - heartSize/8
+    );
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.lineWidth = 3;
+    ctx.stroke();
 
-    // Draw percentage in the center
-    ctx.font = "bold 80px Arial";
+    // Add small hearts around the main heart
+    const miniHearts = [
+      { x: heartX - heartSize/2, y: heartY - heartSize/2, size: heartSize/4 },
+      { x: heartX + heartSize/3, y: heartY - heartSize/2.5, size: heartSize/3 },
+      { x: heartX, y: heartY - heartSize/1.8, size: heartSize/5 }
+    ];
+
+    miniHearts.forEach(miniHeart => {
+      const { x, y, size } = miniHeart;
+      
+      // Draw mini heart
+      ctx.beginPath();
+      // Left curve of mini heart
+      ctx.moveTo(x, y + size/4);
+      ctx.bezierCurveTo(
+        x - size/2, y - size/2, 
+        x - size, y + size/4, 
+        x, y + size/1.5
+      );
+      // Right curve of mini heart
+      ctx.bezierCurveTo(
+        x + size, y + size/4, 
+        x + size/2, y - size/2, 
+        x, y + size/4
+      );
+      ctx.closePath();
+      
+      // Fill mini heart
+      ctx.fillStyle = "#ff3b3b";
+      ctx.fill();
+      
+      // Mini heart outline
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    // Semi-transparent background for percentage
+    ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+    ctx.fillRect(canvas.width/2 - 120, canvas.height * 0.68 - 50, 240, 100);
+
+    // Draw percentage with improved styling
+    ctx.font = "bold 100px Arial";
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(`${shipPercentage}%`, canvas.width / 2, 320);
+    ctx.fillText(`${shipPercentage}%`, canvas.width / 2, canvas.height * 0.68);
 
+    // Add shadow to percentage
+    ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 3;
+    ctx.shadowOffsetY = 3;
+    ctx.fillText(`${shipPercentage}%`, canvas.width / 2, canvas.height * 0.68);
+    ctx.shadowColor = "transparent"; // Reset shadow
+    
     // Add "SHIP" text below
-    ctx.font = "bold 36px Arial";
+    ctx.font = "bold 45px Arial";
     ctx.fillStyle = "#ff6b6b";
-    ctx.fillText("SHIP", canvas.width / 2, 360);
-
-    // Add decorative elements (small hearts, sparkles)
-    // Draw small decorative hearts
-    const smallHearts = [
-      { x: 360, y: 150, size: 20 },
-      { x: 440, y: 150, size: 15 },
-      { x: 400, y: 130, size: 25 }
-    ];
-
-    for (const heart of smallHearts) {
-      ctx.drawImage(heartImg, heart.x, heart.y, heart.size, heart.size);
-    }
-
-    // Add sparkles
-    ctx.fillStyle = "yellow";
-    const sparkles = [
-      { x: 375, y: 140, size: 5 },
-      { x: 425, y: 140, size: 5 },
-      { x: 375, y: 180, size: 5 },
-      { x: 425, y: 180, size: 5 }
-    ];
-
-    for (const sparkle of sparkles) {
-      ctx.beginPath();
-      // Draw a star shape
-      for (let i = 0; i < 5; i++) {
-        const radius = i % 2 === 0 ? sparkle.size : sparkle.size / 2;
-        const angle = (Math.PI * 2 * i) / 10 - Math.PI / 2;
-        const x = sparkle.x + radius * Math.cos(angle);
-        const y = sparkle.y + radius * Math.sin(angle);
-        
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
-      ctx.closePath();
-      ctx.fill();
-    }
+    ctx.fillText("SHIP", canvas.width / 2, canvas.height * 0.85);
 
     // Send image as response
     res.setHeader("Content-Type", "image/png");
