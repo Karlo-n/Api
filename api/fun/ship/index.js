@@ -4,9 +4,6 @@ const axios = require("axios");
 const path = require("path");
 const router = express.Router();
 
-// Single beautiful background for all ships
-const BACKGROUND_URL = "https://wallpaperaccess.com/full/2825704.jpg"; // Beautiful countryside sunset
-
 router.get("/", async (req, res) => {
   try {
     const { avatar1, avatar2, json, numero } = req.query;
@@ -31,7 +28,7 @@ router.get("/", async (req, res) => {
       });
     }
 
-    // Create canvas with 16:9 ratio to match the reference image
+    // Create canvas with 16:9 ratio
     const canvas = Canvas.createCanvas(900, 500);
     const ctx = canvas.getContext("2d");
 
@@ -46,25 +43,104 @@ router.get("/", async (req, res) => {
       }
     };
 
-    // Load all required images
-    const background = await loadImage(BACKGROUND_URL);
+    // Load avatar images
     const avatarImg1 = await loadImage(avatar1);
     const avatarImg2 = await loadImage(avatar2);
 
-    if (!background || !avatarImg1 || !avatarImg2) {
-      return res.status(500).json({ error: "Error loading images." });
+    if (!avatarImg1 || !avatarImg2) {
+      return res.status(500).json({ error: "Error loading avatar images" });
     }
 
-    // Draw background
-    ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-
-    // Add overall overlay for better contrast
-    ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+    // SECTION 1: CREATE STYLIZED BACKGROUND INSTEAD OF USING IMAGE
+    // Create a beautiful gradient background
+    const bgGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    bgGradient.addColorStop(0, "#2c3e50");
+    bgGradient.addColorStop(0.5, "#4a69bd");
+    bgGradient.addColorStop(1, "#1e3799");
+    ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Add a subtle pattern overlay
+    ctx.globalAlpha = 0.1;
+    for (let i = 0; i < canvas.width; i += 20) {
+      for (let j = 0; j < canvas.height; j += 20) {
+        // Create a slight variation in the pattern
+        if ((i + j) % 40 === 0) {
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(i, j, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+    ctx.globalAlpha = 1.0;
+
+    // Create decorative light beams
+    ctx.globalAlpha = 0.15;
+    for (let i = 0; i < 7; i++) {
+      const beamWidth = Math.random() * 100 + 50;
+      const startX = Math.random() * canvas.width;
+      
+      const beamGradient = ctx.createLinearGradient(startX, 0, startX + beamWidth/2, canvas.height);
+      beamGradient.addColorStop(0, "#f5f5f5");
+      beamGradient.addColorStop(0.5, "#ffffff");
+      beamGradient.addColorStop(1, "#f5f5f5");
+      
+      ctx.fillStyle = beamGradient;
+      ctx.beginPath();
+      ctx.moveTo(startX, 0);
+      ctx.lineTo(startX + beamWidth, 0);
+      ctx.lineTo(startX + beamWidth/2 + beamWidth/4, canvas.height);
+      ctx.lineTo(startX + beamWidth/4, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1.0;
+
+    // Add floating particles
+    ctx.globalAlpha = 0.6;
+    for (let i = 0; i < 100; i++) {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      const size = Math.random() * 2 + 1;
+      
+      const particleGradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+      particleGradient.addColorStop(0, "rgba(255, 255, 255, 0.9)");
+      particleGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+      
+      ctx.fillStyle = particleGradient;
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1.0;
+
+    // Add swirls/abstract design elements
+    ctx.globalAlpha = 0.2;
+    for (let i = 0; i < 5; i++) {
+      const centerX = Math.random() * canvas.width;
+      const centerY = Math.random() * canvas.height;
+      const radius = Math.random() * 100 + 50;
+      
+      // Create swirl effect
+      for (let angle = 0; angle < Math.PI * 10; angle += 0.1) {
+        const x = centerX + (angle * 5) * Math.cos(angle) / 10;
+        const y = centerY + (angle * 5) * Math.sin(angle) / 10;
+        const size = 3 - (angle / (Math.PI * 2));
+        
+        if (size > 0) {
+          ctx.fillStyle = "rgba(255, 182, 193, 0.3)";
+          ctx.beginPath();
+          ctx.arc(x, y, size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+    ctx.globalAlpha = 1.0;
 
     // Add decorative frame around the whole image
     const frameWidth = 15;
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
     ctx.lineWidth = frameWidth;
     ctx.strokeRect(frameWidth/2, frameWidth/2, canvas.width - frameWidth, canvas.height - frameWidth);
     
@@ -309,13 +385,13 @@ router.get("/", async (req, res) => {
     const panelX = canvas.width/2 - panelWidth/2;
     const panelY = canvas.height * 0.68 - 40;
     
-    // Panel background with gradient
+    // Panel background with gradient and glass effect
     const panelGradient = ctx.createLinearGradient(
       panelX, panelY,
       panelX + panelWidth, panelY + panelHeight
     );
-    panelGradient.addColorStop(0, "rgba(0, 0, 0, 0.5)");
-    panelGradient.addColorStop(1, "rgba(0, 0, 0, 0.7)");
+    panelGradient.addColorStop(0, "rgba(0, 0, 0, 0.4)");
+    panelGradient.addColorStop(1, "rgba(0, 0, 0, 0.6)");
     
     // Draw rounded rectangle
     const radius = 15;
@@ -337,6 +413,14 @@ router.get("/", async (req, res) => {
     // Panel border
     ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
     ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Add glass shine effect
+    ctx.beginPath();
+    ctx.moveTo(panelX + 20, panelY + 15);
+    ctx.lineTo(panelX + panelWidth - 20, panelY + 30);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.lineWidth = 10;
     ctx.stroke();
     
     // Draw decorative lines inside panel
