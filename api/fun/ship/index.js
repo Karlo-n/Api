@@ -51,11 +51,95 @@ router.get("/", async (req, res) => {
       return res.status(500).json({ error: "Error al cargar las imagenes de los avatares" });
     }
 
+    // Determinar apariencia basada en el porcentaje
+    let themeColors = {
+      background: {
+        primary: "#1e2a4a", 
+        secondary: "#253760"
+      },
+      border: "#ff6b6b",
+      heart: {
+        primary: "#ff3b3b",
+        secondary: "#ff0000"
+      },
+      title: {
+        primary: "#ff6b6b",
+        secondary: "#ff9d9d"
+      },
+      ship: {
+        primary: "#ff6b6b", 
+        secondary: "#ff0000"
+      }
+    };
+    
+    let heartBroken = false;
+    let theme = "positive";
+    let panelAlpha = 0.6;
+    
+    // Ajustar tema según el porcentaje
+    if (shipPercentage < 10) {
+      // Muy malo - corazón roto, colores oscuros
+      theme = "very_negative";
+      heartBroken = true;
+      themeColors.background.primary = "#0d1117";
+      themeColors.background.secondary = "#161b22";
+      themeColors.border = "#483434";
+      themeColors.heart.primary = "#3e0000";
+      themeColors.heart.secondary = "#6e0000";
+      themeColors.title.primary = "#6e0000";
+      themeColors.title.secondary = "#8f0000";
+      themeColors.ship.primary = "#6e0000";
+      themeColors.ship.secondary = "#8f0000";
+      panelAlpha = 0.8;
+    } 
+    else if (shipPercentage < 20) {
+      // Malo - casi igual al anterior pero no tan dramático
+      theme = "negative";
+      heartBroken = true;
+      themeColors.background.primary = "#151f2e";
+      themeColors.background.secondary = "#1c2940";
+      themeColors.border = "#5C4033";
+      themeColors.heart.primary = "#5e0000";
+      themeColors.heart.secondary = "#8e0000";
+      themeColors.title.primary = "#8e0000";
+      themeColors.title.secondary = "#a53030";
+      themeColors.ship.primary = "#8e0000";
+      themeColors.ship.secondary = "#a53030";
+      panelAlpha = 0.7;
+    } 
+    else if (shipPercentage < 50) {
+      // Regular - no tan feo
+      theme = "neutral_negative";
+      themeColors.background.primary = "#182a4a"; 
+      themeColors.background.secondary = "#233760";
+      themeColors.border = "#937163";
+      themeColors.heart.primary = "#d06060";
+      themeColors.heart.secondary = "#a54040";
+      themeColors.title.primary = "#d06060";
+      themeColors.title.secondary = "#e08080";
+      themeColors.ship.primary = "#d06060";
+      themeColors.ship.secondary = "#a54040";
+    } 
+    else if (shipPercentage < 70) {
+      // Bueno
+      theme = "neutral_positive";
+      themeColors.background.primary = "#1e2a4a"; 
+      themeColors.background.secondary = "#2a3a64";
+      themeColors.border = "#d37a7a";
+      themeColors.heart.primary = "#f06060";
+      themeColors.heart.secondary = "#ff0000";
+      themeColors.title.primary = "#ff6b6b";
+      themeColors.title.secondary = "#ff9d9d";
+      themeColors.ship.primary = "#ff6b6b";
+      themeColors.ship.secondary = "#ff0000";
+    }
+    // Si es >= 70, se mantiene el estilo por defecto (muy bueno)
+
     // CREATE STYLIZED BACKGROUND
     // Create gradient background with blue stripes - similar to the reference image
     const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    bgGradient.addColorStop(0, "#1e2a4a"); // Darker blue at top
-    bgGradient.addColorStop(1, "#253760"); // Slightly lighter blue at bottom
+    bgGradient.addColorStop(0, themeColors.background.primary); 
+    bgGradient.addColorStop(1, themeColors.background.secondary); 
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -105,7 +189,7 @@ router.get("/", async (req, res) => {
 
     // Add decorative frame around the edge (like in reference)
     // Outer frame
-    ctx.strokeStyle = "#ff6b6b"; // Red
+    ctx.strokeStyle = themeColors.border; 
     ctx.lineWidth = 3;
     ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
     
@@ -130,7 +214,7 @@ router.get("/", async (req, res) => {
       ctx.lineTo(corner.x + 10, corner.y);
       ctx.moveTo(corner.x, corner.y - 10);
       ctx.lineTo(corner.x, corner.y + 10);
-      ctx.strokeStyle = "#ff6b6b";
+      ctx.strokeStyle = themeColors.border;
       ctx.lineWidth = 2;
       ctx.stroke();
       
@@ -146,7 +230,7 @@ router.get("/", async (req, res) => {
     ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
     ctx.fillRect(0, 0, canvas.width, 70);
 
-    // Draw "Anny Cupido:" title
+    // Draw "Medidor de Amor" title
     ctx.font = "bold 56px Arial";
     ctx.textAlign = "center";
     
@@ -161,12 +245,12 @@ router.get("/", async (req, res) => {
       canvas.width/2 - 150, 10, 
       canvas.width/2 + 150, 60
     );
-    titleGradient.addColorStop(0, "#ff6b6b");
-    titleGradient.addColorStop(0.5, "#ff9d9d");
-    titleGradient.addColorStop(1, "#ff6b6b");
+    titleGradient.addColorStop(0, themeColors.title.primary);
+    titleGradient.addColorStop(0.5, themeColors.title.secondary);
+    titleGradient.addColorStop(1, themeColors.title.primary);
     ctx.fillStyle = titleGradient;
     
-    ctx.fillText("Medidor de Amor::", canvas.width/2, 50);
+    ctx.fillText("Medidor de Amor:", canvas.width/2, 50);
     
     // Reset shadow
     ctx.shadowColor = "transparent";
@@ -181,6 +265,16 @@ router.get("/", async (req, res) => {
     const rightAvatarX = canvas.width * 0.75;
     const avatarY = canvas.height * 0.45;
 
+    // Ajustar color del brillo del avatar según el tema
+    let avatarGlowColor;
+    if (theme === "very_negative" || theme === "negative") {
+      avatarGlowColor = "rgba(100, 0, 0, 0.3)";
+    } else if (theme === "neutral_negative") {
+      avatarGlowColor = "rgba(150, 50, 50, 0.3)";
+    } else {
+      avatarGlowColor = "rgba(255, 0, 0, 0.3)";
+    }
+
     // Function to draw circular avatar with decorative elements
     const drawAvatar = (x, y, avatarImg) => {
       // Draw glow effect behind avatar (red glow like in reference)
@@ -188,9 +282,9 @@ router.get("/", async (req, res) => {
         x, y, avatarRadius * 0.9,
         x, y, avatarRadius * 1.5
       );
-      glowGradient.addColorStop(0, "rgba(255, 0, 0, 0.3)");
-      glowGradient.addColorStop(0.7, "rgba(255, 0, 0, 0.1)");
-      glowGradient.addColorStop(1, "rgba(255, 0, 0, 0)");
+      glowGradient.addColorStop(0, avatarGlowColor);
+      glowGradient.addColorStop(0.7, avatarGlowColor.replace("0.3", "0.1"));
+      glowGradient.addColorStop(1, avatarGlowColor.replace("0.3", "0"));
       
       ctx.beginPath();
       ctx.arc(x, y, avatarRadius * 1.5, 0, Math.PI * 2);
@@ -203,11 +297,24 @@ router.get("/", async (req, res) => {
       ctx.arc(x, y, avatarRadius, 0, Math.PI * 2);
       ctx.closePath();
       ctx.clip();
-      ctx.drawImage(avatarImg, x - avatarRadius, y - avatarRadius, avatarSize, avatarSize);
+      
+      // Si el tema es muy negativo, agregar un tono grisáceo a los avatares
+      if (theme === "very_negative") {
+        ctx.drawImage(avatarImg, x - avatarRadius, y - avatarRadius, avatarSize, avatarSize);
+        ctx.fillStyle = "rgba(50, 50, 50, 0.4)";
+        ctx.fillRect(x - avatarRadius, y - avatarRadius, avatarSize, avatarSize);
+      } else if (theme === "negative") {
+        ctx.drawImage(avatarImg, x - avatarRadius, y - avatarRadius, avatarSize, avatarSize);
+        ctx.fillStyle = "rgba(50, 50, 50, 0.2)";
+        ctx.fillRect(x - avatarRadius, y - avatarRadius, avatarSize, avatarSize);
+      } else {
+        ctx.drawImage(avatarImg, x - avatarRadius, y - avatarRadius, avatarSize, avatarSize);
+      }
+      
       ctx.restore();
       
-      // Red circle border
-      ctx.strokeStyle = "#ff0000";
+      // Red circle border, ajustado según el tema
+      ctx.strokeStyle = theme.includes("negative") ? "#800000" : "#ff0000";
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.arc(x, y, avatarRadius + 2, 0, Math.PI * 2);
@@ -238,7 +345,7 @@ router.get("/", async (req, res) => {
     drawAvatar(leftAvatarX, avatarY, avatarImg1);
     drawAvatar(rightAvatarX, avatarY, avatarImg2);
 
-    // Draw dashed line connecting the avatars (like in reference)
+    // Draw dashed line connecting the avatars
     ctx.beginPath();
     ctx.setLineDash([5, 5]);
     ctx.moveTo(leftAvatarX + avatarRadius + 15, avatarY);
@@ -248,81 +355,177 @@ router.get("/", async (req, res) => {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw heart in the center
+    // Draw heart in the center - normal or broken depending on percentage
     const heartX = canvas.width / 2;
     const heartY = avatarY;
     const heartSize = 70;
     
-    // Draw main heart
-    ctx.beginPath();
-    ctx.moveTo(heartX, heartY + heartSize/3);
-    ctx.bezierCurveTo(
-      heartX - heartSize/2, heartY - heartSize/3,
-      heartX - heartSize, heartY + heartSize/3,
-      heartX, heartY + heartSize/1.5
-    );
-    ctx.bezierCurveTo(
-      heartX + heartSize, heartY + heartSize/3,
-      heartX + heartSize/2, heartY - heartSize/3,
-      heartX, heartY + heartSize/3
-    );
+    // Heart shadow
+    ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+    ctx.shadowBlur = 15;
+    ctx.shadowOffsetX = 5;
+    ctx.shadowOffsetY = 5;
     
-    // Heart gradient fill (bright red like reference)
-    const heartGradient = ctx.createLinearGradient(
-      heartX - heartSize/2, heartY - heartSize/2,
-      heartX + heartSize/2, heartY + heartSize/2
-    );
-    heartGradient.addColorStop(0, "#ff3b3b");
-    heartGradient.addColorStop(1, "#ff0000");
-    ctx.fillStyle = heartGradient;
-    ctx.fill();
+    if (heartBroken) {
+      // Draw broken heart (split in two pieces with a gap)
+      // Left half
+      ctx.beginPath();
+      ctx.moveTo(heartX - 5, heartY + heartSize/3);
+      ctx.bezierCurveTo(
+        heartX - heartSize/2, heartY - heartSize/3,
+        heartX - heartSize, heartY + heartSize/3,
+        heartX - 15, heartY + heartSize/1.5
+      );
+      // Break line
+      ctx.lineTo(heartX - 15, heartY);
+      ctx.lineTo(heartX - 5, heartY + heartSize/6);
+      ctx.closePath();
+      
+      // Right half (shifted slightly)
+      ctx.beginPath();
+      ctx.moveTo(heartX + 5, heartY + heartSize/3);
+      ctx.bezierCurveTo(
+        heartX + heartSize/2, heartY - heartSize/3,
+        heartX + heartSize, heartY + heartSize/3,
+        heartX + 15, heartY + heartSize/1.5
+      );
+      // Break line
+      ctx.lineTo(heartX + 15, heartY);
+      ctx.lineTo(heartX + 5, heartY + heartSize/6);
+      ctx.closePath();
+      
+      // Heart gradient fill (dark red for broken heart)
+      const brokenHeartGradient = ctx.createLinearGradient(
+        heartX - heartSize/2, heartY - heartSize/2,
+        heartX + heartSize/2, heartY + heartSize/2
+      );
+      brokenHeartGradient.addColorStop(0, themeColors.heart.primary);
+      brokenHeartGradient.addColorStop(1, themeColors.heart.secondary);
+      ctx.fillStyle = brokenHeartGradient;
+      ctx.fill();
+      
+      // Crack line in the middle
+      ctx.beginPath();
+      ctx.moveTo(heartX, heartY - heartSize/4);
+      // Zigzag crack
+      ctx.lineTo(heartX - 8, heartY - heartSize/8);
+      ctx.lineTo(heartX + 5, heartY);
+      ctx.lineTo(heartX - 3, heartY + heartSize/6);
+      ctx.lineTo(heartX + 8, heartY + heartSize/3);
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else {
+      // Draw regular heart
+      ctx.beginPath();
+      ctx.moveTo(heartX, heartY + heartSize/3);
+      ctx.bezierCurveTo(
+        heartX - heartSize/2, heartY - heartSize/3,
+        heartX - heartSize, heartY + heartSize/3,
+        heartX, heartY + heartSize/1.5
+      );
+      ctx.bezierCurveTo(
+        heartX + heartSize, heartY + heartSize/3,
+        heartX + heartSize/2, heartY - heartSize/3,
+        heartX, heartY + heartSize/3
+      );
+      
+      // Heart gradient fill
+      const heartGradient = ctx.createLinearGradient(
+        heartX - heartSize/2, heartY - heartSize/2,
+        heartX + heartSize/2, heartY + heartSize/2
+      );
+      heartGradient.addColorStop(0, themeColors.heart.primary);
+      heartGradient.addColorStop(1, themeColors.heart.secondary);
+      ctx.fillStyle = heartGradient;
+      ctx.fill();
+    }
     
-    // White outline
+    // White outline for all heart versions
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 2;
     ctx.stroke();
     
-    // Add shine to heart (small white curve)
-    ctx.beginPath();
-    ctx.moveTo(heartX - heartSize/3, heartY - heartSize/5);
-    ctx.quadraticCurveTo(
-      heartX - heartSize/6, heartY - heartSize/3,
-      heartX, heartY - heartSize/4
-    );
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Add small hearts above the center heart (like in reference)
-    const miniHearts = [
-      { x: heartX - 20, y: heartY - 45, size: 15 },
-      { x: heartX + 15, y: heartY - 55, size: 20 },
-      { x: heartX + 40, y: heartY - 35, size: 15 }
-    ];
-
-    miniHearts.forEach(({x, y, size}) => {
+    // Reset shadow
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    
+    // Add shine to heart (small white curve) if not broken
+    if (!heartBroken) {
       ctx.beginPath();
-      ctx.moveTo(x, y + size/3);
-      ctx.bezierCurveTo(
-        x - size/2, y - size/3,
-        x - size, y + size/3,
-        x, y + size/1.5
+      ctx.moveTo(heartX - heartSize/3, heartY - heartSize/5);
+      ctx.quadraticCurveTo(
+        heartX - heartSize/6, heartY - heartSize/3,
+        heartX, heartY - heartSize/4
       );
-      ctx.bezierCurveTo(
-        x + size, y + size/3,
-        x + size/2, y - size/3,
-        x, y + size/3
-      );
-      
-      ctx.fillStyle = "#ff0000";
-      ctx.fill();
-      
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+      ctx.lineWidth = 2;
       ctx.stroke();
-    });
+    }
 
-    // Create panel for percentage and SHIP text (like in reference)
+    // Add small hearts above the center heart (like in reference) - only if good percentage
+    if (shipPercentage >= 50) {
+      const miniHearts = [
+        { x: heartX - 20, y: heartY - 45, size: 15 },
+        { x: heartX + 15, y: heartY - 55, size: 20 },
+        { x: heartX + 40, y: heartY - 35, size: 15 }
+      ];
+
+      miniHearts.forEach(({x, y, size}) => {
+        ctx.beginPath();
+        ctx.moveTo(x, y + size/3);
+        ctx.bezierCurveTo(
+          x - size/2, y - size/3,
+          x - size, y + size/3,
+          x, y + size/1.5
+        );
+        ctx.bezierCurveTo(
+          x + size, y + size/3,
+          x + size/2, y - size/3,
+          x, y + size/3
+        );
+        
+        ctx.fillStyle = themeColors.heart.primary;
+        ctx.fill();
+        
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+    } else if (theme === "neutral_negative") {
+      // Agregar una pequeña lágrima en lugar de corazones para el tema neutral_negative
+      ctx.beginPath();
+      ctx.moveTo(heartX + 10, heartY - 20);
+      ctx.bezierCurveTo(
+        heartX + 10, heartY - 15,
+        heartX + 15, heartY - 10,
+        heartX + 15, heartY
+      );
+      ctx.fillStyle = "#8eacff";
+      ctx.fill();
+    } else if (heartBroken) {
+      // Agregar lágrimas para corazones rotos
+      const tears = [
+        { x: heartX - 25, y: heartY - 15, size: 6 },
+        { x: heartX + 25, y: heartY - 20, size: 8 }
+      ];
+      
+      tears.forEach(({x, y, size}) => {
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.bezierCurveTo(
+          x - size/2, y + size,
+          x + size/2, y + size,
+          x, y
+        );
+        ctx.fillStyle = "#8eacff";
+        ctx.fill();
+      });
+    }
+
+    // Create panel for percentage and SHIP text
     // Semi-transparent panel
     const panelWidth = 220;
     const panelHeight = 130;
@@ -345,8 +548,8 @@ router.get("/", async (req, res) => {
     
     // Fill panel with semi-transparent gradient
     const panelGradient = ctx.createLinearGradient(panelX, panelY, panelX, panelY + panelHeight);
-    panelGradient.addColorStop(0, "rgba(0, 0, 0, 0.5)");
-    panelGradient.addColorStop(1, "rgba(0, 0, 0, 0.7)");
+    panelGradient.addColorStop(0, `rgba(0, 0, 0, ${panelAlpha - 0.1})`);
+    panelGradient.addColorStop(1, `rgba(0, 0, 0, ${panelAlpha})`);
     ctx.fillStyle = panelGradient;
     ctx.fill();
 
@@ -372,8 +575,8 @@ router.get("/", async (req, res) => {
       canvas.width/2 - 50, panelY + panelHeight - 30,
       canvas.width/2 + 50, panelY + panelHeight
     );
-    shipGradient.addColorStop(0, "#ff6b6b");
-    shipGradient.addColorStop(1, "#ff0000");
+    shipGradient.addColorStop(0, themeColors.ship.primary);
+    shipGradient.addColorStop(1, themeColors.ship.secondary);
     ctx.fillStyle = shipGradient;
     
     // Position in the lower part of the panel, but not touching the percentage
