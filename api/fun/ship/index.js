@@ -38,7 +38,7 @@ router.get("/", async (req, res) => {
         const response = await axios.get(url, { responseType: "arraybuffer" });
         return await Canvas.loadImage(Buffer.from(response.data));
       } catch (error) {
-        console.error(`Error loading image: ${url}`, error);
+        console.error(`Error cargando la imagen: ${url}`, error);
         return null;
       }
     };
@@ -48,7 +48,7 @@ router.get("/", async (req, res) => {
     const avatarImg2 = await loadImage(avatar2);
 
     if (!avatarImg1 || !avatarImg2) {
-      return res.status(500).json({ error: "Error loading avatar images" });
+      return res.status(500).json({ error: "Error al cargar las imagenes de los avatares" });
     }
 
     // CREATE STYLIZED BACKGROUND
