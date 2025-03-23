@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const { avatar1, avatar2, json, numero } = req.query;
+    const { avatar1, avatar2, json, numero, lenguage } = req.query;
 
     // Validate required parameters
     if (!avatar1 || !avatar2 || !numero) {
@@ -15,13 +15,189 @@ router.get("/", async (req, res) => {
       });
     }
 
+    // Define languages with translations
+    const languages = {
+      "ES": { // Spanish (default)
+        title: "Medidor de Amor:",
+        ship: "SHIP",
+        errorParams: "Faltan parámetros. Debes enviar avatar1, avatar2 y numero",
+        errorImages: "Error al cargar las imagenes de los avatares",
+        errorGeneral: "Error generating ship image",
+        loveCompatibility: "❤️ Compatibilidad de pareja ❤️"
+      },
+      "EN": { // English
+        title: "Love Meter:",
+        ship: "SHIP",
+        errorParams: "Missing parameters. You must send avatar1, avatar2 and number",
+        errorImages: "Error loading avatar images",
+        errorGeneral: "Error generating ship image",
+        loveCompatibility: "❤️ Couple Compatibility ❤️"
+      },
+      "FR": { // French
+        title: "Compteur d'Amour:",
+        ship: "COUPLE",
+        errorParams: "Paramètres manquants. Vous devez envoyer avatar1, avatar2 et numero",
+        errorImages: "Erreur lors du chargement des images d'avatar",
+        errorGeneral: "Erreur lors de la génération de l'image de couple",
+        loveCompatibility: "❤️ Compatibilité de couple ❤️"
+      },
+      "DE": { // German
+        title: "Liebesmesser:",
+        ship: "PAAR",
+        errorParams: "Fehlende Parameter. Sie müssen avatar1, avatar2 und numero senden",
+        errorImages: "Fehler beim Laden der Avatar-Bilder",
+        errorGeneral: "Fehler beim Generieren des Paarbildes",
+        loveCompatibility: "❤️ Paarkompatibilität ❤️"
+      },
+      "IT": { // Italian
+        title: "Misuratore d'Amore:",
+        ship: "COPPIA",
+        errorParams: "Parametri mancanti. Devi inviare avatar1, avatar2 e numero",
+        errorImages: "Errore durante il caricamento delle immagini dell'avatar",
+        errorGeneral: "Errore durante la generazione dell'immagine della coppia",
+        loveCompatibility: "❤️ Compatibilità di coppia ❤️"
+      },
+      "PT": { // Portuguese
+        title: "Medidor de Amor:",
+        ship: "CASAL",
+        errorParams: "Parâmetros ausentes. Você deve enviar avatar1, avatar2 e numero",
+        errorImages: "Erro ao carregar imagens de avatar",
+        errorGeneral: "Erro ao gerar imagem do casal",
+        loveCompatibility: "❤️ Compatibilidade do casal ❤️"
+      },
+      "RU": { // Russian
+        title: "Измеритель Любви:",
+        ship: "ПАРА",
+        errorParams: "Отсутствуют параметры. Вы должны отправить avatar1, avatar2 и numero",
+        errorImages: "Ошибка при загрузке изображений аватара",
+        errorGeneral: "Ошибка при создании изображения пары",
+        loveCompatibility: "❤️ Совместимость пары ❤️"
+      },
+      "JA": { // Japanese
+        title: "愛のメーター:",
+        ship: "カップル",
+        errorParams: "パラメータが不足しています。avatar1、avatar2、numeroを送信する必要があります",
+        errorImages: "アバター画像の読み込み中にエラーが発生しました",
+        errorGeneral: "カップル画像の生成中にエラーが発生しました",
+        loveCompatibility: "❤️ カップルの相性 ❤️"
+      },
+      "ZH": { // Chinese (Simplified)
+        title: "爱情测量仪:",
+        ship: "情侣",
+        errorParams: "缺少参数。您必须发送avatar1、avatar2和numero",
+        errorImages: "加载头像图片时出错",
+        errorGeneral: "生成情侣图片时出错",
+        loveCompatibility: "❤️ 情侣兼容性 ❤️"
+      },
+      "KO": { // Korean
+        title: "사랑 측정기:",
+        ship: "커플",
+        errorParams: "매개변수가 없습니다. avatar1, avatar2 및 numero를 보내야 합니다",
+        errorImages: "아바타 이미지를 로드하는 중 오류가 발생했습니다",
+        errorGeneral: "커플 이미지를 생성하는 중 오류가 발생했습니다",
+        loveCompatibility: "❤️ 커플 호환성 ❤️"
+      },
+      "AR": { // Arabic
+        title: "مقياس الحب:",
+        ship: "ثنائي",
+        errorParams: "معلمات مفقودة. يجب عليك إرسال avatar1 و avatar2 و numero",
+        errorImages: "خطأ في تحميل صور الرمز التعبيري",
+        errorGeneral: "خطأ في إنشاء صورة الثنائي",
+        loveCompatibility: "❤️ توافق الثنائي ❤️"
+      },
+      "HI": { // Hindi
+        title: "प्रेम मीटर:",
+        ship: "जोड़ी",
+        errorParams: "पैरामीटर गायब हैं। आपको avatar1, avatar2 और numero भेजना होगा",
+        errorImages: "अवतार छवियों को लोड करने में त्रुटि",
+        errorGeneral: "जोड़ी की छवि बनाने में त्रुटि",
+        loveCompatibility: "❤️ जोड़ी की संगतता ❤️"
+      },
+      "TR": { // Turkish
+        title: "Aşk Ölçer:",
+        ship: "ÇİFT",
+        errorParams: "Parametreler eksik. avatar1, avatar2 ve numero göndermelisiniz",
+        errorImages: "Avatar görüntüleri yüklenirken hata oluştu",
+        errorGeneral: "Çift resmi oluşturulurken hata oluştu",
+        loveCompatibility: "❤️ Çift Uyumluluğu ❤️"
+      },
+      "NL": { // Dutch
+        title: "Liefdesmeter:",
+        ship: "PAAR",
+        errorParams: "Ontbrekende parameters. Je moet avatar1, avatar2 en numero sturen",
+        errorImages: "Fout bij het laden van avatar-afbeeldingen",
+        errorGeneral: "Fout bij het genereren van paarafbeelding",
+        loveCompatibility: "❤️ Paarcompatibiliteit ❤️"
+      },
+      "PL": { // Polish
+        title: "Miernik Miłości:",
+        ship: "PARA",
+        errorParams: "Brakujące parametry. Musisz wysłać avatar1, avatar2 i numero",
+        errorImages: "Błąd podczas ładowania obrazów awatarów",
+        errorGeneral: "Błąd podczas generowania obrazu pary",
+        loveCompatibility: "❤️ Kompatybilność pary ❤️"
+      },
+      "SV": { // Swedish
+        title: "Kärleksmätare:",
+        ship: "PAR",
+        errorParams: "Saknade parametrar. Du måste skicka avatar1, avatar2 och numero",
+        errorImages: "Fel vid laddning av avatarbilder",
+        errorGeneral: "Fel vid generering av parbild",
+        loveCompatibility: "❤️ Parkompatibilitet ❤️"
+      },
+      "CS": { // Czech
+        title: "Měřič Lásky:",
+        ship: "PÁR",
+        errorParams: "Chybějící parametry. Musíte odeslat avatar1, avatar2 a numero",
+        errorImages: "Chyba při načítání obrázků avatarů",
+        errorGeneral: "Chyba při generování obrázku páru",
+        loveCompatibility: "❤️ Kompatibilita páru ❤️"
+      },
+      "HU": { // Hungarian
+        title: "Szerelemmérő:",
+        ship: "PÁR",
+        errorParams: "Hiányzó paraméterek. Küldenie kell avatar1, avatar2 és numero",
+        errorImages: "Hiba az avatár képek betöltésekor",
+        errorGeneral: "Hiba a párkép generálásakor",
+        loveCompatibility: "❤️ Pár kompatibilitás ❤️"
+      },
+      "ID": { // Indonesian
+        title: "Pengukur Cinta:",
+        ship: "PASANGAN",
+        errorParams: "Parameter yang hilang. Anda harus mengirimkan avatar1, avatar2, dan numero",
+        errorImages: "Kesalahan saat memuat gambar avatar",
+        errorGeneral: "Kesalahan saat menghasilkan gambar pasangan",
+        loveCompatibility: "❤️ Kompatibilitas Pasangan ❤️"
+      },
+      "EL": { // Greek
+        title: "Μετρητής Αγάπης:",
+        ship: "ΖΕΥΓΟΣ",
+        errorParams: "Λείπουν παράμετροι. Πρέπει να στείλετε avatar1, avatar2 και numero",
+        errorImages: "Σφάλμα κατά τη φόρτωση εικόνων avatar",
+        errorGeneral: "Σφάλμα κατά τη δημιουργία εικόνας ζεύγους",
+        loveCompatibility: "❤️ Συμβατότητα Ζεύγους ❤️"
+      },
+      "VI": { // Vietnamese
+        title: "Đồng Hồ Đo Tình Yêu:",
+        ship: "CẶP ĐÔI",
+        errorParams: "Thiếu tham số. Bạn phải gửi avatar1, avatar2 và numero",
+        errorImages: "Lỗi khi tải hình ảnh đại diện",
+        errorGeneral: "Lỗi khi tạo hình ảnh cặp đôi",
+        loveCompatibility: "❤️ Khả năng tương thích cặp đôi ❤️"
+      }
+    };
+
+    // Default to Spanish if language is not specified or not supported
+    const selectedLang = (lenguage && languages[lenguage.toUpperCase()]) ? lenguage.toUpperCase() : "ES";
+    const texts = languages[selectedLang];
+
     // Parse ship percentage (ensure it's between 0-100)
     const shipPercentage = Math.min(100, Math.max(0, parseInt(numero) || 0));
     
     // If user wants JSON response only
     if (json === "true") {
       return res.json({
-        message: "❤️ Compatibilidad de pareja ❤️",
+        message: texts.loveCompatibility,
         avatar1: avatar1,
         avatar2: avatar2,
         love_percentage: `${shipPercentage}%`
@@ -48,7 +224,7 @@ router.get("/", async (req, res) => {
     const avatarImg2 = await loadImage(avatar2);
 
     if (!avatarImg1 || !avatarImg2) {
-      return res.status(500).json({ error: "Error al cargar las imagenes de los avatares" });
+      return res.status(500).json({ error: texts.errorImages });
     }
 
     // Determinar apariencia basada en el porcentaje
@@ -230,7 +406,7 @@ router.get("/", async (req, res) => {
     ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
     ctx.fillRect(0, 0, canvas.width, 70);
 
-    // Draw "Medidor de Amor" title
+    // Draw title text in the selected language
     ctx.font = "bold 56px Arial";
     ctx.textAlign = "center";
     
@@ -250,7 +426,7 @@ router.get("/", async (req, res) => {
     titleGradient.addColorStop(1, themeColors.title.primary);
     ctx.fillStyle = titleGradient;
     
-    ctx.fillText("Medidor de Amor:", canvas.width/2, 50);
+    ctx.fillText(texts.title, canvas.width/2, 50);
     
     // Reset shadow
     ctx.shadowColor = "transparent";
@@ -567,7 +743,7 @@ router.get("/", async (req, res) => {
     // Position in the upper part of the panel
     ctx.fillText(`${shipPercentage}%`, canvas.width/2, panelY + 65);
     
-    // Draw "SHIP" text
+    // Draw "SHIP" text in the selected language
     ctx.font = "bold 40px Arial";
     
     // Gradient text for "SHIP"
@@ -580,7 +756,7 @@ router.get("/", async (req, res) => {
     ctx.fillStyle = shipGradient;
     
     // Position in the lower part of the panel, but not touching the percentage
-    ctx.fillText("SHIP", canvas.width/2, panelY + panelHeight - 25);
+    ctx.fillText(texts.ship, canvas.width/2, panelY + panelHeight - 25);
     
     // Reset shadow
     ctx.shadowColor = "transparent";
