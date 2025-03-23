@@ -166,7 +166,7 @@ router.get("/", async (req, res) => {
     titleGradient.addColorStop(1, "#ff6b6b");
     ctx.fillStyle = titleGradient;
     
-    ctx.fillText("Anny Cupido:", canvas.width/2, 50);
+    ctx.fillText("Medidor de Amor::", canvas.width/2, 50);
     
     // Reset shadow
     ctx.shadowColor = "transparent";
