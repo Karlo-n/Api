@@ -28,8 +28,8 @@ router.get("/", async (req, res) => {
       });
     }
 
-    // Create canvas with 16:9 ratio
-    const canvas = Canvas.createCanvas(900, 500);
+    // Create canvas (more landscape oriented, like the reference)
+    const canvas = Canvas.createCanvas(900, 430);
     const ctx = canvas.getContext("2d");
 
     // Load images safely with axios
@@ -51,139 +51,122 @@ router.get("/", async (req, res) => {
       return res.status(500).json({ error: "Error loading avatar images" });
     }
 
-    // SECTION 1: CREATE STYLIZED BACKGROUND INSTEAD OF USING IMAGE
-    // Create a beautiful gradient background
-    const bgGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    bgGradient.addColorStop(0, "#2c3e50");
-    bgGradient.addColorStop(0.5, "#4a69bd");
-    bgGradient.addColorStop(1, "#1e3799");
+    // CREATE STYLIZED BACKGROUND
+    // Create gradient background with blue stripes - similar to the reference image
+    const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    bgGradient.addColorStop(0, "#1e2a4a"); // Darker blue at top
+    bgGradient.addColorStop(1, "#253760"); // Slightly lighter blue at bottom
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Add a subtle pattern overlay
+    // Add vertical stripes
     ctx.globalAlpha = 0.1;
-    for (let i = 0; i < canvas.width; i += 20) {
-      for (let j = 0; j < canvas.height; j += 20) {
-        // Create a slight variation in the pattern
-        if ((i + j) % 40 === 0) {
-          ctx.fillStyle = "#ffffff";
-          ctx.beginPath();
-          ctx.arc(i, j, 2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
+    const stripeWidth = 50;
+    for (let x = 0; x < canvas.width; x += stripeWidth * 2) {
+      ctx.fillStyle = "#4a69bd";
+      ctx.fillRect(x, 0, stripeWidth, canvas.height);
     }
     ctx.globalAlpha = 1.0;
 
-    // Create decorative light beams
-    ctx.globalAlpha = 0.15;
-    for (let i = 0; i < 7; i++) {
-      const beamWidth = Math.random() * 100 + 50;
+    // Add subtle light beams
+    ctx.globalAlpha = 0.07;
+    for (let i = 0; i < 5; i++) {
+      const beamWidth = Math.random() * 100 + 100;
       const startX = Math.random() * canvas.width;
       
-      const beamGradient = ctx.createLinearGradient(startX, 0, startX + beamWidth/2, canvas.height);
-      beamGradient.addColorStop(0, "#f5f5f5");
-      beamGradient.addColorStop(0.5, "#ffffff");
-      beamGradient.addColorStop(1, "#f5f5f5");
+      const beamGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      beamGradient.addColorStop(0, "#8ab4f8");
+      beamGradient.addColorStop(1, "#2c5ea9");
       
       ctx.fillStyle = beamGradient;
       ctx.beginPath();
       ctx.moveTo(startX, 0);
       ctx.lineTo(startX + beamWidth, 0);
-      ctx.lineTo(startX + beamWidth/2 + beamWidth/4, canvas.height);
-      ctx.lineTo(startX + beamWidth/4, canvas.height);
+      ctx.lineTo(startX + beamWidth, canvas.height);
+      ctx.lineTo(startX, canvas.height);
       ctx.closePath();
       ctx.fill();
     }
     ctx.globalAlpha = 1.0;
 
-    // Add floating particles
-    ctx.globalAlpha = 0.6;
-    for (let i = 0; i < 100; i++) {
+    // Add small particles/stars
+    ctx.globalAlpha = 0.4;
+    for (let i = 0; i < 80; i++) {
       const x = Math.random() * canvas.width;
       const y = Math.random() * canvas.height;
-      const size = Math.random() * 2 + 1;
+      const size = Math.random() * 1.5 + 0.5;
       
-      const particleGradient = ctx.createRadialGradient(x, y, 0, x, y, size);
-      particleGradient.addColorStop(0, "rgba(255, 255, 255, 0.9)");
-      particleGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-      
-      ctx.fillStyle = particleGradient;
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.arc(x, y, size, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1.0;
 
-    // Add swirls/abstract design elements
-    ctx.globalAlpha = 0.2;
-    for (let i = 0; i < 5; i++) {
-      const centerX = Math.random() * canvas.width;
-      const centerY = Math.random() * canvas.height;
-      const radius = Math.random() * 100 + 50;
+    // Add decorative frame around the edge (like in reference)
+    // Outer frame
+    ctx.strokeStyle = "#ff6b6b"; // Red
+    ctx.lineWidth = 3;
+    ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+    
+    // Inner frame with white
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+
+    // Add corner decorations like in the reference
+    const cornerSize = 20;
+    const corners = [
+      { x: 15, y: 15 }, // Top left
+      { x: canvas.width - 15, y: 15 }, // Top right
+      { x: 15, y: canvas.height - 15 }, // Bottom left
+      { x: canvas.width - 15, y: canvas.height - 15 } // Bottom right
+    ];
+    
+    corners.forEach(corner => {
+      ctx.beginPath();
+      // Draw cross
+      ctx.moveTo(corner.x - 10, corner.y);
+      ctx.lineTo(corner.x + 10, corner.y);
+      ctx.moveTo(corner.x, corner.y - 10);
+      ctx.lineTo(corner.x, corner.y + 10);
+      ctx.strokeStyle = "#ff6b6b";
+      ctx.lineWidth = 2;
+      ctx.stroke();
       
-      // Create swirl effect
-      for (let angle = 0; angle < Math.PI * 10; angle += 0.1) {
-        const x = centerX + (angle * 5) * Math.cos(angle) / 10;
-        const y = centerY + (angle * 5) * Math.sin(angle) / 10;
-        const size = 3 - (angle / (Math.PI * 2));
-        
-        if (size > 0) {
-          ctx.fillStyle = "rgba(255, 182, 193, 0.3)";
-          ctx.beginPath();
-          ctx.arc(x, y, size, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    }
-    ctx.globalAlpha = 1.0;
+      // Add center circle
+      ctx.beginPath();
+      ctx.arc(corner.x, corner.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+    });
 
-    // Add decorative frame around the whole image
-    const frameWidth = 15;
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.lineWidth = frameWidth;
-    ctx.strokeRect(frameWidth/2, frameWidth/2, canvas.width - frameWidth, canvas.height - frameWidth);
-    
-    // Add inner frame with gradient
-    const innerFrameWidth = 3;
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, "#ff6b6b");
-    gradient.addColorStop(0.5, "#ffb8b8");
-    gradient.addColorStop(1, "#ff6b6b");
-    ctx.strokeStyle = gradient;
-    ctx.lineWidth = innerFrameWidth;
-    ctx.strokeRect(frameWidth + 5, frameWidth + 5, canvas.width - (frameWidth + 10) * 2, canvas.height - (frameWidth + 10) * 2);
+    // Add top banner with title
+    // Simply a transparent overlay at the top
+    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+    ctx.fillRect(0, 0, canvas.width, 70);
 
-    // Add top banner with gradient
-    const bannerHeight = 80;
-    const bannerGradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
-    bannerGradient.addColorStop(0, "rgba(0, 0, 0, 0.7)");
-    bannerGradient.addColorStop(0.5, "rgba(0, 0, 0, 0.5)");
-    bannerGradient.addColorStop(1, "rgba(0, 0, 0, 0.7)");
-    ctx.fillStyle = bannerGradient;
-    ctx.fillRect(0, 0, canvas.width, bannerHeight);
-
-    // Draw "Anny Cupido:" title with effects
+    // Draw "Anny Cupido:" title
     ctx.font = "bold 56px Arial";
-    
-    // Text shadow effect
-    ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
-    ctx.shadowBlur = 12;
-    ctx.shadowOffsetX = 3;
-    ctx.shadowOffsetY = 3;
-    
-    // Gradient text
-    const textGradient = ctx.createLinearGradient(
-      canvas.width/2 - 150, 20, 
-      canvas.width/2 + 150, 70
-    );
-    textGradient.addColorStop(0, "#ff6b6b");
-    textGradient.addColorStop(0.5, "#ff9d9d");
-    textGradient.addColorStop(1, "#ff6b6b");
-    ctx.fillStyle = textGradient;
-    
     ctx.textAlign = "center";
-    ctx.fillText("Anny Cupido:", canvas.width / 2, 55);
+    
+    // Text shadow for depth
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 5;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    
+    // Fill with gradient
+    const titleGradient = ctx.createLinearGradient(
+      canvas.width/2 - 150, 10, 
+      canvas.width/2 + 150, 60
+    );
+    titleGradient.addColorStop(0, "#ff6b6b");
+    titleGradient.addColorStop(0.5, "#ff9d9d");
+    titleGradient.addColorStop(1, "#ff6b6b");
+    ctx.fillStyle = titleGradient;
+    
+    ctx.fillText("Anny Cupido:", canvas.width/2, 50);
     
     // Reset shadow
     ctx.shadowColor = "transparent";
@@ -192,25 +175,25 @@ router.get("/", async (req, res) => {
     ctx.shadowOffsetY = 0;
 
     // Draw avatars with circular borders
-    const avatarSize = 160;
+    const avatarSize = 150;
     const avatarRadius = avatarSize / 2;
     const leftAvatarX = canvas.width * 0.25;
     const rightAvatarX = canvas.width * 0.75;
-    const avatarY = canvas.height * 0.4;
+    const avatarY = canvas.height * 0.45;
 
     // Function to draw circular avatar with decorative elements
     const drawAvatar = (x, y, avatarImg) => {
-      // Draw glow effect behind avatar
+      // Draw glow effect behind avatar (red glow like in reference)
       const glowGradient = ctx.createRadialGradient(
         x, y, avatarRadius * 0.9,
-        x, y, avatarRadius * 1.6
+        x, y, avatarRadius * 1.5
       );
-      glowGradient.addColorStop(0, "rgba(255, 107, 107, 0.8)");
-      glowGradient.addColorStop(0.5, "rgba(255, 107, 107, 0.3)");
-      glowGradient.addColorStop(1, "rgba(255, 107, 107, 0)");
+      glowGradient.addColorStop(0, "rgba(255, 0, 0, 0.3)");
+      glowGradient.addColorStop(0.7, "rgba(255, 0, 0, 0.1)");
+      glowGradient.addColorStop(1, "rgba(255, 0, 0, 0)");
       
       ctx.beginPath();
-      ctx.arc(x, y, avatarRadius * 1.6, 0, Math.PI * 2);
+      ctx.arc(x, y, avatarRadius * 1.5, 0, Math.PI * 2);
       ctx.fillStyle = glowGradient;
       ctx.fill();
       
@@ -223,39 +206,30 @@ router.get("/", async (req, res) => {
       ctx.drawImage(avatarImg, x - avatarRadius, y - avatarRadius, avatarSize, avatarSize);
       ctx.restore();
       
-      // Red circle border (gradient)
-      const borderGradient = ctx.createLinearGradient(
-        x - avatarRadius, y - avatarRadius,
-        x + avatarRadius, y + avatarRadius
-      );
-      borderGradient.addColorStop(0, "#ff3b3b");
-      borderGradient.addColorStop(1, "#ff7777");
-      
-      ctx.strokeStyle = borderGradient;
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      ctx.arc(x, y, avatarRadius + 3, 0, Math.PI * 2);
-      ctx.stroke();
-      
-      // White outer border with shadow
-      ctx.shadowColor = "rgba(0,0,0,0.5)";
-      ctx.shadowBlur = 15;
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      // Red circle border
+      ctx.strokeStyle = "#ff0000";
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.arc(x, y, avatarRadius + 10, 0, Math.PI * 2);
+      ctx.arc(x, y, avatarRadius + 2, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.shadowColor = "transparent";
       
-      // Add decorative dots around avatar
-      for (let i = 0; i < 8; i++) {
-        const angle = i * Math.PI / 4;
-        const dotX = x + (avatarRadius + 20) * Math.cos(angle);
-        const dotY = y + (avatarRadius + 20) * Math.sin(angle);
+      // White outer border
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, avatarRadius + 7, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      // Add small white dots around avatar (like in reference)
+      const dotCount = 8;
+      for (let i = 0; i < dotCount; i++) {
+        const angle = (i / dotCount) * Math.PI * 2;
+        const dotX = x + Math.cos(angle) * (avatarRadius + 15);
+        const dotY = y + Math.sin(angle) * (avatarRadius + 15);
         
         ctx.beginPath();
-        ctx.arc(dotX, dotY, 3, 0, Math.PI * 2);
-        ctx.fillStyle = i % 2 === 0 ? "#ff3b3b" : "#ffffff";
+        ctx.arc(dotX, dotY, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
         ctx.fill();
       }
     };
@@ -264,266 +238,152 @@ router.get("/", async (req, res) => {
     drawAvatar(leftAvatarX, avatarY, avatarImg1);
     drawAvatar(rightAvatarX, avatarY, avatarImg2);
 
-    // Draw a connection line between avatars
+    // Draw dashed line connecting the avatars (like in reference)
     ctx.beginPath();
+    ctx.setLineDash([5, 5]);
     ctx.moveTo(leftAvatarX + avatarRadius + 15, avatarY);
     ctx.lineTo(rightAvatarX - avatarRadius - 15, avatarY);
-    ctx.setLineDash([5, 5]);
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw a better heart in the center
+    // Draw heart in the center
     const heartX = canvas.width / 2;
     const heartY = avatarY;
-    const heartSize = 100;
+    const heartSize = 70;
     
-    // Heart shadow
-    ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
-    ctx.shadowBlur = 15;
-    ctx.shadowOffsetX = 5;
-    ctx.shadowOffsetY = 5;
-    
-    // Custom heart drawing with complex gradient fill
+    // Draw main heart
     ctx.beginPath();
-    ctx.moveTo(heartX, heartY + heartSize/4);
+    ctx.moveTo(heartX, heartY + heartSize/3);
     ctx.bezierCurveTo(
-      heartX - heartSize/2, heartY - heartSize/2, 
-      heartX - heartSize, heartY + heartSize/4, 
+      heartX - heartSize/2, heartY - heartSize/3,
+      heartX - heartSize, heartY + heartSize/3,
       heartX, heartY + heartSize/1.5
     );
     ctx.bezierCurveTo(
-      heartX + heartSize, heartY + heartSize/4, 
-      heartX + heartSize/2, heartY - heartSize/2, 
-      heartX, heartY + heartSize/4
+      heartX + heartSize, heartY + heartSize/3,
+      heartX + heartSize/2, heartY - heartSize/3,
+      heartX, heartY + heartSize/3
     );
-    ctx.closePath();
     
-    // Heart gradient fill
-    const heartGradient = ctx.createRadialGradient(
-      heartX, heartY, heartSize/4,
-      heartX, heartY, heartSize
+    // Heart gradient fill (bright red like reference)
+    const heartGradient = ctx.createLinearGradient(
+      heartX - heartSize/2, heartY - heartSize/2,
+      heartX + heartSize/2, heartY + heartSize/2
     );
-    heartGradient.addColorStop(0, "#ff5252");
-    heartGradient.addColorStop(0.7, "#ff0000");
-    heartGradient.addColorStop(1, "#b30000");
+    heartGradient.addColorStop(0, "#ff3b3b");
+    heartGradient.addColorStop(1, "#ff0000");
     ctx.fillStyle = heartGradient;
     ctx.fill();
     
-    // Heart outline
+    // White outline
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
     ctx.stroke();
+    
+    // Add shine to heart (small white curve)
+    ctx.beginPath();
+    ctx.moveTo(heartX - heartSize/3, heartY - heartSize/5);
+    ctx.quadraticCurveTo(
+      heartX - heartSize/6, heartY - heartSize/3,
+      heartX, heartY - heartSize/4
+    );
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Add small hearts above the center heart (like in reference)
+    const miniHearts = [
+      { x: heartX - 20, y: heartY - 45, size: 15 },
+      { x: heartX + 15, y: heartY - 55, size: 20 },
+      { x: heartX + 40, y: heartY - 35, size: 15 }
+    ];
+
+    miniHearts.forEach(({x, y, size}) => {
+      ctx.beginPath();
+      ctx.moveTo(x, y + size/3);
+      ctx.bezierCurveTo(
+        x - size/2, y - size/3,
+        x - size, y + size/3,
+        x, y + size/1.5
+      );
+      ctx.bezierCurveTo(
+        x + size, y + size/3,
+        x + size/2, y - size/3,
+        x, y + size/3
+      );
+      
+      ctx.fillStyle = "#ff0000";
+      ctx.fill();
+      
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    // Create panel for percentage and SHIP text (like in reference)
+    // Semi-transparent panel
+    const panelWidth = 220;
+    const panelHeight = 130;
+    const panelX = canvas.width/2 - panelWidth/2;
+    const panelY = avatarY + 80;
+    
+    // Draw panel with rounded corners
+    ctx.beginPath();
+    const cornerRadius = 10;
+    ctx.moveTo(panelX + cornerRadius, panelY);
+    ctx.lineTo(panelX + panelWidth - cornerRadius, panelY);
+    ctx.quadraticCurveTo(panelX + panelWidth, panelY, panelX + panelWidth, panelY + cornerRadius);
+    ctx.lineTo(panelX + panelWidth, panelY + panelHeight - cornerRadius);
+    ctx.quadraticCurveTo(panelX + panelWidth, panelY + panelHeight, panelX + panelWidth - cornerRadius, panelY + panelHeight);
+    ctx.lineTo(panelX + cornerRadius, panelY + panelHeight);
+    ctx.quadraticCurveTo(panelX, panelY + panelHeight, panelX, panelY + panelHeight - cornerRadius);
+    ctx.lineTo(panelX, panelY + cornerRadius);
+    ctx.quadraticCurveTo(panelX, panelY, panelX + cornerRadius, panelY);
+    ctx.closePath();
+    
+    // Fill panel with semi-transparent gradient
+    const panelGradient = ctx.createLinearGradient(panelX, panelY, panelX, panelY + panelHeight);
+    panelGradient.addColorStop(0, "rgba(0, 0, 0, 0.5)");
+    panelGradient.addColorStop(1, "rgba(0, 0, 0, 0.7)");
+    ctx.fillStyle = panelGradient;
+    ctx.fill();
+
+    // Draw percentage
+    ctx.font = "bold 80px Arial";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ffffff";
+    
+    // Add shadow for depth
+    ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+    ctx.shadowBlur = 5;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    
+    // Position in the upper part of the panel
+    ctx.fillText(`${shipPercentage}%`, canvas.width/2, panelY + 65);
+    
+    // Draw "SHIP" text
+    ctx.font = "bold 40px Arial";
+    
+    // Gradient text for "SHIP"
+    const shipGradient = ctx.createLinearGradient(
+      canvas.width/2 - 50, panelY + panelHeight - 30,
+      canvas.width/2 + 50, panelY + panelHeight
+    );
+    shipGradient.addColorStop(0, "#ff6b6b");
+    shipGradient.addColorStop(1, "#ff0000");
+    ctx.fillStyle = shipGradient;
+    
+    // Position in the lower part of the panel, but not touching the percentage
+    ctx.fillText("SHIP", canvas.width/2, panelY + panelHeight - 25);
     
     // Reset shadow
     ctx.shadowColor = "transparent";
     ctx.shadowBlur = 0;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
-    
-    // Add shine effect to heart
-    ctx.beginPath();
-    ctx.moveTo(heartX - heartSize/3, heartY - heartSize/4);
-    ctx.quadraticCurveTo(
-      heartX - heartSize/6, heartY - heartSize/3,
-      heartX - heartSize/8, heartY - heartSize/8
-    );
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    // Add small hearts around the main heart
-    const miniHearts = [
-      { x: heartX - heartSize/2, y: heartY - heartSize/2, size: heartSize/4 },
-      { x: heartX + heartSize/3, y: heartY - heartSize/2.5, size: heartSize/3 },
-      { x: heartX, y: heartY - heartSize/1.8, size: heartSize/5 }
-    ];
-
-    miniHearts.forEach(miniHeart => {
-      const { x, y, size } = miniHeart;
-      
-      // Draw mini heart with shadow
-      ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-      ctx.shadowBlur = 5;
-      
-      ctx.beginPath();
-      ctx.moveTo(x, y + size/4);
-      ctx.bezierCurveTo(
-        x - size/2, y - size/2, 
-        x - size, y + size/4, 
-        x, y + size/1.5
-      );
-      ctx.bezierCurveTo(
-        x + size, y + size/4, 
-        x + size/2, y - size/2, 
-        x, y + size/4
-      );
-      ctx.closePath();
-      
-      // Fill mini heart with gradient
-      const miniHeartGradient = ctx.createLinearGradient(x - size, y - size, x + size, y + size);
-      miniHeartGradient.addColorStop(0, "#ff5252");
-      miniHeartGradient.addColorStop(1, "#ff0000");
-      ctx.fillStyle = miniHeartGradient;
-      ctx.fill();
-      
-      // Mini heart outline
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      
-      // Reset shadow
-      ctx.shadowColor = "transparent";
-      ctx.shadowBlur = 0;
-    });
-
-    // Create glass-effect panel for percentage
-    ctx.save();
-    const panelWidth = 240;
-    const panelHeight = 150;
-    const panelX = canvas.width/2 - panelWidth/2;
-    const panelY = canvas.height * 0.68 - 40;
-    
-    // Panel background with gradient and glass effect
-    const panelGradient = ctx.createLinearGradient(
-      panelX, panelY,
-      panelX + panelWidth, panelY + panelHeight
-    );
-    panelGradient.addColorStop(0, "rgba(0, 0, 0, 0.4)");
-    panelGradient.addColorStop(1, "rgba(0, 0, 0, 0.6)");
-    
-    // Draw rounded rectangle
-    const radius = 15;
-    ctx.beginPath();
-    ctx.moveTo(panelX + radius, panelY);
-    ctx.lineTo(panelX + panelWidth - radius, panelY);
-    ctx.quadraticCurveTo(panelX + panelWidth, panelY, panelX + panelWidth, panelY + radius);
-    ctx.lineTo(panelX + panelWidth, panelY + panelHeight - radius);
-    ctx.quadraticCurveTo(panelX + panelWidth, panelY + panelHeight, panelX + panelWidth - radius, panelY + panelHeight);
-    ctx.lineTo(panelX + radius, panelY + panelHeight);
-    ctx.quadraticCurveTo(panelX, panelY + panelHeight, panelX, panelY + panelHeight - radius);
-    ctx.lineTo(panelX, panelY + radius);
-    ctx.quadraticCurveTo(panelX, panelY, panelX + radius, panelY);
-    ctx.closePath();
-    
-    ctx.fillStyle = panelGradient;
-    ctx.fill();
-    
-    // Panel border
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    
-    // Add glass shine effect
-    ctx.beginPath();
-    ctx.moveTo(panelX + 20, panelY + 15);
-    ctx.lineTo(panelX + panelWidth - 20, panelY + 30);
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
-    ctx.lineWidth = 10;
-    ctx.stroke();
-    
-    // Draw decorative lines inside panel
-    ctx.beginPath();
-    ctx.moveTo(panelX + 15, panelY + 15);
-    ctx.lineTo(panelX + panelWidth - 15, panelY + 15);
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(panelX + 15, panelY + panelHeight - 15);
-    ctx.lineTo(panelX + panelWidth - 15, panelY + panelHeight - 15);
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    
-    // Draw percentage with 3D effect
-    ctx.font = "bold 100px Arial";
-    
-    // Draw shadow
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(`${shipPercentage}%`, canvas.width / 2 + 4, canvas.height * 0.68 + 4);
-    
-    // Draw text with gradient
-    const percentGradient = ctx.createLinearGradient(
-      canvas.width/2 - 80, panelY + 20,
-      canvas.width/2 + 80, panelY + panelHeight - 20
-    );
-    percentGradient.addColorStop(0, "#ffffff");
-    percentGradient.addColorStop(0.5, "#f0f0f0");
-    percentGradient.addColorStop(1, "#e0e0e0");
-    ctx.fillStyle = percentGradient;
-    ctx.fillText(`${shipPercentage}%`, canvas.width / 2, canvas.height * 0.68);
-    
-    // Add "SHIP" text with special effects
-    ctx.font = "bold 45px Arial";
-    
-    // Text shadow for depth
-    ctx.shadowColor = "rgba(0,0,0,0.7)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 3;
-    ctx.shadowOffsetY = 3;
-    
-    // Text gradient
-    const shipGradient = ctx.createLinearGradient(
-      canvas.width/2 - 60, canvas.height * 0.85 - 20,
-      canvas.width/2 + 60, canvas.height * 0.85 + 20
-    );
-    shipGradient.addColorStop(0, "#ff6b6b");
-    shipGradient.addColorStop(0.5, "#ff9d9d");
-    shipGradient.addColorStop(1, "#ff6b6b");
-    ctx.fillStyle = shipGradient;
-    
-    ctx.fillText("SHIP", canvas.width / 2, canvas.height * 0.88);
-    
-    // Reset shadow
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
-    ctx.restore();
-
-    // Add decorative corner elements
-    const cornerSize = 30;
-    const cornerOffset = 30;
-    const corners = [
-      { x: cornerOffset, y: cornerOffset }, // Top left
-      { x: canvas.width - cornerOffset, y: cornerOffset }, // Top right
-      { x: cornerOffset, y: canvas.height - cornerOffset }, // Bottom left
-      { x: canvas.width - cornerOffset, y: canvas.height - cornerOffset } // Bottom right
-    ];
-    
-    corners.forEach(corner => {
-      // Draw decorative corner
-      ctx.beginPath();
-      if (corner.x < canvas.width / 2) {
-        // Left corners
-        ctx.moveTo(corner.x, corner.y - cornerSize / 2);
-        ctx.lineTo(corner.x, corner.y + cornerSize / 2);
-        ctx.moveTo(corner.x - cornerSize / 2, corner.y);
-        ctx.lineTo(corner.x + cornerSize / 2, corner.y);
-      } else {
-        // Right corners
-        ctx.moveTo(corner.x, corner.y - cornerSize / 2);
-        ctx.lineTo(corner.x, corner.y + cornerSize / 2);
-        ctx.moveTo(corner.x - cornerSize / 2, corner.y);
-        ctx.lineTo(corner.x + cornerSize / 2, corner.y);
-      }
-      
-      ctx.strokeStyle = "#ff6b6b";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      
-      // Add decorative dot
-      ctx.beginPath();
-      ctx.arc(corner.x, corner.y, 5, 0, Math.PI * 2);
-      ctx.fillStyle = "#ffffff";
-      ctx.fill();
-      ctx.strokeStyle = "#ff6b6b";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    });
 
     // Send image as response
     res.setHeader("Content-Type", "image/png");
