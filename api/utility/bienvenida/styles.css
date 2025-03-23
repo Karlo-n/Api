@@ -306,6 +306,7 @@ main {
     align-items: center;
     min-height: 500px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: auto;
 }
 
 #previewCanvas {
@@ -325,6 +326,7 @@ main {
     padding: 15px;
     margin-top: 10px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    display: none;
 }
 
 .api-url p {
@@ -466,6 +468,7 @@ main {
     
     .preview-container {
         padding: 10px;
+        overflow-x: auto;
     }
     
     .buttons {
