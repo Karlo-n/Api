@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const apiBaseUrl = window.location.origin + '/api/utility/bienvenida/bienvenida-styled';
     let configHistory = [];
     let historyPosition = -1;
-    let currentConfig = {};
 
     // Referencias DOM
     const tabs = document.querySelectorAll('.tab');
@@ -639,14 +638,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Generar URL de API
     function generateApiUrl() {
-        // Obtener todos los parámetros configurados
         const params = new URLSearchParams();
-        
-        // Dimensiones
+
+        // ========== DIMENSIONES ==========
         params.append('width', document.getElementById('canvasWidth').value);
         params.append('height', document.getElementById('canvasHeight').value);
         
-        // Fondo
+        // ========== FONDO ==========
         const bgType = document.getElementById('bgType').value;
         switch (bgType) {
             case 'color':
@@ -666,27 +664,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
         }
         
-        // Borde - CORREGIDO
+        // ========== BORDE ==========
         params.append('borderRadius', document.getElementById('borderRadius').value);
         params.append('borderColor', document.getElementById('borderColor').value.replace('#', ''));
         params.append('borderWidth', document.getElementById('borderWidth').value);
         
-        // Textos - CORREGIDO para que coincida con imageGenerator.js
+        // ========== TEXTOS ==========
+        // Se debe enviar explícitamente cada propiedad de texto ya que
+        // el servidor espera parámetros específicos
         activeTextElements.forEach((textElement, index) => {
             const num = index + 1;
+            
+            // Propiedades principales del texto
             params.append(`texto${num}`, textElement.text);
             params.append(`textX${num}`, textElement.x);
             params.append(`textY${num}`, textElement.y);
+            
+            // Estilo de fuente y formato
             params.append(`textSize${num}`, textElement.size);
             params.append(`textColor${num}`, textElement.color.replace('#', ''));
             params.append(`textFont${num}`, textElement.font);
             params.append(`textStyle${num}`, textElement.style);
+            
+            // Sombra (opcional)
             if (textElement.shadow) {
                 params.append(`textShadow${num}`, 'true');
             }
         });
         
-        // Avatar principal - CORREGIDO
+        // ========== AVATAR PRINCIPAL ==========
         const mainAvatarUrl = document.getElementById('mainAvatarUrl').value;
         if (mainAvatarUrl) {
             params.append('avatar', mainAvatarUrl);
@@ -695,12 +701,14 @@ document.addEventListener('DOMContentLoaded', function() {
             params.append('avatarSize', document.getElementById('mainAvatarSize').value);
             params.append('avatarShape', document.getElementById('mainAvatarShape').value);
             params.append('avatarBorderColor', document.getElementById('mainAvatarBorderColor').value.replace('#', ''));
+            
+            // Efecto de brillo
             if (document.getElementById('mainAvatarGlow').checked) {
                 params.append('avatarGlow', 'true');
             }
         }
         
-        // Avatares adicionales
+        // ========== AVATARES ADICIONALES ==========
         for (let i = 1; i <= 4; i++) {
             const avatarUrl = document.getElementById(`avatarUrl${i}`);
             if (avatarUrl && avatarUrl.value) {
@@ -712,23 +720,24 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Efectos - CORREGIDO
+        // ========== EFECTOS ==========
         const effectType = document.getElementById('globalEffect').value;
         if (effectType !== 'none') {
             params.append('effectType', effectType);
             params.append('effectIntensity', document.getElementById('effectIntensitySlider').value);
-            // Añadir colores de efectos también para algunos tipos de efectos
+            
+            // Colores para efectos que los usan
             if (['gradient', 'sparkle', 'rays', 'cyberpunk', 'retro', 'grid'].includes(effectType)) {
                 params.append('effectColor1', document.getElementById('effectColor1').value.replace('#', ''));
                 params.append('effectColor2', document.getElementById('effectColor2').value.replace('#', ''));
             }
         }
         
-        // Generar la URL
+        // Generar la URL completa
         const apiUrl = `${apiBaseUrl}?${params.toString()}`;
-        apiUrlOutput.textContent = apiUrl;
         
-        // Mostrar el contenedor de la URL
+        // Mostrar la URL generada
+        apiUrlOutput.textContent = apiUrl;
         document.getElementById('apiUrlContainer').style.display = 'block';
         
         // Animar para atraer la atención
@@ -736,6 +745,9 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             apiUrlOutput.classList.remove('fadeIn');
         }, 500);
+        
+        // Opcional: Previsualizar la imagen generada
+        // window.open(apiUrl, '_blank');
     }
     
     // Guardar el estado actual para deshacer/rehacer
