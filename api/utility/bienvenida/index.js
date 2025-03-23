@@ -15,9 +15,13 @@ router.get("/", (req, res) => {
     res.sendFile(HTML_PATH);
 });
 
-// Rutas explícitas para CSS y JS de la raíz
+// Rutas para CSS y JS
+router.get("/bienvenida/styles.css", (req, res) => {
+    res.sendFile(path.join(__dirname, 'styles.css'));
+});
+
 router.get("/styles.css", (req, res) => {
-    res.sendFile(path.join(ROOT_DIR, 'styles.css'));
+    res.sendFile(path.join(__dirname, 'styles.css')); // Mantenemos backward compatibility
 });
 
 router.get("/script.js", (req, res) => {
