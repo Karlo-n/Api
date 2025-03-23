@@ -7,28 +7,25 @@ const { generateWelcomeImage } = require('./imageGenerator');
 // Ruta al archivo HTML
 const HTML_PATH = path.join(__dirname, 'index.html');
 
-// Ruta a la raíz del proyecto
-const ROOT_DIR = path.join(__dirname, '../../../');
-
 // Ruta principal - Sirve el HTML
 router.get("/", (req, res) => {
     res.sendFile(HTML_PATH);
 });
 
-// Rutas para CSS y JS
+// Rutas para archivos estáticos
 router.get("/bienvenida/styles.css", (req, res) => {
     res.sendFile(path.join(__dirname, 'styles.css'));
 });
 
 router.get("/styles.css", (req, res) => {
-    res.sendFile(path.join(__dirname, 'styles.css')); // Mantenemos backward compatibility
-});
-
-router.get("/script.js", (req, res) => {
-    res.sendFile(path.join(__dirname, 'script.js'));
+    res.sendFile(path.join(__dirname, 'styles.css'));
 });
 
 router.get("/bienvenida/script.js", (req, res) => {
+    res.sendFile(path.join(__dirname, 'script.js'));
+});
+
+router.get("/script.js", (req, res) => {
     res.sendFile(path.join(__dirname, 'script.js'));
 });
 
@@ -38,8 +35,12 @@ router.use('/temp', express.static(path.join(__dirname, 'temp')));
 // Endpoint para generar imágenes de bienvenida
 router.get("/bienvenida-styled", async (req, res) => {
     try {
+        console.log("Recibida solicitud para generar imagen con parámetros:", req.query);
+        
         // Generar imagen usando los parámetros recibidos
         const imagePath = await generateWelcomeImage(req.query);
+        
+        console.log("Imagen generada en:", imagePath);
         
         // Enviar la imagen generada
         res.sendFile(imagePath);
@@ -55,6 +56,14 @@ router.get("/bienvenida-styled", async (req, res) => {
 // Endpoint adicional para compatibilidad
 router.get("/bienvenida", async (req, res) => {
     res.redirect(`/api/utility/bienvenida/bienvenida-styled?${new URLSearchParams(req.query).toString()}`);
+});
+
+// Endpoint para depuración
+router.get("/debug-params", (req, res) => {
+    res.json({
+        query: req.query,
+        message: "Estos son los parámetros que se están enviando a la API"
+    });
 });
 
 // Exportar el router
