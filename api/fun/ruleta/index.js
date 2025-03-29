@@ -205,11 +205,13 @@ async function generarRuletaGIF(colores, velocidad) {
     
     // Seleccionar un índice aleatorio para el resultado
     const indiceResultado = Math.floor(Math.random() * segmentos);
-    const colorResultado = colores[indiceResultado];
     
     // Calcular el ángulo final para que se detenga en el resultado
     // Añadimos un pequeño offset para que caiga en el centro del segmento
     const anguloFinal = 2 * Math.PI - (indiceResultado * anguloPorSegmento + anguloPorSegmento / 2);
+    
+    // Almacenar el color que corresponde al índice seleccionado
+    const colorResultado = colores[indiceResultado];
     
     // Calcular la rotación total (vueltas completas + ángulo final)
     const rotacionTotal = (2 * Math.PI * config.vueltas) + anguloFinal;
@@ -451,9 +453,25 @@ async function generarRuletaGIF(colores, velocidad) {
             ctx.shadowOffsetX = 2;
             ctx.shadowOffsetY = 2;
             
+            // Determinar dónde se detuvo la flecha
+            // Usamos el segmento donde apunta la flecha al final de la rotación
+            let colorMostrado = colorResultado;
+            
+            // Calcular posición de la flecha (siempre en la parte superior, PI/2)
+            // Tenemos que calcular qué segmento está en esa posición
+            const anguloFicha = Math.PI/2; // Posición de la flecha (arriba)
+            const anguloFinal = (anguloFicha - rotacionActual) % (2 * Math.PI);
+            const segmentoFinal = Math.floor(((2 * Math.PI - anguloFinal) % (2 * Math.PI)) / anguloPorSegmento);
+            
+            // Asegurarnos de que el índice está dentro del rango
+            const segmentoAjustado = ((segmentoFinal % segmentos) + segmentos) % segmentos;
+            
+            // Usar el color que realmente está bajo la flecha
+            colorMostrado = colores[segmentoAjustado];
+            
             // Mostrar texto con destello y con el COLOR CORRECTO
             ctx.fillStyle = `rgba(255, 255, 255, ${0.8 + intensidadDestello * 0.2})`;
-            ctx.fillText(`¡TOCÓ ${colorResultado.nombre.toUpperCase()}!`, centerX, bannerY + bannerHeight/2);
+            ctx.fillText(`¡TOCÓ ${colorMostrado.nombre.toUpperCase()}!`, centerX, bannerY + bannerHeight/2);
             ctx.shadowColor = 'transparent';
             
             // Agregar destello alrededor del resultado
@@ -462,7 +480,7 @@ async function generarRuletaGIF(colores, velocidad) {
             const gradiente = ctx.createRadialGradient(centerX, bannerY + bannerHeight/2, 70, centerX, bannerY + bannerHeight/2, 140);
             
             // Usar color del resultado para el destello
-            const colorBase = colorResultado.hex;
+            const colorBase = colorMostrado.hex;
             gradiente.addColorStop(0, `rgba(255, 255, 255, ${0.3 * intensidadDestello})`);
             gradiente.addColorStop(0.5, `${colorBase}50`);
             gradiente.addColorStop(1, 'rgba(255, 255, 255, 0)');
