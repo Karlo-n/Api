@@ -155,19 +155,22 @@ async function generarRuletaGIF(colores, velocidad) {
     // Configuración basada en velocidad
     const configuracionVelocidad = {
         "lento": { 
-            frames: 120, 
-            delay: 10,
-            vueltas: 2.5
+            frames: 180, 
+            delay: 8,
+            vueltas: 2.5,
+            framesFinales: 20
         },
         "normal": { 
-            frames: 90, 
-            delay: 8,
-            vueltas: 3.5
+            frames: 150, 
+            delay: 6,
+            vueltas: 3.5,
+            framesFinales: 15
         },
         "veloz": { 
-            frames: 60, 
-            delay: 5,
-            vueltas: 5
+            frames: 120, 
+            delay: 4,
+            vueltas: 5,
+            framesFinales: 10
         }
     };
     
@@ -211,15 +214,21 @@ async function generarRuletaGIF(colores, velocidad) {
     // Calcular la rotación total (vueltas completas + ángulo final)
     const rotacionTotal = (2 * Math.PI * config.vueltas) + anguloFinal;
     
+    // Calcular frames totales (incluyendo los frames finales para mostrar resultado)
+    const framesTotal = config.frames + config.framesFinales;
+    
     // Generar cada frame
-    for (let frame = 0; frame < config.frames; frame++) {
+    for (let frame = 0; frame < framesTotal; frame++) {
+        // Calcular si estamos en los frames finales (mostrando resultado)
+        const esFrameFinal = frame >= config.frames;
+        
         // Calcular ángulo actual con desaceleración
-        const progreso = frame / (config.frames - 1); // 0 a 1
+        const progreso = Math.min(1, frame / (config.frames - 1)); // 0 a 1, no supera 1
         
         // Aplicar desaceleración (empieza rápido y termina lento)
-        // Usamos una función de easing: cubicInOut
-        const easeInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        const progresoEaseOut = 1 - easeInOut(1 - progreso);
+        // Usamos una función de easing más suave: quintOut para mejor desaceleración
+        const easeOut = t => 1 - Math.pow(1 - t, 5);
+        const progresoEaseOut = easeOut(progreso);
         
         const rotacionActual = progresoEaseOut * rotacionTotal;
         
@@ -285,6 +294,51 @@ async function generarRuletaGIF(colores, velocidad) {
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 2;
         ctx.stroke();
+        
+        // Mostrar texto de resultado en los frames finales
+        if (esFrameFinal) {
+            // Crear efecto de parpadeo/destello para llamar la atención
+            const intensidadDestello = Math.sin((frame - config.frames) / 2) * 0.5 + 0.5;
+            
+            // Dibujar banner con resultado
+            const bannerHeight = 80;
+            const bannerY = height - bannerHeight - 20;
+            
+            // Fondo semitransparente
+            ctx.fillStyle = `rgba(0, 0, 0, 0.7)`;
+            ctx.fillRect(20, bannerY, width - 40, bannerHeight);
+            
+            // Borde brillante
+            ctx.strokeStyle = colorResultado.hex;
+            ctx.lineWidth = 4;
+            ctx.strokeRect(20, bannerY, width - 40, bannerHeight);
+            
+            // Texto de resultado
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 32px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Texto con sombra
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 5;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            
+            // Mostrar texto con destello
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.8 + intensidadDestello * 0.2})`;
+            ctx.fillText(`¡TOCÓ ${colorResultado.nombre.toUpperCase()}!`, centerX, bannerY + bannerHeight/2);
+            ctx.shadowColor = 'transparent';
+            
+            // Agregar destello alrededor del resultado
+            ctx.beginPath();
+            ctx.arc(centerX, bannerY + bannerHeight/2, 120, 0, 2 * Math.PI);
+            const gradiente = ctx.createRadialGradient(centerX, bannerY + bannerHeight/2, 70, centerX, bannerY + bannerHeight/2, 120);
+            gradiente.addColorStop(0, `rgba(255, 255, 255, ${0.2 * intensidadDestello})`);
+            gradiente.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = gradiente;
+            ctx.fill();
+        }
         
         // Añadir frame al GIF
         encoder.addFrame(ctx);
