@@ -489,22 +489,6 @@ async function generarRuletaGIF(colores, velocidad) {
         bufferStream.on('error', reject);
     });
 }
-    }
-    
-    // Finalizar el GIF
-    encoder.finish();
-    
-    // Recolectar datos del stream
-    return new Promise((resolve, reject) => {
-        const chunks = [];
-        bufferStream.on('data', chunk => chunks.push(chunk));
-        bufferStream.on('end', () => {
-            const gifBuffer = Buffer.concat(chunks);
-            resolve({ gifBuffer, colorResultado });
-        });
-        bufferStream.on('error', reject);
-    });
-}
 
 // Limpieza periódica de archivos (cada 12 horas)
 setInterval(() => {
