@@ -234,32 +234,21 @@ async function generarRuletaGIF(colores, velocidad) {
         
         const rotacionActual = progresoEaseOut * rotacionTotal;
         
-        // Limpiar canvas con un fondo oscuro estilo casino
-        const bgGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, height);
-        bgGradient.addColorStop(0, '#1a1a1a');
-        bgGradient.addColorStop(1, '#0a0a0a');
-        ctx.fillStyle = bgGradient;
+        // Limpiar canvas con un fondo oscuro sencillo, sin gradiente
+        ctx.fillStyle = '#121212';
         ctx.fillRect(0, 0, width, height);
         
-        // Dibujar borde exterior lujoso (dorado)
+        // Dibujar borde exterior simple
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius + 25, 0, 2 * Math.PI);
-        ctx.fillStyle = '#2a1f0e';
+        ctx.fillStyle = '#1a1a1a';
         ctx.fill();
         
-        // Dibujar borde dorado brillante
-        const borderGradient = ctx.createRadialGradient(
-            centerX, centerY, radius + 15, 
-            centerX, centerY, radius + 25
-        );
-        borderGradient.addColorStop(0, '#d4af37');
-        borderGradient.addColorStop(0.5, '#f9df7b');
-        borderGradient.addColorStop(1, '#d4af37');
-        
+        // Borde simple
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius + 20, 0, 2 * Math.PI);
-        ctx.strokeStyle = borderGradient;
-        ctx.lineWidth = 10;
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 5;
         ctx.stroke();
         
         // Fondo de la ruleta (más oscuro que el fondo general)
@@ -268,7 +257,7 @@ async function generarRuletaGIF(colores, velocidad) {
         ctx.fillStyle = '#0e0e0e';
         ctx.fill();
         
-        // Dibujar segmentos de la ruleta estilo casino
+        // Dibujar segmentos de la ruleta estilo casino - sin brillos
         for (let i = 0; i < segmentos; i++) {
             const startAngle = i * anguloPorSegmento - Math.PI / 2 + rotacionActual;
             const endAngle = (i + 1) * anguloPorSegmento - Math.PI / 2 + rotacionActual;
@@ -278,13 +267,13 @@ async function generarRuletaGIF(colores, velocidad) {
             ctx.arc(centerX, centerY, radius, startAngle, endAngle);
             ctx.closePath();
             
-            // Color del segmento (colores alternos para algunos diseños)
+            // Color del segmento (sin efectos de brillo)
             ctx.fillStyle = colores[i].hex;
             ctx.fill();
             
-            // Borde metálico de los segmentos
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.lineWidth = 2;
+            // Borde simple entre segmentos
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 1;
             ctx.stroke();
             
             // Añadir números y textos como en ruleta de casino
@@ -292,7 +281,7 @@ async function generarRuletaGIF(colores, velocidad) {
             const numeroRadius = radius * 0.8; // Posición del número
             const textoRadius = radius * 0.5; // Posición del texto
             
-            // Dibujar número del segmento (como en ruletas de casino)
+            // Dibujar número del segmento
             const numX = centerX + numeroRadius * Math.cos(anguloTexto);
             const numY = centerY + numeroRadius * Math.sin(anguloTexto);
             
@@ -325,49 +314,21 @@ async function generarRuletaGIF(colores, velocidad) {
             ctx.translate(textoX, textoY);
             ctx.rotate(anguloTexto + Math.PI/2);
             
-            // Texto con borde para mejor legibilidad
+            // Texto simple sin efectos de brillo
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#000000';
-            ctx.strokeText(colores[i].nombre, 0, 0);
             ctx.fillStyle = '#ffffff';
             ctx.fillText(colores[i].nombre, 0, 0);
             
             ctx.restore();
             
-            // Dibujar pequeños diamantes en los bordes entre segmentos
-            const diamondRadius = radius + 10;
-            const diamondX = centerX + diamondRadius * Math.cos(startAngle);
-            const diamondY = centerY + diamondRadius * Math.sin(startAngle);
-            
-            ctx.save();
-            ctx.translate(diamondX, diamondY);
-            ctx.rotate(startAngle + Math.PI/4);
-            
-            // Diamante brillante
-            ctx.beginPath();
-            ctx.rect(-3, -3, 6, 6);
-            ctx.fillStyle = '#f9df7b'; // Dorado
-            ctx.fill();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            
-            ctx.restore();
+            // Ya no dibujamos los diamantes brillantes
         }
         
-        // Dibujar centro de la ruleta (más elaborado estilo casino)
-        // Círculo exterior
+        // Dibujar centro de la ruleta (simplificado, sin brillos)
         ctx.beginPath();
         ctx.arc(centerX, centerY, 40, 0, 2 * Math.PI);
-        const centerGradient = ctx.createRadialGradient(
-            centerX, centerY, 10,
-            centerX, centerY, 40
-        );
-        centerGradient.addColorStop(0, '#d4af37');
-        centerGradient.addColorStop(1, '#8b6914');
-        ctx.fillStyle = centerGradient;
+        ctx.fillStyle = '#333333';
         ctx.fill();
         
         // Círculo interior
@@ -375,7 +336,7 @@ async function generarRuletaGIF(colores, velocidad) {
         ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
         ctx.fillStyle = '#0e0e0e';
         ctx.fill();
-        ctx.strokeStyle = '#f9df7b';
+        ctx.strokeStyle = '#444444';
         ctx.lineWidth = 2;
         ctx.stroke();
         
@@ -386,7 +347,7 @@ async function generarRuletaGIF(colores, velocidad) {
         ctx.textBaseline = 'middle';
         ctx.fillText('RULETA', centerX, centerY);
         
-        // Dibujar marcador/flecha de la ruleta (más ornamentado)
+        // Dibujar marcador/flecha de la ruleta (simplificado)
         // Triángulo base
         ctx.beginPath();
         ctx.moveTo(centerX, centerY - radius - 15);
@@ -394,100 +355,14 @@ async function generarRuletaGIF(colores, velocidad) {
         ctx.lineTo(centerX + 20, centerY - radius - 40);
         ctx.closePath();
         
-        // Gradiente para el marcador
-        const markerGradient = ctx.createLinearGradient(
-            centerX, centerY - radius - 40,
-            centerX, centerY - radius - 15
-        );
-        markerGradient.addColorStop(0, '#d4af37');
-        markerGradient.addColorStop(0.5, '#f9df7b');
-        markerGradient.addColorStop(1, '#d4af37');
-        
-        ctx.fillStyle = markerGradient;
+        ctx.fillStyle = '#cc0000'; // Rojo simple
         ctx.fill();
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = '#000000';
         ctx.lineWidth = 2;
         ctx.stroke();
         
-        // Añadir brillo al marcador
-        ctx.beginPath();
-        ctx.moveTo(centerX - 10, centerY - radius - 35);
-        ctx.lineTo(centerX + 10, centerY - radius - 35);
-        ctx.lineTo(centerX, centerY - radius - 25);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fill();
-        
-        // Mostrar texto de resultado en los frames finales
-        if (esFrameFinal) {
-            // Crear efecto de parpadeo/destello para llamar la atención
-            const intensidadDestello = Math.sin((frame - config.frames) / 2) * 0.5 + 0.5;
-            
-            // Dibujar banner con resultado
-            const bannerHeight = 80;
-            const bannerY = height - bannerHeight - 20;
-            
-            // Fondo semitransparente con borde dorado
-            ctx.fillStyle = `rgba(0, 0, 0, 0.8)`;
-            ctx.fillRect(20, bannerY, width - 40, bannerHeight);
-            
-            // Borde brillante dorado
-            const bannerGradient = ctx.createLinearGradient(20, bannerY, width - 20, bannerY + bannerHeight);
-            bannerGradient.addColorStop(0, '#d4af37');
-            bannerGradient.addColorStop(0.5, '#f9df7b');
-            bannerGradient.addColorStop(1, '#d4af37');
-            
-            ctx.strokeStyle = bannerGradient;
-            ctx.lineWidth = 4;
-            ctx.strokeRect(20, bannerY, width - 40, bannerHeight);
-            
-            // Texto de resultado con el color correcto del resultado
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 36px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            // Texto con sombra
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-            ctx.shadowBlur = 5;
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
-            
-            // Determinar dónde se detuvo la flecha
-            // Usamos el segmento donde apunta la flecha al final de la rotación
-            let colorMostrado = colorResultado;
-            
-            // Calcular posición de la flecha (siempre en la parte superior, PI/2)
-            // Tenemos que calcular qué segmento está en esa posición
-            const anguloFicha = Math.PI/2; // Posición de la flecha (arriba)
-            const anguloFinal = (anguloFicha - rotacionActual) % (2 * Math.PI);
-            const segmentoFinal = Math.floor(((2 * Math.PI - anguloFinal) % (2 * Math.PI)) / anguloPorSegmento);
-            
-            // Asegurarnos de que el índice está dentro del rango
-            const segmentoAjustado = ((segmentoFinal % segmentos) + segmentos) % segmentos;
-            
-            // Usar el color que realmente está bajo la flecha
-            colorMostrado = colores[segmentoAjustado];
-            
-            // Mostrar texto con destello y con el COLOR CORRECTO
-            ctx.fillStyle = `rgba(255, 255, 255, ${0.8 + intensidadDestello * 0.2})`;
-            ctx.fillText(`¡TOCÓ ${colorMostrado.nombre.toUpperCase()}!`, centerX, bannerY + bannerHeight/2);
-            ctx.shadowColor = 'transparent';
-            
-            // Agregar destello alrededor del resultado
-            ctx.beginPath();
-            ctx.arc(centerX, bannerY + bannerHeight/2, 140, 0, 2 * Math.PI);
-            const gradiente = ctx.createRadialGradient(centerX, bannerY + bannerHeight/2, 70, centerX, bannerY + bannerHeight/2, 140);
-            
-            // Usar color del resultado para el destello
-            const colorBase = colorMostrado.hex;
-            gradiente.addColorStop(0, `rgba(255, 255, 255, ${0.3 * intensidadDestello})`);
-            gradiente.addColorStop(0.5, `${colorBase}50`);
-            gradiente.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            
-            ctx.fillStyle = gradiente;
-            ctx.fill();
-        }
+        // Ya no mostraremos el texto de resultado (banner eliminado)
+        // Los frames finales simplemente continuarán mostrando la ruleta detenida
         
         // Añadir frame al GIF
         encoder.addFrame(ctx);
