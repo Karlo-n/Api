@@ -66,3 +66,6 @@ router.get("/", async (req, res) => {
     });
   }
 });
+
+// Esta es la línea correcta para exportar el router
+module.exports = router;
