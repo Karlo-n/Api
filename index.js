@@ -15,7 +15,6 @@ const invertir = require("./api/fun/invertir");
 const pixelArtRoutes = require('./api/fun/pixel');
 const comicFilter = require("./api/fun/comic");
 const juego21Router = require("./api/fun/21");
-const audioVisualizerRouter = require("./api/fun/audiovisualizer");
 const triviaRouter = require("./api/fun/trivia");
 const wouldYouRatherRouter = require('./api/fun/would-you-rather');
 const ruletaRouter = require("./api/fun/ruleta");
@@ -44,7 +43,6 @@ app.use("/api/fun/invertir", invertir);
 app.use('/api/fun/pixel', pixelArtRoutes);
 app.use("/api/fun/comic", comicFilter);
 app.use("/api/fun/21", juego21Router);
-app.use("/api/fun/audiovisualizer", audioVisualizerRouter);
 app.use("/api/fun/trivia", triviaRouter);
 app.use("/api/fun/would-you-rather", wouldYouRatherRouter);
 app.use("/api/fun/ruleta", ruletaRouter);
@@ -81,7 +79,6 @@ app.get("/", (req, res) => {
     "/api/fun/pixel",
     "/api/fun/comic",
     "/api/fun/21",
-    "/api/fun/audiovisualizer",
     "/api/fun/trivia",
     "/api/fun/would-you-rather",
     "/api/fun/ruleta",
