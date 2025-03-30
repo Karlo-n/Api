@@ -19,6 +19,7 @@ const audioVisualizerRouter = require("./api/fun/audiovisualizer");
 const triviaRouter = require("./api/fun/trivia");
 const wouldYouRatherRouter = require('./api/fun/would-you-rather');
 const ruletaRouter = require("./api/fun/ruleta");
+const sleepingRouter = require("./api/fun/sleeping");
 const bienvenidaRouter = require('./api/utility/bienvenida');
 const qrRouter = require("./api/utility/qr");
 const boostCardRouter = require("./api/utility/boostcard");
@@ -47,6 +48,7 @@ app.use("/api/fun/audiovisualizer", audioVisualizerRouter);
 app.use("/api/fun/trivia", triviaRouter);
 app.use("/api/fun/would-you-rather", wouldYouRatherRouter);
 app.use("/api/fun/ruleta", ruletaRouter);
+app.use("/api/fun/sleeping", sleepingRouter);
 app.use('/api/utility/bienvenida', bienvenidaRouter);
 app.use("/api/utility/qr", qrRouter);
 app.use("/api/utility/boostcard", boostCardRouter);
@@ -83,6 +85,7 @@ app.get("/", (req, res) => {
     "/api/fun/trivia",
     "/api/fun/would-you-rather",
     "/api/fun/ruleta",
+    "/api/fun/sleeping",
     "/api/utility/boostcard",
     "/api/utility/traductor",
     "/api/utility/bienvenida",
