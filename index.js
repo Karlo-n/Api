@@ -19,6 +19,7 @@ const triviaRouter = require("./api/fun/trivia");
 const wouldYouRatherRouter = require('./api/fun/would-you-rather');
 const ruletaRouter = require("./api/fun/ruleta");
 const sleepingRouter = require("./api/fun/sleeping");
+const akinator = require("./api/fun/akinator");
 const bienvenidaRouter = require('./api/utility/bienvenida');
 const qrRouter = require("./api/utility/qr");
 const boostCardRouter = require("./api/utility/boostcard");
