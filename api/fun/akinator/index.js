@@ -188,31 +188,31 @@ router.get("/partida/:id", (req, res) => {
     const tematica = obtenerTematicaCategoria(partida.categoria);
     
     return res.json({
-        🎮: "Akinator API", // Nombre decorativo
-        🆔: partidaId, // ID de partida
-        partidaId: partidaId,
-        estado: partida.terminada ? "✅ Terminada" : "⏳ Activa",
-        personaje: partida.terminada ? partida.personaje : null,
-        imagen: partida.terminada && partida.personaje ? partida.imagenPersonaje : null,
-        progreso: `${partida.progreso}%`,
-        progreso_valor: partida.progreso,
-        categoria: partida.categoria,
-        tema: tematica,
-        ❓: partida.preguntaActual,
-        pregunta_actual: partida.preguntaActual,
-        preguntas_hechas: partida.preguntasHechas || 0,
-        tiempo_transcurrido: obtenerTiempoTranscurrido(partida.fechaCreacion),
-        fecha_creacion: partida.fechaCreacion,
-        tiempo_limite: partida.cancelada ? "⌛ Tiempo excedido" : "⏱️ 30 segundos para responder",
-        historial: partida.historial || [],
-        botones: [
-            { valor: "si", texto: "✅ Sí", color: "#4CAF50" },
-            { valor: "no", texto: "❌ No", color: "#F44336" },
-            { valor: "tal_vez", texto: "🤔 Tal vez", color: "#2196F3" },
-            { valor: "probablemente", texto: "🔄 Probablemente", color: "#FF9800" },
-            { valor: "desconozco", texto: "❓ No lo sé", color: "#9E9E9E" }
+        "🎮": "Akinator API", // Nombre decorativo
+        "🆔": partidaId, // ID de partida
+        "partidaId": partidaId,
+        "estado": partida.terminada ? "✅ Terminada" : "⏳ Activa",
+        "personaje": partida.terminada ? partida.personaje : null,
+        "imagen": partida.terminada && partida.personaje ? partida.imagenPersonaje : null,
+        "progreso": `${partida.progreso}%`,
+        "progreso_valor": partida.progreso,
+        "categoria": partida.categoria,
+        "tema": tematica,
+        "❓": partida.preguntaActual,
+        "pregunta_actual": partida.preguntaActual,
+        "preguntas_hechas": partida.preguntasHechas || 0,
+        "tiempo_transcurrido": obtenerTiempoTranscurrido(partida.fechaCreacion),
+        "fecha_creacion": partida.fechaCreacion,
+        "tiempo_limite": partida.cancelada ? "⌛ Tiempo excedido" : "⏱️ 30 segundos para responder",
+        "historial": partida.historial || [],
+        "botones": [
+            { "valor": "si", "texto": "✅ Sí", "color": "#4CAF50" },
+            { "valor": "no", "texto": "❌ No", "color": "#F44336" },
+            { "valor": "tal_vez", "texto": "🤔 Tal vez", "color": "#2196F3" },
+            { "valor": "probablemente", "texto": "🔄 Probablemente", "color": "#FF9800" },
+            { "valor": "desconozco", "texto": "❓ No lo sé", "color": "#9E9E9E" }
         ],
-        next_url: partida.terminada ? 
+        "next_url": partida.terminada ? 
             `/api/fun/akinator?partidaId=${partidaId}&reiniciar=true` : 
             `/api/fun/akinator?partidaId=${partidaId}&respuesta=`
     });
@@ -267,34 +267,34 @@ async function iniciarNuevaPartida(categoria, formato, res) {
         
         // Respuesta estándar con todos los detalles y decoración
         return res.json({
-            🎮: "Akinator API", // Nombre decorativo
-            🆔: nuevoId, // ID de partida
-            partidaId: nuevoId,
-            ❓: respuestaIA.pregunta, // Pregunta actual con emoji
-            pregunta: respuestaIA.pregunta,
-            contexto: respuestaIA.contexto,
-            progreso: 0,
-            pregunta_numero: 0,
-            categoria: categoria,
-            tema: obtenerTematicaCategoria(categoria),
-            tiempo_limite: "⏱️ 30 segundos para responder",
-            opciones_respuesta: {
-                ✅: "Sí, es correcto",
-                ❌: "No",
-                🤔: "Tal vez",
-                🔄: "Probablemente sí",
-                ⚠️: "Probablemente no",
-                🔀: "Depende",
-                ❓: "No lo sé"
+            "🎮": "Akinator API", // Nombre decorativo
+            "🆔": nuevoId, // ID de partida
+            "partidaId": nuevoId,
+            "❓": respuestaIA.pregunta, // Pregunta actual con emoji
+            "pregunta": respuestaIA.pregunta,
+            "contexto": respuestaIA.contexto,
+            "progreso": 0,
+            "pregunta_numero": 0,
+            "categoria": categoria,
+            "tema": obtenerTematicaCategoria(categoria),
+            "tiempo_limite": "⏱️ 30 segundos para responder",
+            "opciones_respuesta": {
+                "✅": "Sí, es correcto",
+                "❌": "No",
+                "🤔": "Tal vez",
+                "🔄": "Probablemente sí",
+                "⚠️": "Probablemente no",
+                "🔀": "Depende",
+                "❓": "No lo sé"
             },
-            botones: [
-                { valor: "si", texto: "✅ Sí", color: "#4CAF50" },
-                { valor: "no", texto: "❌ No", color: "#F44336" },
-                { valor: "tal_vez", texto: "🤔 Tal vez", color: "#2196F3" },
-                { valor: "probablemente", texto: "🔄 Probablemente", color: "#FF9800" },
-                { valor: "desconozco", texto: "❓ No lo sé", color: "#9E9E9E" }
+            "botones": [
+                { "valor": "si", "texto": "✅ Sí", "color": "#4CAF50" },
+                { "valor": "no", "texto": "❌ No", "color": "#F44336" },
+                { "valor": "tal_vez", "texto": "🤔 Tal vez", "color": "#2196F3" },
+                { "valor": "probablemente", "texto": "🔄 Probablemente", "color": "#FF9800" },
+                { "valor": "desconozco", "texto": "❓ No lo sé", "color": "#9E9E9E" }
             ],
-            next_url: `/api/fun/akinator?partidaId=${nuevoId}&respuesta=`
+            "next_url": `/api/fun/akinator?partidaId=${nuevoId}&respuesta=`
         });
 
     } catch (error) {
@@ -542,11 +542,11 @@ async function procesarRespuesta(partidaId, respuesta, formato, res) {
     // Si formato simple, respuesta mínima
     if (formato === 'simple') {
         const respuesta = {
-            partidaId: partidaId,
-            pregunta: partida.preguntaActual,
-            terminada: partida.terminada,
-            personaje: partida.terminada ? partida.personaje : null,
-            mensaje: partida.terminada ? partida.mensajeFinal : null
+            "partidaId": partidaId,
+            "pregunta": partida.preguntaActual,
+            "terminada": partida.terminada,
+            "personaje": partida.terminada ? partida.personaje : null,
+            "mensaje": partida.terminada ? partida.mensajeFinal : null
         };
         
         // Si terminada y hay personaje, incluir imagen
@@ -564,51 +564,51 @@ async function procesarRespuesta(partidaId, respuesta, formato, res) {
     if (partida.terminada) {
         // Respuesta cuando ha terminado (adivinado o cancelado)
         return res.json({
-            🎮: "Akinator API", // Nombre decorativo
-            🆔: partidaId, // ID de partida
-            partidaId: partidaId,
-            estado: "✅ ¡Adivinado!",
-            terminada: true,
-            ✨: partida.personaje,
-            personaje: partida.personaje,
-            mensaje: partida.mensajeFinal,
-            imagen: partida.imagenPersonaje,
-            descripcion: partida.descripcionPersonaje || `Un ${partida.categoria}`,
-            confianza: `${partida.confianza}%`,
-            progreso: `100%`,
-            pregunta_numero: partida.preguntasHechas,
-            categoria: partida.categoria,
-            tema: tematica,
-            tiempo_transcurrido: obtenerTiempoTranscurrido(partida.fechaCreacion),
-            estadisticas: {
-                preguntas_realizadas: partida.preguntasHechas,
-                tiempo_total: obtenerTiempoTranscurrido(partida.fechaCreacion),
-                fecha_inicio: partida.fechaCreacion,
-                fecha_fin: new Date().toISOString()
+            "🎮": "Akinator API", // Nombre decorativo
+            "🆔": partidaId, // ID de partida
+            "partidaId": partidaId,
+            "estado": "✅ ¡Adivinado!",
+            "terminada": true,
+            "✨": partida.personaje,
+            "personaje": partida.personaje,
+            "mensaje": partida.mensajeFinal,
+            "imagen": partida.imagenPersonaje,
+            "descripcion": partida.descripcionPersonaje || `Un ${partida.categoria}`,
+            "confianza": `${partida.confianza}%`,
+            "progreso": `100%`,
+            "pregunta_numero": partida.preguntasHechas,
+            "categoria": partida.categoria,
+            "tema": tematica,
+            "tiempo_transcurrido": obtenerTiempoTranscurrido(partida.fechaCreacion),
+            "estadisticas": {
+                "preguntas_realizadas": partida.preguntasHechas,
+                "tiempo_total": obtenerTiempoTranscurrido(partida.fechaCreacion),
+                "fecha_inicio": partida.fechaCreacion,
+                "fecha_fin": new Date().toISOString()
             },
-            acciones: {
-                reiniciar: `/api/fun/akinator?partidaId=${partidaId}&reiniciar=true`,
-                nueva_partida: "/api/fun/akinator"
+            "acciones": {
+                "reiniciar": `/api/fun/akinator?partidaId=${partidaId}&reiniciar=true`,
+                "nueva_partida": "/api/fun/akinator"
             }
         });
     } else {
         // Respuesta cuando aún está en curso
         return res.json({
-            🎮: "Akinator API", // Nombre decorativo
-            🆔: partidaId, // ID de partida
-            partidaId: partidaId,
-            ❓: respuestaIA.pregunta, // Pregunta actual con emoji
-            pregunta: respuestaIA.pregunta,
-            contexto: respuestaIA.contexto,
-            progreso: `${partida.progreso}%`,
-            progreso_valor: partida.progreso,
-            pregunta_numero: partida.preguntasHechas,
-            categoria: partida.categoria,
-            tema: tematica,
-            terminada: false,
-            tiempo_limite: "⏱️ 30 segundos para responder",
-            tiempo_transcurrido: obtenerTiempoTranscurrido(partida.fechaCreacion),
-            opciones_respuesta: {
+            "🎮": "Akinator API", // Nombre decorativo
+            "🆔": partidaId, // ID de partida
+            "partidaId": partidaId,
+            "❓": respuestaIA.pregunta, // Pregunta actual con emoji
+            "pregunta": respuestaIA.pregunta,
+            "contexto": respuestaIA.contexto,
+            "progreso": `${partida.progreso}%`,
+            "progreso_valor": partida.progreso,
+            "pregunta_numero": partida.preguntasHechas,
+            "categoria": partida.categoria,
+            "tema": tematica,
+            "terminada": false,
+            "tiempo_limite": "⏱️ 30 segundos para responder",
+            "tiempo_transcurrido": obtenerTiempoTranscurrido(partida.fechaCreacion),
+            "opciones_respuesta": {
                 "✅": "Sí, es correcto",
                 "❌": "No",
                 "🤔": "Tal vez",
@@ -617,14 +617,14 @@ async function procesarRespuesta(partidaId, respuesta, formato, res) {
                 "🔀": "Depende",
                 "❓": "No lo sé"
             },
-            botones: [
-                { valor: "si", texto: "✅ Sí", color: "#4CAF50" },
-                { valor: "no", texto: "❌ No", color: "#F44336" },
-                { valor: "tal_vez", texto: "🤔 Tal vez", color: "#2196F3" },
-                { valor: "probablemente", texto: "🔄 Probablemente", color: "#FF9800" },
-                { valor: "desconozco", texto: "❓ No lo sé", color: "#9E9E9E" }
+            "botones": [
+                { "valor": "si", "texto": "✅ Sí", "color": "#4CAF50" },
+                { "valor": "no", "texto": "❌ No", "color": "#F44336" },
+                { "valor": "tal_vez", "texto": "🤔 Tal vez", "color": "#2196F3" },
+                { "valor": "probablemente", "texto": "🔄 Probablemente", "color": "#FF9800" },
+                { "valor": "desconozco", "texto": "❓ No lo sé", "color": "#9E9E9E" }
             ],
-            next_url: `/api/fun/akinator?partidaId=${partidaId}&respuesta=`
+            "next_url": `/api/fun/akinator?partidaId=${partidaId}&respuesta=`
         });
     }
 }
@@ -757,25 +757,44 @@ router.get("/admin/partidas", (req, res) => {
     });
 });
 
-// Limpiar partidas caducadas (mejorado)
+// Limpiar partidas caducadas y temporizadores
 setInterval(() => {
     const ahora = Date.now();
     const tiempoMaximo = 60 * 60 * 1000; // 1 hora (mayor tiempo de caducidad)
     let partidasEliminadas = 0;
+    let temporizadoresLimpiados = 0;
     
+    // Limpiar partidas inactivas
     Object.keys(partidasActivas).forEach(id => {
         const partida = partidasActivas[id];
         const ultimaInteraccion = new Date(partida.ultimaInteraccion || partida.fechaCreacion).getTime();
         const tiempoTranscurrido = ahora - ultimaInteraccion;
         
         if (tiempoTranscurrido > tiempoMaximo) {
+            // Limpiar temporizador asociado si existe
+            if (temporizadoresPartidas[id]) {
+                clearTimeout(temporizadoresPartidas[id]);
+                delete temporizadoresPartidas[id];
+                temporizadoresLimpiados++;
+            }
+            
+            // Eliminar partida
             delete partidasActivas[id];
             partidasEliminadas++;
         }
     });
     
-    if (partidasEliminadas > 0) {
-        console.log(`Limpieza de partidas: ${partidasEliminadas} partidas eliminadas por inactividad`);
+    // Limpiar temporizadores huérfanos (sin partida asociada)
+    Object.keys(temporizadoresPartidas).forEach(id => {
+        if (!partidasActivas[id]) {
+            clearTimeout(temporizadoresPartidas[id]);
+            delete temporizadoresPartidas[id];
+            temporizadoresLimpiados++;
+        }
+    });
+    
+    if (partidasEliminadas > 0 || temporizadoresLimpiados > 0) {
+        console.log(`🧹 Limpieza: ${partidasEliminadas} partidas y ${temporizadoresLimpiados} temporizadores eliminados por inactividad`);
     }
 }, 10 * 60 * 1000); // Ejecutar cada 10 minutos
 
