@@ -47,6 +47,7 @@ app.use("/api/fun/trivia", triviaRouter);
 app.use("/api/fun/would-you-rather", wouldYouRatherRouter);
 app.use("/api/fun/ruleta", ruletaRouter);
 app.use("/api/fun/sleeping", sleepingRouter);
+app.use("/api/fun/akinator", akinatorRouter);
 app.use('/api/utility/bienvenida', bienvenidaRouter);
 app.use("/api/utility/qr", qrRouter);
 app.use("/api/utility/boostcard", boostCardRouter);
