@@ -165,8 +165,14 @@ async function generarTarjetaTwitter(opciones) {
     // Seleccionar tema o usar blanco como predeterminado
     const tema = colores[opciones.colorFondo] || colores.blanco;
     
+    // Añadir un fondo con degradado muy sutil para más profundidad
+    const fondoGradiente = ctx.createLinearGradient(0, 0, 0, alto);
+    fondoGradiente.addColorStop(0, tema.fondo);
+    fondoGradiente.addColorStop(1, tema.fondo === "#ffffff" ? "#f8f8f8" : 
+                                  tema.fondo === "#15202b" ? "#101a25" : "#050505");
+    
     // Establecer color de fondo principal (con borde redondeado)
-    ctx.fillStyle = tema.fondo;
+    ctx.fillStyle = fondoGradiente;
     ctx.beginPath();
     dibujarRectanguloRedondeado(ctx, 0, 0, ancho, alto, 16);
     ctx.closePath();
@@ -177,11 +183,25 @@ async function generarTarjetaTwitter(opciones) {
     ctx.lineWidth = 1;
     ctx.stroke();
     
+    // Añadir un destello muy sutil en la parte superior (efecto de luz)
+    const brilloGradiente = ctx.createLinearGradient(ancho/2, 0, ancho/2, 70);
+    brilloGradiente.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
+    brilloGradiente.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    
+    ctx.fillStyle = brilloGradiente;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(ancho, 0);
+    ctx.lineTo(ancho, 70);
+    ctx.lineTo(0, 70);
+    ctx.closePath();
+    ctx.fill();
+    
     // Aplicar sombra muy sutil a toda la tarjeta
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
-    ctx.shadowBlur = 5;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+    ctx.shadowBlur = 8;
     ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 2;
+    ctx.shadowOffsetY = 3;
     
     // Variables para posicionamiento
     const tamañoPerfil = 60;
@@ -274,9 +294,22 @@ async function generarTarjetaTwitter(opciones) {
             offsetY += 34;
         }
         
-        // Dibujar texto del tweet con mejor formato
+        // Dibujar texto del tweet con mejor formato y estilo
         ctx.fillStyle = tema.texto;
+        
+        // Añadir un pequeño decorador al inicio del texto (línea vertical sutil)
+        if (textoAjustado && textoAjustado.length > 0) {
+            ctx.strokeStyle = tema.azulTwitter;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(padding - 10, offsetY - 5);
+            ctx.lineTo(padding - 10, offsetY + Math.min(textoAjustado.length * 28, 28));
+            ctx.stroke();
+        }
+        
+        // Usar una fuente un poco más elegante y con mejor renderizado
         ctx.font = "18px 'Arial', sans-serif";
+        ctx.textRendering = "optimizeLegibility";
         
         const textoX = padding;
         let textoY = offsetY;
@@ -285,9 +318,32 @@ async function generarTarjetaTwitter(opciones) {
         const anchoMaximo = ancho - (padding * 2);
         const textoAjustado = ajustarTexto(ctx, opciones.texto, anchoMaximo);
         
+        // Aplicar un efecto de resaltado sutil para enlaces, menciones y hashtags
         let textoHeight = 0;
         textoAjustado.forEach(linea => {
+            // Primero dibujamos la línea completa
             ctx.fillText(linea, textoX, textoY + textoHeight);
+            
+            // Luego buscamos y destacamos elementos especiales
+            const palabras = linea.split(' ');
+            let posicionX = textoX;
+            
+            palabras.forEach(palabra => {
+                const anchoPalabra = ctx.measureText(palabra + ' ').width;
+                
+                // Resaltar enlaces, menciones y hashtags en color azul
+                if (palabra.startsWith('http') || 
+                    palabra.startsWith('www.') || 
+                    palabra.startsWith('@') || 
+                    palabra.startsWith('#')) {
+                    ctx.fillStyle = tema.azulTwitter;
+                    ctx.fillText(palabra, posicionX, textoY + textoHeight);
+                    ctx.fillStyle = tema.texto; // Restaurar color normal
+                }
+                
+                posicionX += anchoPalabra;
+            });
+            
             textoHeight += 28; // Mayor espacio entre líneas
         });
         
@@ -355,8 +411,10 @@ async function generarTarjetaTwitter(opciones) {
             }
         }
         
-        // Agregar línea divisoria sutil
+        // Agregar línea divisoria sutil con un toque decorativo
         currentY += imagenHeight;
+        
+        // Línea principal
         ctx.strokeStyle = tema.divider;
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -364,42 +422,103 @@ async function generarTarjetaTwitter(opciones) {
         ctx.lineTo(ancho - padding, currentY);
         ctx.stroke();
         
-        currentY += 15;
+        // Pequeños puntos decorativos en los extremos
+        ctx.fillStyle = tema.azulTwitter;
+        ctx.beginPath();
+        ctx.arc(padding, currentY, 2, 0, Math.PI * 2);
+        ctx.fill();
         
-        // Sección de interacciones con mejor diseño
+        ctx.beginPath();
+        ctx.arc(ancho - padding, currentY, 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        currentY += 20;
+        
+        // Sección de interacciones con diseño mejorado
         const iconosY = currentY + 10;
-        const espacioIconos = 150;
+        const espacioIconos = 140;
         const tamañoIcono = 20;
         
         // Configuración común para los contadores
         ctx.fillStyle = tema.textoSecundario;
         ctx.font = "14px 'Arial', sans-serif";
         
+        // Crear áreas interactivas con fondo sutil
+        function dibujarAreaInteractiva(x, y, ancho, icono, texto) {
+            // Fondo sutil de botón
+            ctx.fillStyle = tema.fondoInteracciones;
+            ctx.beginPath();
+            ctx.arc(x + tamañoIcono/2 + 10, y, tamañoIcono + 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Dibujar icono
+            ctx.drawImage(icono, x + 10, y - tamañoIcono/2, tamañoIcono, tamañoIcono);
+            
+            // Dibujar texto
+            ctx.fillStyle = tema.textoSecundario;
+            ctx.fillText(texto, x + 35, y + 5);
+        }
+        
         // Dibujar zona de interacción para comentarios
-        ctx.drawImage(imagenes.comentarios, padding + 10, iconosY - tamañoIcono/2, tamañoIcono, tamañoIcono);
-        ctx.fillText(formatearNumero(opciones.favoritos), padding + 35, iconosY + 5);
+        dibujarAreaInteractiva(padding, iconosY, 70, imagenes.comentarios, formatearNumero(opciones.favoritos));
         
         // Dibujar zona de interacción para retweets
-        ctx.drawImage(imagenes.compartidos, padding + espacioIconos + 10, iconosY - tamañoIcono/2, tamañoIcono, tamañoIcono);
-        ctx.fillText(formatearNumero(opciones.compartidos), padding + espacioIconos + 35, iconosY + 5);
+        dibujarAreaInteractiva(padding + espacioIconos, iconosY, 70, imagenes.compartidos, formatearNumero(opciones.compartidos));
         
         // Dibujar zona de interacción para me gusta
-        ctx.drawImage(imagenes.likes, padding + espacioIconos*2 + 10, iconosY - tamañoIcono/2, tamañoIcono, tamañoIcono);
-        ctx.fillText(formatearNumero(opciones.likes), padding + espacioIconos*2 + 35, iconosY + 5);
+        dibujarAreaInteractiva(padding + espacioIconos*2, iconosY, 70, imagenes.likes, formatearNumero(opciones.likes));
         
-        // Añadir marca de tiempo mejorada
+        // Añadir marca de tiempo mejorada con decoración
         ctx.fillStyle = tema.textoSecundario;
-        ctx.font = "14px 'Arial', sans-serif";
+        
+        // Pequeño detalle decorativo junto a la hora - icono de reloj dibujado
+        ctx.beginPath();
+        ctx.arc(ancho - padding - 85, alto - 25, 6, 0, Math.PI * 2);
+        ctx.strokeStyle = tema.textoSecundario;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+        
+        // Manecillas del reloj
+        ctx.beginPath();
+        ctx.moveTo(ancho - padding - 85, alto - 25);
+        ctx.lineTo(ancho - padding - 85, alto - 29);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(ancho - padding - 85, alto - 25);
+        ctx.lineTo(ancho - padding - 81, alto - 25);
+        ctx.stroke();
         
         // Formato fecha mejorado
         const ahora = new Date();
         const opcFecha = { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
         const marcaTiempo = `${ahora.getHours()}:${ahora.getMinutes().toString().padStart(2, '0')} · ${ahora.toLocaleDateString('es-ES', opcFecha)}`;
         
-        ctx.fillText(marcaTiempo, ancho - ctx.measureText(marcaTiempo).width - padding, alto - 25);
+        ctx.font = "bold 14px 'Arial', sans-serif";
+        ctx.fillText(marcaTiempo, ancho - ctx.measureText(marcaTiempo).width - padding - 15, alto - 22);
         
-        // Logo de Twitter/X en la esquina inferior derecha
-        ctx.drawImage(imagenes.logo, ancho - 40, alto - 40, 25, 25);
+        // Logo de Twitter/X en la esquina inferior izquierda
+        ctx.drawImage(imagenes.logo, padding, alto - 35, 22, 22);
+        
+        // Añadir un degradado sutil en la parte inferior
+        const gradiente = ctx.createLinearGradient(0, alto - 60, 0, alto);
+        gradiente.addColorStop(0, 'rgba(0,0,0,0)');
+        gradiente.addColorStop(1, 'rgba(0,0,0,0.03)');
+        ctx.fillStyle = gradiente;
+        ctx.fillRect(0, alto - 60, ancho, 60);
+        
+        // Añadir un pequeño detalle de "Twitter" junto al logo
+        ctx.fillStyle = tema.textoSecundario;
+        ctx.font = "12px 'Arial', sans-serif";
+        ctx.fillText("Twitter", padding + 28, alto - 20);
+        
+        // Añadir línea vertical decorativa sutil
+        ctx.strokeStyle = tema.divider;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding + 90, alto - 30);
+        ctx.lineTo(padding + 90, alto - 10);
+        ctx.stroke();
         
         // Devolver el buffer de imagen
         return canvas.toBuffer("image/png");
