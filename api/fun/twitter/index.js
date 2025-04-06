@@ -125,7 +125,7 @@ async function generarTarjetaTwitter(opciones) {
     const canvas = createCanvas(ancho, alto);
     const ctx = canvas.getContext("2d");
     
-    // Definir colores según tema
+    // Definir colores según tema (simplificado)
     const colores = {
         blanco: {
             fondo: "#ffffff",
@@ -136,20 +136,18 @@ async function generarTarjetaTwitter(opciones) {
             hover: "#e7e7e8",
             azulTwitter: "#1d9bf0",
             linkColor: "#1d9bf0",
-            divider: "#eff3f4",
-            iconoColor: "claro" // Los iconos claros van sobre fondo claro
+            divider: "#eff3f4"
         },
         negro: {
             fondo: "#15202b",
             texto: "#ffffff",
-            textoSecundario: "#8899a6", 
+            textoSecundario: "#8899a6",
             borde: "#38444d",
             fondoInteracciones: "#1e2732",
             hover: "#252e38",
             azulTwitter: "#1d9bf0",
-            linkColor: "#1d9bf0", 
-            divider: "#38444d",
-            iconoColor: "oscuro" // Los iconos oscuros van sobre fondo oscuro
+            linkColor: "#1d9bf0",
+            divider: "#38444d"
         },
         oscuro: {
             fondo: "#000000",
@@ -160,8 +158,7 @@ async function generarTarjetaTwitter(opciones) {
             hover: "#1d1f23",
             azulTwitter: "#1d9bf0",
             linkColor: "#1d9bf0",
-            divider: "#2f3336",
-            iconoColor: "oscuro" // Los iconos oscuros van sobre fondo oscuro
+            divider: "#2f3336"
         }
     };
     
@@ -276,30 +273,6 @@ async function generarTarjetaTwitter(opciones) {
         
         // Dibujar designación importante si se proporciona
         let offsetY = nombreY + 45;
-        
-        // Primero afiliación (si se proporciona)
-        if (opciones.afiliacion) {
-            const afiliacionX = nombreX;
-            
-            // Fondo para afiliación
-            ctx.fillStyle = tema.fondoInteracciones;
-            const anchoAfiliacion = ctx.measureText(opciones.afiliacion).width + 20;
-            const altoAfiliacion = 26;
-            
-            ctx.beginPath();
-            dibujarRectanguloRedondeado(ctx, afiliacionX - 5, offsetY - 18, anchoAfiliacion, altoAfiliacion, 12);
-            ctx.closePath();
-            ctx.fill();
-            
-            // Dibujar el texto con color especial
-            ctx.fillStyle = tema.azulTwitter;
-            ctx.font = "14px 'Arial', sans-serif";
-            ctx.fillText(opciones.afiliacion, afiliacionX, offsetY);
-            
-            offsetY += 34;
-        }
-        
-        // Luego importante (si se proporciona)
         if (opciones.importante) {
             const importanteX = nombreX;
             
@@ -317,6 +290,23 @@ async function generarTarjetaTwitter(opciones) {
             ctx.fillStyle = tema.azulTwitter;
             ctx.font = "14px 'Arial', sans-serif";
             ctx.fillText(opciones.importante, importanteX, offsetY);
+            
+            // Si hay afiliación (URL de imagen), cargarla y mostrarla junto a importante
+            if (opciones.afiliacion) {
+                try {
+                    // Cargar imagen de afiliación desde URL externa
+                    const iconoSize = 18;
+                    const iconoX = importanteX + anchoImportante + 5;
+                    const iconoY = offsetY - 14;
+                    
+                    // Intentar cargar la imagen de afiliación
+                    const imagenAfiliacion = await loadImage(opciones.afiliacion);
+                    ctx.drawImage(imagenAfiliacion, iconoX, iconoY, iconoSize, iconoSize);
+                } catch (error) {
+                    console.error("Error cargando imagen de afiliación:", error.message);
+                    // Si falla, simplemente no mostrar nada
+                }
+            }
             
             offsetY += 34;
         }
@@ -462,7 +452,7 @@ async function generarTarjetaTwitter(opciones) {
         
         currentY += 20;
         
-        // Sección de interacciones con diseño mejorado
+        // Sección de interacciones con diseño mejorado para adaptarse a números grandes
         const iconosY = currentY + 10;
         const espacioIconos = 140;
         const tamañoIcono = 20;
@@ -471,36 +461,32 @@ async function generarTarjetaTwitter(opciones) {
         ctx.fillStyle = tema.textoSecundario;
         ctx.font = "14px 'Arial', sans-serif";
         
-        // Crear áreas interactivas con fondo sutil que se ajustan al texto
+        // Función para dibujar áreas interactivas con fondos ajustables
         function dibujarAreaInteractiva(x, y, icono, texto) {
             // Medir el texto para ajustar el tamaño del fondo
             const anchoTexto = ctx.measureText(texto).width;
-            const radioCirculo = tamañoIcono + 8;
             
             // Fondo sutil de botón - más grande para acomodar el número
             ctx.fillStyle = tema.fondoInteracciones;
             
-            // Forma de botón adaptativa - círculo para iconos pequeños, oval para números grandes
-            if (anchoTexto > 20) {
-                // Forma de óvalo adaptativo para números más grandes
-                const anchoTotal = 35 + anchoTexto;
-                ctx.beginPath();
-                dibujarRectanguloRedondeado(ctx, x, y - radioCirculo/2, anchoTotal, radioCirculo, radioCirculo/2);
-                ctx.closePath();
-                ctx.fill();
-            } else {
-                // Círculo simple para números pequeños
-                ctx.beginPath();
-                ctx.arc(x + tamañoIcono/2 + 10, y, radioCirculo/2, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            // Forma de botón adaptativa según el tamaño del texto
+            const padding = 8;
+            const radioEsquina = 12;
+            const altoFondo = 24;
+            const anchoFondo = Math.max(36, 36 + anchoTexto); // Mínimo 36px, o lo que necesite el texto
+            
+            // Dibujar fondo redondeado
+            ctx.beginPath();
+            dibujarRectanguloRedondeado(ctx, x, y - altoFondo/2, anchoFondo, altoFondo, radioEsquina);
+            ctx.closePath();
+            ctx.fill();
             
             // Dibujar icono
-            ctx.drawImage(icono, x + 10, y - tamañoIcono/2, tamañoIcono, tamañoIcono);
+            ctx.drawImage(icono, x + padding, y - tamañoIcono/2, tamañoIcono, tamañoIcono);
             
             // Dibujar texto
             ctx.fillStyle = tema.textoSecundario;
-            ctx.fillText(texto, x + 35, y + 5);
+            ctx.fillText(texto, x + tamañoIcono + padding + 5, y + 5);
         }
         
         // Dibujar zona de interacción para comentarios
@@ -568,7 +554,6 @@ async function generarTarjetaTwitter(opciones) {
 
 /**
  * Carga las imágenes necesarias para los iconos del tweet
- * Incluye manejo de versiones claras y oscuras para diferentes temas
  */
 async function cargarImagenes() {
     try {
@@ -577,57 +562,13 @@ async function cargarImagenes() {
         
         // Cargar todas las imágenes necesarias
         const imagenes = {
-            // Imágenes base
             generico: await loadImage(path.join(directorioImagenes, 'generico.png')),
             verificado: await loadImage(path.join(directorioImagenes, 'verificado.png')),
-            
-            // Imágenes para tema claro
-            likes_claro: await loadImage(path.join(directorioImagenes, 'likes.png')),
-            compartidos_claro: await loadImage(path.join(directorioImagenes, 'compartidos.png')),
-            comentarios_claro: await loadImage(path.join(directorioImagenes, 'comentarios.png')),
-            logo_claro: await loadImage(path.join(directorioImagenes, 'logo.png')),
-            
-            // Intentar cargar versiones para tema oscuro si existen, o usar las claras como respaldo
-            likes_oscuro: fs.existsSync(path.join(directorioImagenes, 'likes_oscuro.png')) ? 
-                await loadImage(path.join(directorioImagenes, 'likes_oscuro.png')) : 
-                await loadImage(path.join(directorioImagenes, 'likes.png')),
-                
-            compartidos_oscuro: fs.existsSync(path.join(directorioImagenes, 'compartidos_oscuro.png')) ? 
-                await loadImage(path.join(directorioImagenes, 'compartidos_oscuro.png')) : 
-                await loadImage(path.join(directorioImagenes, 'compartidos.png')),
-                
-            comentarios_oscuro: fs.existsSync(path.join(directorioImagenes, 'comentarios_oscuro.png')) ? 
-                await loadImage(path.join(directorioImagenes, 'comentarios_oscuro.png')) : 
-                await loadImage(path.join(directorioImagenes, 'comentarios.png')),
-                
-            logo_oscuro: fs.existsSync(path.join(directorioImagenes, 'logo_oscuro.png')) ? 
-                await loadImage(path.join(directorioImagenes, 'logo_oscuro.png')) : 
-                await loadImage(path.join(directorioImagenes, 'logo.png'))
+            likes: await loadImage(path.join(directorioImagenes, 'likes.png')),
+            compartidos: await loadImage(path.join(directorioImagenes, 'compartidos.png')),
+            comentarios: await loadImage(path.join(directorioImagenes, 'comentarios.png')),
+            logo: await loadImage(path.join(directorioImagenes, 'logo.png'))
         };
-        
-        // Crear propiedades dinámicas para acceso más fácil según el tema
-        Object.defineProperties(imagenes, {
-            'likes': {
-                get: function() { 
-                    return this[tema.iconoColor === 'oscuro' ? 'likes_oscuro' : 'likes_claro']; 
-                }
-            },
-            'compartidos': {
-                get: function() { 
-                    return this[tema.iconoColor === 'oscuro' ? 'compartidos_oscuro' : 'compartidos_claro']; 
-                }
-            },
-            'comentarios': {
-                get: function() { 
-                    return this[tema.iconoColor === 'oscuro' ? 'comentarios_oscuro' : 'comentarios_claro']; 
-                }
-            },
-            'logo': {
-                get: function() { 
-                    return this[tema.iconoColor === 'oscuro' ? 'logo_oscuro' : 'logo_claro']; 
-                }
-            }
-        });
         
         return imagenes;
     } catch (error) {
