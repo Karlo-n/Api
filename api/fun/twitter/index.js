@@ -273,6 +273,8 @@ async function generarTarjetaTwitter(opciones) {
         
         // Dibujar designación importante si se proporciona
         let offsetY = nombreY + 45;
+        const offsetOriginal = offsetY; // Guardar posición original
+        
         if (opciones.importante) {
             const importanteX = nombreX;
             
@@ -309,6 +311,9 @@ async function generarTarjetaTwitter(opciones) {
             }
             
             offsetY += 34;
+        } else {
+            // Si no hay etiqueta importante, añadir un poco de espacio igual
+            offsetY += 15;
         }
         
         // Dibujar texto del tweet con mejor formato y estilo
@@ -317,6 +322,11 @@ async function generarTarjetaTwitter(opciones) {
         // Preparar el ajuste de texto primero
         const textoX = padding;
         let textoY = offsetY;
+        
+        // Si no hay etiqueta importante, ajustar Y para no dejar tanto espacio
+        if (!opciones.importante) {
+            textoY = offsetOriginal + 15;
+        }
         
         // Manejar ajuste de texto
         const anchoMaximo = ancho - (padding * 2);
