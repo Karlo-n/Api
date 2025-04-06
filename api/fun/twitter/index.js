@@ -1,23 +1,7 @@
 // api/fun/twitter/index.js
 const express = require("express");
-const { createCanvas, loadImage, registerFont } = require("canvas");
-const fs = require("fs");
-const path = require("path");
+const { createCanvas, loadImage } = require("canvas");
 const router = express.Router();
-
-// Crear directorio para assets si no existe
-const ASSETS_DIR = path.join(__dirname, "assets");
-if (!fs.existsSync(ASSETS_DIR)) {
-    fs.mkdirSync(ASSETS_DIR, { recursive: true });
-}
-
-// Registrar fuentes (usando Arial como respaldo si no están disponibles)
-try {
-    registerFont(path.join(__dirname, "assets", "Roboto-Regular.ttf"), { family: "Roboto" });
-    registerFont(path.join(__dirname, "assets", "Roboto-Bold.ttf"), { family: "Roboto Bold" });
-} catch (error) {
-    console.warn("No se pudieron registrar fuentes personalizadas, usando fuentes del sistema como respaldo:", error);
-}
 
 /**
  * API de Tarjetas de Twitter - Genera una imagen que simula un tweet
@@ -36,7 +20,7 @@ try {
  * - afilacion: Texto o URL de imagen de afiliación (YouTube, TikTok, etc.)
  * - importante: Designación especial (CEO, Presidente, etc.)
  * - likes: Número de me gusta
- * - favoritos: Número de favoritos/comentarios
+ * - favoritos: Número de comentarios
  * - compartidos: Número de retweets
  */
 router.get("/", async (req, res) => {
@@ -58,7 +42,7 @@ router.get("/", async (req, res) => {
         } = req.query;
 
         // Validar parámetros obligatorios
-        if (!nombre || !usuario || !pfp || !texto) {
+        if (!nombre || !usuario || !texto) {
             return res.status(400).json({ 
                 error: "Faltan parámetros obligatorios",
                 obligatorios: ["nombre", "usuario", "pfp", "texto"],
@@ -67,24 +51,32 @@ router.get("/", async (req, res) => {
         }
 
         // Generar imagen de tarjeta de Twitter
-        const cardBuffer = await generarTarjetaTwitter({
-            nombre,
-            usuario,
-            pfp,
-            texto,
-            verificado: verificado.toLowerCase() === "true",
-            colorFondo: color.toLowerCase(),
-            imagen,
-            afilacion,
-            importante,
-            likes: parseInt(likes) || 0,
-            favoritos: parseInt(favoritos) || 0,
-            compartidos: parseInt(compartidos) || 0
-        });
+        try {
+            const cardBuffer = await generarTarjetaTwitter({
+                nombre,
+                usuario,
+                pfp: pfp || "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png", // Imagen predeterminada
+                texto,
+                verificado: verificado.toLowerCase() === "true",
+                colorFondo: color.toLowerCase(),
+                imagen,
+                afilacion,
+                importante,
+                likes: parseInt(likes) || 0,
+                favoritos: parseInt(favoritos) || 0,
+                compartidos: parseInt(compartidos) || 0
+            });
 
-        // Devolver la imagen directamente
-        res.setHeader('Content-Type', 'image/png');
-        res.send(cardBuffer);
+            // Devolver la imagen directamente
+            res.setHeader('Content-Type', 'image/png');
+            res.send(cardBuffer);
+        } catch (imageError) {
+            console.error("Error específico en la generación de la imagen:", imageError);
+            res.status(500).json({
+                error: "Error al generar la imagen",
+                detalles: imageError.message
+            });
+        }
 
     } catch (error) {
         console.error("Error al generar tarjeta de Twitter:", error);
@@ -99,7 +91,7 @@ router.get("/", async (req, res) => {
  * Genera una imagen de tarjeta similar a Twitter
  */
 async function generarTarjetaTwitter(opciones) {
-    // Establecer dimensiones (estilo tarjeta de Twitter)
+    // Establecer dimensiones
     const ancho = 600;
     const alto = opciones.imagen ? 550 : 320;
     const padding = 16;
@@ -116,15 +108,29 @@ async function generarTarjetaTwitter(opciones) {
     }
     ctx.fillRect(0, 0, ancho, alto);
     
+    // Establecer color de texto según fondo
+    const colorTexto = opciones.colorFondo === "negro" ? "#ffffff" : "#000000";
+    const colorSecundario = opciones.colorFondo === "negro" ? "#8899a6" : "#536471";
+    
+    // Variables para posicionamiento
+    const tamañoPerfil = 50;
+    const perfilX = padding + tamañoPerfil/2;
+    const perfilY = 40;
+    const nombreX = perfilX + tamañoPerfil/2 + 15;
+    const nombreY = perfilY - 10;
+    
     try {
-        // Cargar foto de perfil
-        const imagenPerfil = await loadImage(opciones.pfp);
+        // Cargar foto de perfil con manejo de error
+        let imagenPerfil;
+        try {
+            imagenPerfil = await loadImage(opciones.pfp);
+        } catch (error) {
+            console.warn("No se pudo cargar la imagen de perfil, usando respaldo:", error.message);
+            // Usar imagen genérica como respaldo
+            imagenPerfil = await createDefaultProfileImage(ctx, tamañoPerfil);
+        }
         
         // Dibujar foto de perfil (recorte circular)
-        const tamañoPerfil = 50;
-        const perfilX = padding + tamañoPerfil/2;
-        const perfilY = 40;
-        
         ctx.save();
         ctx.beginPath();
         ctx.arc(perfilX, perfilY, tamañoPerfil/2, 0, Math.PI * 2);
@@ -133,16 +139,10 @@ async function generarTarjetaTwitter(opciones) {
         ctx.drawImage(imagenPerfil, perfilX - tamañoPerfil/2, perfilY - tamañoPerfil/2, tamañoPerfil, tamañoPerfil);
         ctx.restore();
         
-        // Establecer color de texto según fondo
-        const colorTexto = opciones.colorFondo === "negro" ? "#ffffff" : "#000000";
-        const colorSecundario = opciones.colorFondo === "negro" ? "#8899a6" : "#536471";
-        
         // Dibujar nombre de usuario e insignia de verificación
         ctx.fillStyle = colorTexto;
-        ctx.font = "bold 18px 'Roboto Bold', Arial, sans-serif";
+        ctx.font = "bold 18px Arial, sans-serif";
         
-        const nombreX = perfilX + tamañoPerfil/2 + 15;
-        const nombreY = perfilY - 10;
         ctx.fillText(opciones.nombre, nombreX, nombreY);
         
         // Dibujar insignia de verificación si está verificado
@@ -166,10 +166,11 @@ async function generarTarjetaTwitter(opciones) {
         
         // Dibujar nombre de usuario
         ctx.fillStyle = colorSecundario;
-        ctx.font = "16px 'Roboto', Arial, sans-serif";
+        ctx.font = "16px Arial, sans-serif";
         ctx.fillText(`@${opciones.usuario}`, nombreX, nombreY + 20);
         
         // Dibujar designación importante si se proporciona
+        let importanteHeight = 0;
         if (opciones.importante) {
             const importanteX = nombreX;
             const importanteY = nombreY + 40;
@@ -183,12 +184,15 @@ async function generarTarjetaTwitter(opciones) {
             
             // Dibujar el texto con color especial
             ctx.fillStyle = "#1DA1F2"; // Azul de Twitter para importante
-            ctx.font = "14px 'Roboto Bold', Arial, sans-serif";
+            ctx.font = "14px Arial, sans-serif";
             ctx.fillText(opciones.importante, importanteX + 10, importanteY);
+            
+            importanteHeight = 25;
         }
         
         // Dibujar insignia de afiliación si se proporciona
-        let afilacionY = opciones.importante ? nombreY + 70 : nombreY + 45;
+        let afilacionHeight = 0;
+        let afilacionY = nombreY + 40 + importanteHeight;
         
         if (opciones.afilacion) {
             if (opciones.afilacion.startsWith("http")) {
@@ -197,37 +201,40 @@ async function generarTarjetaTwitter(opciones) {
                     const imagenAfiliacion = await loadImage(opciones.afilacion);
                     const tamañoAfiliacion = 24;
                     ctx.drawImage(imagenAfiliacion, nombreX, afilacionY - tamañoAfiliacion, tamañoAfiliacion, tamañoAfiliacion);
-                    afilacionY += 30;
+                    afilacionHeight = 30;
                 } catch (error) {
-                    console.error("Error al cargar imagen de afiliación:", error);
+                    console.warn("No se pudo cargar imagen de afiliación:", error.message);
+                    // Simplemente no mostrar la imagen de afiliación
                 }
             } else {
                 // Es texto
                 ctx.fillStyle = "#1DA1F2"; // Azul de Twitter
-                ctx.font = "14px 'Roboto Bold', Arial, sans-serif";
+                ctx.font = "14px Arial, sans-serif";
                 ctx.fillText(opciones.afilacion, nombreX, afilacionY);
-                afilacionY += 25;
+                afilacionHeight = 25;
             }
         }
         
         // Dibujar texto del tweet
         ctx.fillStyle = colorTexto;
-        ctx.font = "18px 'Roboto', Arial, sans-serif";
+        ctx.font = "18px Arial, sans-serif";
         
         const textoX = padding;
-        let textoY = afilacionY + 10;
+        let textoY = nombreY + 40 + importanteHeight + afilacionHeight + 10;
         
         // Manejar ajuste de texto
         const anchoMaximo = ancho - (padding * 2);
         const textoAjustado = ajustarTexto(ctx, opciones.texto, anchoMaximo);
         
+        let textoHeight = 0;
         textoAjustado.forEach(linea => {
-            ctx.fillText(linea, textoX, textoY);
-            textoY += 25;
+            ctx.fillText(linea, textoX, textoY + textoHeight);
+            textoHeight += 25;
         });
         
         // Dibujar imagen adjunta si se proporciona
-        let alturaActual = textoY + 15;
+        let imagenHeight = 0;
+        let currentY = textoY + textoHeight + 15;
         
         if (opciones.imagen) {
             try {
@@ -251,7 +258,7 @@ async function generarTarjetaTwitter(opciones) {
                 
                 // Dibujar la imagen con esquinas redondeadas
                 const imagenX = padding;
-                const imagenY = alturaActual;
+                const imagenY = currentY;
                 
                 ctx.save();
                 dibujarRectanguloRedondeado(ctx, imagenX, imagenY, anchoImg, altoImg, 16);
@@ -259,22 +266,22 @@ async function generarTarjetaTwitter(opciones) {
                 ctx.drawImage(imagenTweet, imagenX, imagenY, anchoImg, altoImg);
                 ctx.restore();
                 
-                alturaActual += altoImg + 20;
+                imagenHeight = altoImg + 20;
             } catch (error) {
-                console.error("Error al cargar imagen del tweet:", error);
+                console.warn("No se pudo cargar imagen del tweet:", error.message);
+                // Simplemente no mostrar la imagen
             }
         }
         
         // Dibujar contadores de interacción (likes, retweets, etc.)
-        alturaActual += 10;
+        const iconosY = currentY + imagenHeight + 10;
         
         const espacioIconos = 150;
-        const iconosY = alturaActual;
         
         // Icono de comentario
         ctx.fillStyle = colorSecundario;
         dibujarIconoComentario(ctx, padding, iconosY, colorSecundario);
-        ctx.font = "14px 'Roboto', Arial, sans-serif";
+        ctx.font = "14px Arial, sans-serif";
         ctx.fillText(formatearNumero(opciones.favoritos), padding + 30, iconosY + 5);
         
         // Icono de retweet
@@ -287,7 +294,7 @@ async function generarTarjetaTwitter(opciones) {
         
         // Añadir marca de tiempo y marca de Twitter
         ctx.fillStyle = colorSecundario;
-        ctx.font = "12px 'Roboto', Arial, sans-serif";
+        ctx.font = "12px Arial, sans-serif";
         const ahora = new Date();
         const marcaTiempo = `${ahora.getHours()}:${ahora.getMinutes().toString().padStart(2, '0')} · ${ahora.toLocaleDateString()}`;
         ctx.fillText(marcaTiempo, ancho - 150, alto - 15);
@@ -306,12 +313,37 @@ async function generarTarjetaTwitter(opciones) {
 }
 
 /**
+ * Crea una imagen de perfil predeterminada
+ */
+async function createDefaultProfileImage(ctx, size) {
+    const canvas = createCanvas(size, size);
+    const profileCtx = canvas.getContext('2d');
+    
+    // Fondo gris
+    profileCtx.fillStyle = '#AAB8C2';
+    profileCtx.fillRect(0, 0, size, size);
+    
+    // Silueta de usuario
+    profileCtx.fillStyle = '#E1E8ED';
+    profileCtx.beginPath();
+    profileCtx.arc(size/2, size/3, size/6, 0, Math.PI * 2);
+    profileCtx.fill();
+    
+    // Cuerpo de la silueta
+    profileCtx.beginPath();
+    profileCtx.arc(size/2, size + size/6, size/1.5, 0, Math.PI, true);
+    profileCtx.fill();
+    
+    return canvas;
+}
+
+/**
  * Ajusta el texto para que quepa dentro de un ancho especificado
  */
 function ajustarTexto(ctx, texto, anchoMaximo) {
     const palabras = texto.split(' ');
     const lineas = [];
-    let lineaActual = palabras[0];
+    let lineaActual = palabras[0] || '';
     
     for (let i = 1; i < palabras.length; i++) {
         const palabra = palabras[i];
@@ -325,7 +357,15 @@ function ajustarTexto(ctx, texto, anchoMaximo) {
         }
     }
     
-    lineas.push(lineaActual);
+    if (lineaActual) {
+        lineas.push(lineaActual);
+    }
+    
+    // Si no hay texto, añadir al menos una línea vacía
+    if (lineas.length === 0) {
+        lineas.push('');
+    }
+    
     return lineas;
 }
 
@@ -365,48 +405,17 @@ function dibujarRectanguloRedondeado(ctx, x, y, ancho, alto, radio) {
 function dibujarIconoTwitter(ctx, x, y, tamaño) {
     ctx.save();
     
-    // Escalar y trasladar a posición
-    ctx.translate(x - tamaño, y - tamaño);
-    ctx.scale(tamaño/12, tamaño/12);
-    
-    // Dibujar pájaro de Twitter
+    // Dibujar logo básico de Twitter (pájaro simplificado)
     ctx.beginPath();
-    ctx.moveTo(23.643, 4.937);
-    ctx.bezierCurveTo(22.809, 5.307, 21.902, 5.557, 20.944, 5.67);
-    ctx.bezierCurveTo(21.952, 5.043, 22.716, 4.057, 23.079, 2.896);
-    ctx.bezierCurveTo(22.166, 3.477, 21.165, 3.891, 20.102, 4.103);
-    ctx.bezierCurveTo(19.403, 3.364, 18.570, 2.821, 17.677, 2.531);
-    ctx.bezierCurveTo(16.785, 2.241, 15.850, 2.214, 14.940, 2.454);
-    ctx.bezierCurveTo(14.030, 2.694, 13.178, 3.194, 12.470, 3.900);
-    ctx.bezierCurveTo(11.763, 4.606, 11.223, 5.494, 10.905, 6.473);
-    ctx.bezierCurveTo(10.587, 7.452, 10.504, 8.491, 10.664, 9.504);
-    ctx.bezierCurveTo(10.823, 10.517, 11.219, 11.471, 11.815, 12.274);
-    ctx.bezierCurveTo(9.860, 12.175, 7.956, 11.652, 6.233, 10.742);
-    ctx.bezierCurveTo(4.510, 9.832, 3.012, 8.558, 1.840, 7.015);
-    ctx.bezierCurveTo(1.420, 7.778, 1.171, 8.688, 1.171, 9.645);
-    ctx.bezierCurveTo(1.170, 10.520, 1.376, 11.380, 1.771, 12.142);
-    ctx.bezierCurveTo(2.166, 12.904, 2.735, 13.540, 3.427, 13.996);
-    ctx.bezierCurveTo(2.685, 13.972, 1.960, 13.774, 1.309, 13.419);
-    ctx.lineTo(1.309, 13.482);
-    ctx.bezierCurveTo(1.309, 14.644, 1.717, 15.774, 2.454, 16.668);
-    ctx.bezierCurveTo(3.191, 17.561, 4.213, 18.166, 5.355, 18.373);
-    ctx.bezierCurveTo(4.668, 18.553, 3.954, 18.582, 3.255, 18.457);
-    ctx.bezierCurveTo(3.574, 19.464, 4.203, 20.346, 5.049, 20.982);
-    ctx.bezierCurveTo(5.895, 21.618, 6.919, 21.979, 7.978, 22.015);
-    ctx.bezierCurveTo(6.070, 23.505, 3.773, 24.306, 1.407, 24.304);
-    ctx.bezierCurveTo(1.021, 24.304, 0.635, 24.282, 0.252, 24.237);
-    ctx.bezierCurveTo(2.647, 25.802, 5.419, 26.626, 8.245, 26.623);
-    ctx.bezierCurveTo(17.327, 26.623, 22.308, 18.637, 22.308, 11.699);
-    ctx.bezierCurveTo(22.308, 11.495, 22.303, 11.289, 22.293, 11.086);
-    ctx.bezierCurveTo(23.202, 10.380, 24.000, 9.524, 24.642, 8.556);
-    ctx.bezierCurveTo(23.786, 8.942, 22.875, 9.191, 21.939, 9.293);
-    ctx.bezierCurveTo(22.915, 8.708, 23.649, 7.797, 24.000, 6.725);
-    ctx.bezierCurveTo(23.081, 7.261, 22.077, 7.635, 21.033, 7.833);
-    ctx.bezierCurveTo(20.345, 7.092, 19.448, 6.588, 18.461, 6.392);
-    ctx.bezierCurveTo(17.474, 6.197, 16.456, 6.321, 15.539, 6.748);
-    ctx.bezierCurveTo(14.623, 7.175, 13.851, 7.882, 13.330, 8.770);
-    ctx.bezierCurveTo(12.809, 9.659, 12.564, 10.688, 12.629, 11.721);
-    ctx.stroke();
+    ctx.moveTo(x - tamaño, y - tamaño/2);
+    ctx.bezierCurveTo(x - tamaño*0.8, y - tamaño*0.7, x - tamaño*0.6, y - tamaño*0.5, x - tamaño*0.5, y - tamaño*0.3);
+    ctx.bezierCurveTo(x - tamaño*0.7, y - tamaño*0.4, x - tamaño*0.9, y - tamaño*0.5, x - tamaño*1.1, y - tamaño*0.5);
+    ctx.bezierCurveTo(x - tamaño*1, y - tamaño*0.3, x - tamaño*0.8, y - tamaño*0.1, x - tamaño*0.6, y);
+    ctx.bezierCurveTo(x - tamaño*0.8, y, x - tamaño, y - tamaño*0.1, x - tamaño*1.2, y - tamaño*0.2);
+    ctx.bezierCurveTo(x - tamaño*1.1, y + tamaño*0.2, x - tamaño*0.8, y + tamaño*0.5, x - tamaño*0.5, y + tamaño*0.6);
+    ctx.bezierCurveTo(x - tamaño*0.2, y + tamaño*0.7, x + tamaño*0.2, y + tamaño*0.6, x + tamaño*0.4, y + tamaño*0.4);
+    ctx.bezierCurveTo(x + tamaño*0.1, y + tamaño*0.6, x - tamaño*0.3, y + tamaño*0.6, x - tamaño*0.5, y + tamaño*0.5);
+    ctx.closePath();
     ctx.fill();
     
     ctx.restore();
