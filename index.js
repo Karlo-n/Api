@@ -35,6 +35,7 @@ const binarioRouter = require("./api/utility/binario");
 const invertidoRouter = require("./api/utility/invertido");
 const obfuscarRouter = require("./api/utility/obfuscar");
 const captchaRouter = require("./api/utility/captcha");
+const leaderboardRouter = require("./api/utility/leaderboard");
 
 // Usar rutas
 app.use("/api/fun/ship", shipRouter);
@@ -65,6 +66,7 @@ app.use("/api/utility/binario", binarioRouter);
 app.use("/api/utility/invertido", invertidoRouter);
 app.use("/api/utility/obfuscar", obfuscarRouter);
 app.use("/api/utility/captcha", captchaRouter);
+
 
 // Ruta principal para listar endpoints con formato bonito
 app.get("/", (req, res) => {
@@ -102,7 +104,8 @@ app.get("/", (req, res) => {
     "/api/utility/ip",
     "/api/utility/youtube",
     "/api/utility/binario",
-    "/api/utility/captcha"
+    "/api/utility/captcha",
+    "/api/utility/leaderboard"
 ]
     }, null, 4)); // <--- Aquí está bien formateado
 });
