@@ -3,10 +3,12 @@ const express = require("express");
 const { createCanvas, loadImage } = require("canvas");
 const router = express.Router();
 const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
 /**
  * API de Tarjetas de Twitter - Genera una imagen que simula un tweet
- * Versión mejorada con diseño más fiel y mejor manejo de imágenes
+ * Versión mejorada con íconos prediseñados y mejor diseño visual
  */
 router.get("/", async (req, res) => {
     try {
@@ -19,10 +21,10 @@ router.get("/", async (req, res) => {
             verificado = "false",
             color = "blanco",
             imagen,
-            afilacion,
+            afiliacion,
             importante,
             likes = "0",
-            favoritos = "0",
+            favoritos = "0", 
             compartidos = "0"
         } = req.query;
 
@@ -50,7 +52,25 @@ router.get("/", async (req, res) => {
                 profileImageBuffer = Buffer.from(profileResponse.data);
             } catch (profileError) {
                 console.warn("Error cargando imagen de perfil, se usará imagen predeterminada:", profileError.message);
-                // No hacer nada, se usará imagen predeterminada
+                // Se usará imagen genérica en el proceso de generación
+            }
+        }
+
+        // Cargar imagen adjunta si se proporciona
+        let attachedImageBuffer;
+        if (imagen) {
+            try {
+                const imageResponse = await axios.get(imagen, {
+                    responseType: 'arraybuffer',
+                    timeout: 8000,
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    }
+                });
+                attachedImageBuffer = Buffer.from(imageResponse.data);
+            } catch (imageError) {
+                console.warn("Error cargando imagen adjunta:", imageError.message);
+                // Si falla, continuamos sin la imagen
             }
         }
 
@@ -63,8 +83,8 @@ router.get("/", async (req, res) => {
                 texto,
                 verificado: verificado.toLowerCase() === "true",
                 colorFondo: color.toLowerCase(),
-                imagen,
-                afilacion,
+                attachedImageBuffer, // Pasar buffer de imagen adjunta si existe
+                afiliacion,
                 importante,
                 likes: parseInt(likes) || 0,
                 favoritos: parseInt(favoritos) || 0,
@@ -93,11 +113,12 @@ router.get("/", async (req, res) => {
 
 /**
  * Genera una imagen de tarjeta similar a Twitter con diseño mejorado
+ * Usa imágenes prediseñadas para los iconos
  */
 async function generarTarjetaTwitter(opciones) {
-    // Establecer dimensiones
+    // Establecer dimensiones base
     const ancho = 600;
-    const alto = opciones.imagen ? 580 : 340;
+    let alto = opciones.attachedImageBuffer ? 600 : 350;
     const padding = 20;
     
     // Crear canvas
@@ -127,10 +148,22 @@ async function generarTarjetaTwitter(opciones) {
             azulTwitter: "#1d9bf0",
             linkColor: "#1d9bf0",
             divider: "#38444d"
+        },
+        oscuro: {
+            fondo: "#000000",
+            texto: "#e7e9ea",
+            textoSecundario: "#71767b",
+            borde: "#2f3336",
+            fondoInteracciones: "#16181c",
+            hover: "#1d1f23",
+            azulTwitter: "#1d9bf0",
+            linkColor: "#1d9bf0",
+            divider: "#2f3336"
         }
     };
     
-    const tema = colores[opciones.colorFondo];
+    // Seleccionar tema o usar blanco como predeterminado
+    const tema = colores[opciones.colorFondo] || colores.blanco;
     
     // Establecer color de fondo principal (con borde redondeado)
     ctx.fillStyle = tema.fondo;
@@ -144,12 +177,21 @@ async function generarTarjetaTwitter(opciones) {
     ctx.lineWidth = 1;
     ctx.stroke();
     
+    // Aplicar sombra muy sutil a toda la tarjeta
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+    ctx.shadowBlur = 5;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 2;
+    
     // Variables para posicionamiento
     const tamañoPerfil = 60;
     const perfilX = padding + tamañoPerfil/2;
     const perfilY = padding + tamañoPerfil/2;
     const nombreX = perfilX + tamañoPerfil/2 + 15;
     const nombreY = padding + 25;
+    
+    // Cargar los íconos necesarios
+    const imagenes = await cargarImagenes();
     
     // Dibujar foto de perfil (recorte circular)
     try {
@@ -159,9 +201,15 @@ async function generarTarjetaTwitter(opciones) {
             // Usar la imagen proporcionada si existe
             imagenPerfil = await loadImage(opciones.profileImageBuffer);
         } else {
-            // Crear avatar predeterminado más elaborado
-            imagenPerfil = await crearAvatarPredeterminado(tamañoPerfil, tema.textoSecundario);
+            // Usar la imagen genérica predeterminada
+            imagenPerfil = imagenes.generico;
         }
+        
+        // Quitar sombra para elementos internos
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
         
         // Dibujar círculo de fondo para el avatar
         ctx.beginPath();
@@ -190,32 +238,12 @@ async function generarTarjetaTwitter(opciones) {
         
         // Dibujar insignia de verificación si está verificado
         if (opciones.verificado) {
-            // Dibujar insignia verificada mejorada
+            // Dibujar insignia verificada usando la imagen cargada
             const tamañoInsignia = 20;
             const insigniaX = nombreX + ctx.measureText(opciones.nombre).width + 5;
             const insigniaY = nombreY - tamañoInsignia/2 - 2;
             
-            // Círculo azul con efecto de brillo
-            const gradiente = ctx.createRadialGradient(
-                insigniaX + tamañoInsignia/2, 
-                insigniaY + tamañoInsignia/2, 
-                0,
-                insigniaX + tamañoInsignia/2, 
-                insigniaY + tamañoInsignia/2, 
-                tamañoInsignia/2
-            );
-            gradiente.addColorStop(0, "#1d9bf0");
-            gradiente.addColorStop(1, "#1a8cd8");
-            
-            ctx.fillStyle = gradiente;
-            ctx.beginPath();
-            ctx.arc(insigniaX + tamañoInsignia/2, insigniaY + tamañoInsignia/2, tamañoInsignia/2, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Marca de verificación blanca mejorada
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 13px Arial";
-            ctx.fillText("✓", insigniaX + 6, insigniaY + 15);
+            ctx.drawImage(imagenes.verificado, insigniaX, insigniaY, tamañoInsignia, tamañoInsignia);
         }
         
         // Dibujar nombre de usuario con estilo mejorado
@@ -248,7 +276,7 @@ async function generarTarjetaTwitter(opciones) {
         
         // Dibujar texto del tweet con mejor formato
         ctx.fillStyle = tema.texto;
-        ctx.font = "bold 18px 'Arial', sans-serif";
+        ctx.font = "18px 'Arial', sans-serif";
         
         const textoX = padding;
         let textoY = offsetY;
@@ -260,17 +288,17 @@ async function generarTarjetaTwitter(opciones) {
         let textoHeight = 0;
         textoAjustado.forEach(linea => {
             ctx.fillText(linea, textoX, textoY + textoHeight);
-            textoHeight += 27; // Mayor espacio entre líneas
+            textoHeight += 28; // Mayor espacio entre líneas
         });
         
         // Línea divisoria sutil antes de la imagen o interacciones
-        let currentY = textoY + textoHeight + 20;
+        let currentY = textoY + textoHeight + 25;
         
         // Dibujar imagen adjunta si se proporciona
         let imagenHeight = 0;
-        if (opciones.imagen) {
+        if (opciones.attachedImageBuffer) {
             try {
-                const imagenTweet = await loadImage(opciones.imagen);
+                const imagenTweet = await loadImage(opciones.attachedImageBuffer);
                 const altoMaximoImagen = 280;
                 const anchoMaximoImagen = ancho - (padding * 2);
                 
@@ -292,6 +320,12 @@ async function generarTarjetaTwitter(opciones) {
                 const imagenX = textoX;
                 const imagenY = currentY;
                 
+                // Añadir sombra sutil a la imagen
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 3;
+                
                 ctx.save();
                 ctx.beginPath();
                 dibujarRectanguloRedondeado(ctx, imagenX, imagenY, anchoImg, altoImg, 16);
@@ -299,6 +333,12 @@ async function generarTarjetaTwitter(opciones) {
                 ctx.clip();
                 ctx.drawImage(imagenTweet, imagenX, imagenY, anchoImg, altoImg);
                 ctx.restore();
+                
+                // Quitar sombra para el resto de elementos
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
                 
                 // Añadir un sutil borde a la imagen
                 ctx.strokeStyle = tema.borde;
@@ -326,44 +366,28 @@ async function generarTarjetaTwitter(opciones) {
         
         currentY += 15;
         
-        // Sección de interacciones con mejor diseño (fondo sutil en hover)
-        const iconosY = currentY;
+        // Sección de interacciones con mejor diseño
+        const iconosY = currentY + 10;
         const espacioIconos = 150;
+        const tamañoIcono = 20;
         
-        // Generar fondos de hover para las interacciones
-        const tamañoHover = 36;
-        
-        // Hover para comentario
-        ctx.fillStyle = tema.fondoInteracciones;
-        ctx.beginPath();
-        ctx.arc(padding + 15, iconosY, tamañoHover/2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Hover para retweet
-        ctx.beginPath();
-        ctx.arc(padding + espacioIconos + 15, iconosY, tamañoHover/2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Hover para me gusta
-        ctx.beginPath();
-        ctx.arc(padding + espacioIconos*2 + 15, iconosY, tamañoHover/2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Icono de comentario mejorado
+        // Configuración común para los contadores
         ctx.fillStyle = tema.textoSecundario;
-        dibujarIconoComentarioMejorado(ctx, padding + 15, iconosY, tema.textoSecundario);
         ctx.font = "14px 'Arial', sans-serif";
-        ctx.fillText(formatearNumero(opciones.favoritos), padding + 32, iconosY + 5);
         
-        // Icono de retweet mejorado
-        dibujarIconoRetweetMejorado(ctx, padding + espacioIconos + 15, iconosY, tema.textoSecundario);
-        ctx.fillText(formatearNumero(opciones.compartidos), padding + espacioIconos + 32, iconosY + 5);
+        // Dibujar zona de interacción para comentarios
+        ctx.drawImage(imagenes.comentarios, padding + 10, iconosY - tamañoIcono/2, tamañoIcono, tamañoIcono);
+        ctx.fillText(formatearNumero(opciones.favoritos), padding + 35, iconosY + 5);
         
-        // Icono de me gusta mejorado
-        dibujarIconoMeGustaMejorado(ctx, padding + espacioIconos*2 + 15, iconosY, tema.textoSecundario);
-        ctx.fillText(formatearNumero(opciones.likes), padding + espacioIconos*2 + 32, iconosY + 5);
+        // Dibujar zona de interacción para retweets
+        ctx.drawImage(imagenes.compartidos, padding + espacioIconos + 10, iconosY - tamañoIcono/2, tamañoIcono, tamañoIcono);
+        ctx.fillText(formatearNumero(opciones.compartidos), padding + espacioIconos + 35, iconosY + 5);
         
-        // Añadir marca de tiempo mejorada y logo de Twitter
+        // Dibujar zona de interacción para me gusta
+        ctx.drawImage(imagenes.likes, padding + espacioIconos*2 + 10, iconosY - tamañoIcono/2, tamañoIcono, tamañoIcono);
+        ctx.fillText(formatearNumero(opciones.likes), padding + espacioIconos*2 + 35, iconosY + 5);
+        
+        // Añadir marca de tiempo mejorada
         ctx.fillStyle = tema.textoSecundario;
         ctx.font = "14px 'Arial', sans-serif";
         
@@ -374,9 +398,8 @@ async function generarTarjetaTwitter(opciones) {
         
         ctx.fillText(marcaTiempo, ancho - ctx.measureText(marcaTiempo).width - padding, alto - 25);
         
-        // Logo de Twitter en la esquina inferior derecha
-        ctx.fillStyle = tema.azulTwitter;
-        dibujarLogoTwitterMejorado(ctx, ancho - 30, alto - 30, 18);
+        // Logo de Twitter/X en la esquina inferior derecha
+        ctx.drawImage(imagenes.logo, ancho - 40, alto - 40, 25, 25);
         
         // Devolver el buffer de imagen
         return canvas.toBuffer("image/png");
@@ -388,37 +411,28 @@ async function generarTarjetaTwitter(opciones) {
 }
 
 /**
- * Crea un avatar predeterminado más elaborado
+ * Carga las imágenes necesarias para los iconos del tweet
  */
-async function crearAvatarPredeterminado(size, color) {
-    const canvas = createCanvas(size, size);
-    const ctx = canvas.getContext('2d');
-    
-    // Fondo con degradado sutil
-    const gradient = ctx.createLinearGradient(0, 0, 0, size);
-    gradient.addColorStop(0, '#E1E8ED');
-    gradient.addColorStop(1, '#AAB8C2');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, size, size);
-    
-    // Dibujar silueta de usuario mejorada
-    ctx.fillStyle = color;
-    
-    // Cabeza
-    ctx.beginPath();
-    ctx.arc(size/2, size/3, size/4, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Cuerpo 
-    ctx.beginPath();
-    ctx.moveTo(size/3, size);
-    ctx.lineTo(size*2/3, size);
-    ctx.lineTo(size*2/3, size/2);
-    ctx.arc(size/2, size/2, size/6, 0, Math.PI, true);
-    ctx.lineTo(size/3, size);
-    ctx.fill();
-    
-    return canvas;
+async function cargarImagenes() {
+    try {
+        // Rutas de las imágenes
+        const directorioImagenes = path.join(__dirname);
+        
+        // Cargar todas las imágenes necesarias
+        const imagenes = {
+            generico: await loadImage(path.join(directorioImagenes, 'generico.png')),
+            verificado: await loadImage(path.join(directorioImagenes, 'verificado.png')),
+            likes: await loadImage(path.join(directorioImagenes, 'likes.png')),
+            compartidos: await loadImage(path.join(directorioImagenes, 'compartidos.png')),
+            comentarios: await loadImage(path.join(directorioImagenes, 'comentarios.png')),
+            logo: await loadImage(path.join(directorioImagenes, 'logo.png'))
+        };
+        
+        return imagenes;
+    } catch (error) {
+        console.error("Error cargando imágenes:", error);
+        throw new Error(`No se pudieron cargar las imágenes: ${error.message}`);
+    }
 }
 
 /**
@@ -457,6 +471,8 @@ function ajustarTexto(ctx, texto, anchoMaximo) {
  * Formatea números para mostrar (ej. 1000 -> 1K)
  */
 function formatearNumero(num) {
+    num = parseInt(num) || 0;
+    
     if (num >= 1000000) {
         return (num / 1000000).toFixed(1) + 'M';
     }
@@ -479,173 +495,6 @@ function dibujarRectanguloRedondeado(ctx, x, y, ancho, alto, radio) {
     ctx.quadraticCurveTo(x, y + alto, x, y + alto - radio);
     ctx.lineTo(x, y + radio);
     ctx.quadraticCurveTo(x, y, x + radio, y);
-}
-
-/**
- * Dibuja logo de Twitter mejorado
- */
-function dibujarLogoTwitterMejorado(ctx, x, y, tamaño) {
-    ctx.save();
-    
-    // Pájaro de Twitter (simplificado pero reconocible)
-    ctx.beginPath();
-    
-    // Coordenadas ajustadas para el logo de Twitter
-    ctx.moveTo(x - tamaño*0.9, y - tamaño*0.3);
-    ctx.bezierCurveTo(
-        x - tamaño*0.7, y - tamaño*0.4, 
-        x - tamaño*0.5, y - tamaño*0.2, 
-        x - tamaño*0.3, y - tamaño*0.3
-    );
-    ctx.bezierCurveTo(
-        x - tamaño*0.5, y - tamaño*0.5, 
-        x - tamaño*0.7, y - tamaño*0.5, 
-        x - tamaño*0.9, y - tamaño*0.4
-    );
-    ctx.bezierCurveTo(
-        x - tamaño*0.7, y - tamaño*0.2, 
-        x - tamaño*0.5, y, 
-        x - tamaño*0.1, y
-    );
-    ctx.bezierCurveTo(
-        x - tamaño*0.5, y + tamaño*0.1, 
-        x - tamaño, y + tamaño*0.1, 
-        x - tamaño*1.2, y - tamaño*0.1
-    );
-    ctx.bezierCurveTo(
-        x - tamaño, y - tamaño*0.3, 
-        x - tamaño*0.8, y - tamaño*0.5, 
-        x - tamaño*0.5, y - tamaño*0.5
-    );
-    ctx.bezierCurveTo(
-        x - tamaño*0.5, y - tamaño*0.5, 
-        x - tamaño*0.6, y - tamaño*0.7, 
-        x - tamaño*0.9, y - tamaño*0.6
-    );
-    ctx.bezierCurveTo(
-        x - tamaño*0.8, y - tamaño*0.4, 
-        x - tamaño*0.7, y - tamaño*0.3, 
-        x - tamaño*0.9, y - tamaño*0.3
-    );
-    
-    ctx.fill();
-    ctx.restore();
-}
-
-/**
- * Dibuja icono de comentario mejorado
- */
-function dibujarIconoComentarioMejorado(ctx, x, y, color) {
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.8;
-    
-    // Burbuja de comentario más detallada
-    ctx.beginPath();
-    const radioComentario = 10;
-    const anchoBurbuja = radioComentario * 2;
-    const altoBurbuja = radioComentario * 1.5;
-    
-    // Dibujar parte superior de la burbuja
-    ctx.arc(x - radioComentario, y - radioComentario/2, radioComentario/2, Math.PI, 1.5 * Math.PI);
-    ctx.arc(x + radioComentario, y - radioComentario/2, radioComentario/2, 1.5 * Math.PI, 0);
-    
-    // Lado derecho
-    ctx.lineTo(x + radioComentario + radioComentario/2, y + radioComentario/2);
-    
-    // Punta de flecha
-    ctx.lineTo(x + radioComentario/2, y + radioComentario);
-    ctx.lineTo(x + radioComentario/3, y + radioComentario/2);
-    
-    // Lado izquierdo
-    ctx.lineTo(x - radioComentario - radioComentario/2, y + radioComentario/2);
-    
-    // Cerrar la forma
-    ctx.arc(x - radioComentario, y - radioComentario/2, radioComentario/2, 0.5 * Math.PI, Math.PI);
-    
-    ctx.stroke();
-    ctx.restore();
-}
-
-/**
- * Dibuja icono de retweet mejorado
- */
-function dibujarIconoRetweetMejorado(ctx, x, y, color) {
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.8;
-    
-    // Icono de retweet más detallado
-    const radioRetweet = 10;
-    
-    // Flecha izquierda
-    ctx.beginPath();
-    ctx.moveTo(x - radioRetweet, y);
-    ctx.lineTo(x - radioRetweet/2, y - radioRetweet/2);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    
-    // Tallo izquierdo
-    ctx.beginPath();
-    ctx.moveTo(x - radioRetweet/2, y - radioRetweet/2);
-    ctx.lineTo(x - radioRetweet/2, y + radioRetweet/2);
-    ctx.stroke();
-    
-    // Flecha derecha
-    ctx.beginPath();
-    ctx.moveTo(x + radioRetweet, y);
-    ctx.lineTo(x + radioRetweet/2, y + radioRetweet/2);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    
-    // Tallo derecho
-    ctx.beginPath();
-    ctx.moveTo(x + radioRetweet/2, y + radioRetweet/2);
-    ctx.lineTo(x + radioRetweet/2, y - radioRetweet/2);
-    ctx.stroke();
-    
-    ctx.restore();
-}
-
-/**
- * Dibuja icono de me gusta mejorado
- */
-function dibujarIconoMeGustaMejorado(ctx, x, y, color) {
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.8;
-    
-    // Corazón más detallado
-    const radioCorazon = 8;
-    
-    ctx.beginPath();
-    // Parte superior izquierda del corazón
-    ctx.moveTo(x, y + radioCorazon);
-    ctx.bezierCurveTo(
-        x - radioCorazon, y, 
-        x - radioCorazon*1.5, y, 
-        x - radioCorazon*1.5, y - radioCorazon/2
-    );
-    ctx.bezierCurveTo(
-        x - radioCorazon*1.5, y - radioCorazon, 
-        x - radioCorazon, y - radioCorazon, 
-        x, y
-    );
-    
-    // Parte superior derecha del corazón
-    ctx.bezierCurveTo(
-        x + radioCorazon, y - radioCorazon, 
-        x + radioCorazon*1.5, y - radioCorazon, 
-        x + radioCorazon*1.5, y - radioCorazon/2
-    );
-    ctx.bezierCurveTo(
-        x + radioCorazon*1.5, y, 
-        x + radioCorazon, y, 
-        x, y + radioCorazon
-    );
-    
-    ctx.stroke();
-    ctx.restore();
 }
 
 module.exports = router;
