@@ -258,8 +258,8 @@ async function generarTarjetaTwitter(opciones) {
         
         // Dibujar insignia de verificación si está verificado
         if (opciones.verificado) {
-            // Dibujar insignia verificada usando la imagen cargada
-            const tamañoInsignia = 20;
+            // Dibujar insignia verificada usando la imagen cargada - versión un poco más grande
+            const tamañoInsignia = 24;  // Aumentado de 20 a 24
             const insigniaX = nombreX + ctx.measureText(opciones.nombre).width + 5;
             const insigniaY = nombreY - tamañoInsignia/2 - 2;
             
@@ -469,34 +469,27 @@ async function generarTarjetaTwitter(opciones) {
         // Dibujar zona de interacción para me gusta
         dibujarAreaInteractiva(padding + espacioIconos*2, iconosY, 70, imagenes.likes, formatearNumero(opciones.likes));
         
-        // Añadir marca de tiempo mejorada con decoración
+        // Añadir información en lugar de la marca de tiempo
         ctx.fillStyle = tema.textoSecundario;
         
-        // Pequeño detalle decorativo junto a la hora - icono de reloj dibujado
+        // Pequeño icono decorativo de ubicación
         ctx.beginPath();
         ctx.arc(ancho - padding - 85, alto - 25, 6, 0, Math.PI * 2);
-        ctx.strokeStyle = tema.textoSecundario;
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
+        ctx.fillStyle = tema.textoSecundario;
+        ctx.fill();
         
-        // Manecillas del reloj
+        // Punto en el centro para simular un pin de ubicación
         ctx.beginPath();
-        ctx.moveTo(ancho - padding - 85, alto - 25);
-        ctx.lineTo(ancho - padding - 85, alto - 29);
-        ctx.stroke();
+        ctx.arc(ancho - padding - 85, alto - 25, 2, 0, Math.PI * 2);
+        ctx.fillStyle = tema.fondo;
+        ctx.fill();
         
-        ctx.beginPath();
-        ctx.moveTo(ancho - padding - 85, alto - 25);
-        ctx.lineTo(ancho - padding - 81, alto - 25);
-        ctx.stroke();
+        // Agregar texto "vía Twitter para Web"
+        ctx.fillStyle = tema.textoSecundario;
+        ctx.font = "italic 14px 'Arial', sans-serif";
         
-        // Formato fecha mejorado
-        const ahora = new Date();
-        const opcFecha = { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
-        const marcaTiempo = `${ahora.getHours()}:${ahora.getMinutes().toString().padStart(2, '0')} · ${ahora.toLocaleDateString('es-ES', opcFecha)}`;
-        
-        ctx.font = "bold 14px 'Arial', sans-serif";
-        ctx.fillText(marcaTiempo, ancho - ctx.measureText(marcaTiempo).width - padding - 15, alto - 22);
+        const appInfo = "vía Twitter para Web";
+        ctx.fillText(appInfo, ancho - ctx.measureText(appInfo).width - padding - 15, alto - 22);
         
         // Logo de Twitter/X en la esquina inferior izquierda
         ctx.drawImage(imagenes.logo, padding, alto - 35, 22, 22);
