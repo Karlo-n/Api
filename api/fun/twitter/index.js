@@ -297,6 +297,14 @@ async function generarTarjetaTwitter(opciones) {
         // Dibujar texto del tweet con mejor formato y estilo
         ctx.fillStyle = tema.texto;
         
+        // Preparar el ajuste de texto primero
+        const textoX = padding;
+        let textoY = offsetY;
+        
+        // Manejar ajuste de texto
+        const anchoMaximo = ancho - (padding * 2);
+        const textoAjustado = ajustarTexto(ctx, opciones.texto, anchoMaximo);
+        
         // Añadir un pequeño decorador al inicio del texto (línea vertical sutil)
         if (textoAjustado && textoAjustado.length > 0) {
             ctx.strokeStyle = tema.azulTwitter;
@@ -310,13 +318,6 @@ async function generarTarjetaTwitter(opciones) {
         // Usar una fuente un poco más elegante y con mejor renderizado
         ctx.font = "18px 'Arial', sans-serif";
         ctx.textRendering = "optimizeLegibility";
-        
-        const textoX = padding;
-        let textoY = offsetY;
-        
-        // Manejar ajuste de texto
-        const anchoMaximo = ancho - (padding * 2);
-        const textoAjustado = ajustarTexto(ctx, opciones.texto, anchoMaximo);
         
         // Aplicar un efecto de resaltado sutil para enlaces, menciones y hashtags
         let textoHeight = 0;
@@ -556,25 +557,60 @@ async function cargarImagenes() {
 
 /**
  * Ajusta el texto para que quepa dentro de un ancho especificado
+ * Maneja palabras muy largas dividiéndolas si es necesario
  */
 function ajustarTexto(ctx, texto, anchoMaximo) {
+    // Dividir el texto en palabras
     const palabras = texto.split(' ');
     const lineas = [];
-    let lineaActual = palabras[0] || '';
+    let lineaActual = '';
     
-    for (let i = 1; i < palabras.length; i++) {
-        const palabra = palabras[i];
-        const ancho = ctx.measureText(lineaActual + " " + palabra).width;
+    // Procesar cada palabra
+    for (let i = 0; i < palabras.length; i++) {
+        let palabra = palabras[i];
         
-        if (ancho < anchoMaximo) {
-            lineaActual += " " + palabra;
+        // Verificar si esta palabra por sí sola es más ancha que el límite
+        if (ctx.measureText(palabra).width > anchoMaximo) {
+            // Si la línea actual tiene contenido, guardarla primero
+            if (lineaActual.length > 0) {
+                lineas.push(lineaActual);
+                lineaActual = '';
+            }
+            
+            // Dividir la palabra larga en fragmentos
+            let fragmento = '';
+            for (let j = 0; j < palabra.length; j++) {
+                fragmento += palabra[j];
+                // Si el fragmento es demasiado ancho, guardarlo como línea
+                if (ctx.measureText(fragmento).width >= anchoMaximo) {
+                    lineas.push(fragmento);
+                    fragmento = '';
+                }
+            }
+            
+            // Si queda algún fragmento, usarlo como inicio de la próxima línea
+            if (fragmento.length > 0) {
+                lineaActual = fragmento;
+            }
+            
+            continue; // Pasar a la siguiente palabra
+        }
+        
+        // Comprobar si añadir esta palabra excedería el ancho
+        const lineaConPalabra = lineaActual.length > 0 ? 
+                               lineaActual + ' ' + palabra : palabra;
+                               
+        if (ctx.measureText(lineaConPalabra).width <= anchoMaximo) {
+            lineaActual = lineaConPalabra;
         } else {
+            // Si no cabe, guardar la línea actual y comenzar una nueva
             lineas.push(lineaActual);
             lineaActual = palabra;
         }
     }
     
-    if (lineaActual) {
+    // Añadir la última línea si tiene contenido
+    if (lineaActual.length > 0) {
         lineas.push(lineaActual);
     }
     
