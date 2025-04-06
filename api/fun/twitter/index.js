@@ -5,46 +5,43 @@ const fs = require("fs");
 const path = require("path");
 const router = express.Router();
 
-// Create directory for output images if it doesn't exist
-const IMAGES_DIR = path.join(__dirname, "output");
-const PUBLIC_URL_BASE = process.env.PUBLIC_URL || "https://api.apikarl.com";
-const PUBLIC_PATH = "/api/fun/twitter/output";
-
-if (!fs.existsSync(IMAGES_DIR)) {
-    fs.mkdirSync(IMAGES_DIR, { recursive: true });
-}
-
-// Register fonts (using Arial as fallback if not available)
-try {
-    registerFont(path.join(__dirname, "assets", "Roboto-Regular.ttf"), { family: "Roboto" });
-    registerFont(path.join(__dirname, "assets", "Roboto-Bold.ttf"), { family: "Roboto Bold" });
-} catch (error) {
-    console.warn("Couldn't register custom fonts, using system fonts as fallback:", error);
-}
-
-// Create assets directory and verification badge
+// Crear directorio para assets si no existe
 const ASSETS_DIR = path.join(__dirname, "assets");
 if (!fs.existsSync(ASSETS_DIR)) {
     fs.mkdirSync(ASSETS_DIR, { recursive: true });
 }
 
-// Route to serve stored images
-router.get("/output/:filename", (req, res) => {
-    const filePath = path.join(IMAGES_DIR, req.params.filename);
-    
-    if (fs.existsSync(filePath)) {
-        res.setHeader("Content-Type", "image/png");
-        res.setHeader("Cache-Control", "public, max-age=86400"); // 24 hours
-        res.sendFile(filePath);
-    } else {
-        res.status(404).json({ error: "Image not found" });
-    }
-});
+// Registrar fuentes (usando Arial como respaldo si no están disponibles)
+try {
+    registerFont(path.join(__dirname, "assets", "Roboto-Regular.ttf"), { family: "Roboto" });
+    registerFont(path.join(__dirname, "assets", "Roboto-Bold.ttf"), { family: "Roboto Bold" });
+} catch (error) {
+    console.warn("No se pudieron registrar fuentes personalizadas, usando fuentes del sistema como respaldo:", error);
+}
 
-// Main API endpoint
+/**
+ * API de Tarjetas de Twitter - Genera una imagen que simula un tweet
+ * Endpoint: /api/fun/twitter
+ * 
+ * Parámetros obligatorios:
+ * - nombre: Nombre del usuario
+ * - usuario: Nombre de usuario (sin @)
+ * - pfp: URL de la foto de perfil
+ * - texto: Contenido del tweet
+ * 
+ * Parámetros opcionales:
+ * - verificado: "true" si la cuenta tiene insignia de verificación
+ * - color: Color de fondo, "blanco" o "negro"
+ * - imagen: URL de una imagen para adjuntar al tweet
+ * - afilacion: Texto o URL de imagen de afiliación (YouTube, TikTok, etc.)
+ * - importante: Designación especial (CEO, Presidente, etc.)
+ * - likes: Número de me gusta
+ * - favoritos: Número de favoritos/comentarios
+ * - compartidos: Número de retweets
+ */
 router.get("/", async (req, res) => {
     try {
-        // Extract parameters
+        // Extraer parámetros
         const { 
             nombre, 
             usuario, 
@@ -60,17 +57,17 @@ router.get("/", async (req, res) => {
             compartidos = "0"
         } = req.query;
 
-        // Validate required parameters
+        // Validar parámetros obligatorios
         if (!nombre || !usuario || !pfp || !texto) {
             return res.status(400).json({ 
-                error: "Missing required parameters",
-                required: ["nombre", "usuario", "pfp", "texto"],
-                example: "/api/fun/twitter?nombre=John%20Doe&usuario=johndoe&pfp=https://example.com/profile.jpg&texto=Hello%20World!"
+                error: "Faltan parámetros obligatorios",
+                obligatorios: ["nombre", "usuario", "pfp", "texto"],
+                ejemplo: "/api/fun/twitter?nombre=Juan%20Pérez&usuario=juanperez&pfp=https://ejemplo.com/perfil.jpg&texto=¡Hola%20Mundo!"
             });
         }
 
-        // Generate Twitter card image
-        const cardBuffer = await generateTwitterCard({
+        // Generar imagen de tarjeta de Twitter
+        const cardBuffer = await generarTarjetaTwitter({
             nombre,
             usuario,
             pfp,
@@ -85,280 +82,257 @@ router.get("/", async (req, res) => {
             compartidos: parseInt(compartidos) || 0
         });
 
-        // Generate a unique filename
-        const timestamp = Date.now();
-        const randomStr = Math.random().toString(36).substring(2, 8);
-        const filename = `twitter_${timestamp}_${randomStr}.png`;
-        const filePath = path.join(IMAGES_DIR, filename);
-
-        // Save the image
-        fs.writeFileSync(filePath, cardBuffer);
-
-        // Generate public URL
-        const imageUrl = `${PUBLIC_URL_BASE}${PUBLIC_PATH}/${filename}`;
-
-        // Schedule deletion after 24 hours
-        setTimeout(() => {
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-                console.log(`Deleted Twitter card: ${filename}`);
-            }
-        }, 24 * 60 * 60 * 1000);
-
-        // Return JSON with the image URL
-        res.json({
-            success: true,
-            url: imageUrl,
-            message: "Twitter card generated successfully"
-        });
+        // Devolver la imagen directamente
+        res.setHeader('Content-Type', 'image/png');
+        res.send(cardBuffer);
 
     } catch (error) {
-        console.error("Error generating Twitter card:", error);
+        console.error("Error al generar tarjeta de Twitter:", error);
         res.status(500).json({ 
-            error: "Failed to generate Twitter card",
-            details: error.message
+            error: "Error al generar tarjeta de Twitter",
+            detalles: error.message
         });
     }
 });
 
 /**
- * Generate a Twitter-like card image
+ * Genera una imagen de tarjeta similar a Twitter
  */
-async function generateTwitterCard(options) {
-    // Set dimensions (Twitter-like card)
-    const width = 600;
-    const height = options.imagen ? 550 : 320;
-    const paddingX = 16;
+async function generarTarjetaTwitter(opciones) {
+    // Establecer dimensiones (estilo tarjeta de Twitter)
+    const ancho = 600;
+    const alto = opciones.imagen ? 550 : 320;
+    const padding = 16;
     
-    // Create canvas
-    const canvas = createCanvas(width, height);
+    // Crear canvas
+    const canvas = createCanvas(ancho, alto);
     const ctx = canvas.getContext("2d");
     
-    // Set background color
-    if (options.colorFondo === "negro") {
-        ctx.fillStyle = "#15202b"; // Twitter dark mode
+    // Establecer color de fondo
+    if (opciones.colorFondo === "negro") {
+        ctx.fillStyle = "#15202b"; // Modo oscuro de Twitter
     } else {
-        ctx.fillStyle = "#ffffff"; // Twitter light mode
+        ctx.fillStyle = "#ffffff"; // Modo claro de Twitter
     }
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, ancho, alto);
     
     try {
-        // Load profile picture
-        const profileImage = await loadImage(options.pfp);
+        // Cargar foto de perfil
+        const imagenPerfil = await loadImage(opciones.pfp);
         
-        // Draw profile picture (circular crop)
-        const profileSize = 50;
-        const profileX = paddingX + profileSize/2;
-        const profileY = 40;
+        // Dibujar foto de perfil (recorte circular)
+        const tamañoPerfil = 50;
+        const perfilX = padding + tamañoPerfil/2;
+        const perfilY = 40;
         
         ctx.save();
         ctx.beginPath();
-        ctx.arc(profileX, profileY, profileSize/2, 0, Math.PI * 2);
+        ctx.arc(perfilX, perfilY, tamañoPerfil/2, 0, Math.PI * 2);
         ctx.closePath();
         ctx.clip();
-        ctx.drawImage(profileImage, profileX - profileSize/2, profileY - profileSize/2, profileSize, profileSize);
+        ctx.drawImage(imagenPerfil, perfilX - tamañoPerfil/2, perfilY - tamañoPerfil/2, tamañoPerfil, tamañoPerfil);
         ctx.restore();
         
-        // Set text color based on background
-        const textColor = options.colorFondo === "negro" ? "#ffffff" : "#000000";
-        const secondaryColor = options.colorFondo === "negro" ? "#8899a6" : "#536471";
+        // Establecer color de texto según fondo
+        const colorTexto = opciones.colorFondo === "negro" ? "#ffffff" : "#000000";
+        const colorSecundario = opciones.colorFondo === "negro" ? "#8899a6" : "#536471";
         
-        // Draw user name and verification badge
-        ctx.fillStyle = textColor;
+        // Dibujar nombre de usuario e insignia de verificación
+        ctx.fillStyle = colorTexto;
         ctx.font = "bold 18px 'Roboto Bold', Arial, sans-serif";
         
-        const nameX = profileX + profileSize/2 + 15;
-        const nameY = profileY - 10;
-        ctx.fillText(options.nombre, nameX, nameY);
+        const nombreX = perfilX + tamañoPerfil/2 + 15;
+        const nombreY = perfilY - 10;
+        ctx.fillText(opciones.nombre, nombreX, nombreY);
         
-        // Draw verification badge if verified
-        if (options.verificado) {
-            // Draw a verified badge (blue circle with white checkmark)
-            const badgeSize = 18;
-            const badgeX = nameX + ctx.measureText(options.nombre).width + 5;
-            const badgeY = nameY - badgeSize/2;
+        // Dibujar insignia de verificación si está verificado
+        if (opciones.verificado) {
+            // Dibujar insignia verificada (círculo azul con marca de verificación blanca)
+            const tamañoInsignia = 18;
+            const insigniaX = nombreX + ctx.measureText(opciones.nombre).width + 5;
+            const insigniaY = nombreY - tamañoInsignia/2;
             
-            // Blue circle
+            // Círculo azul
             ctx.fillStyle = "#1DA1F2";
             ctx.beginPath();
-            ctx.arc(badgeX + badgeSize/2, badgeY + badgeSize/2, badgeSize/2, 0, Math.PI * 2);
+            ctx.arc(insigniaX + tamañoInsignia/2, insigniaY + tamañoInsignia/2, tamañoInsignia/2, 0, Math.PI * 2);
             ctx.fill();
             
-            // White checkmark
+            // Marca de verificación blanca
             ctx.fillStyle = "#ffffff";
             ctx.font = "bold 12px Arial";
-            ctx.fillText("✓", badgeX + 4, badgeY + 13);
+            ctx.fillText("✓", insigniaX + 4, insigniaY + 13);
         }
         
-        // Draw username
-        ctx.fillStyle = secondaryColor;
+        // Dibujar nombre de usuario
+        ctx.fillStyle = colorSecundario;
         ctx.font = "16px 'Roboto', Arial, sans-serif";
-        ctx.fillText(`@${options.usuario}`, nameX, nameY + 20);
+        ctx.fillText(`@${opciones.usuario}`, nombreX, nombreY + 20);
         
-        // Draw important designation if provided
-        if (options.importante) {
-            const importanteX = nameX;
-            const importanteY = nameY + 40;
+        // Dibujar designación importante si se proporciona
+        if (opciones.importante) {
+            const importanteX = nombreX;
+            const importanteY = nombreY + 40;
             
-            // Background for important designation
-            ctx.fillStyle = options.colorFondo === "negro" ? "#192734" : "#f7f9f9";
-            const importanteWidth = ctx.measureText(options.importante).width + 20;
-            const importanteHeight = 24;
-            drawRoundRect(ctx, importanteX, importanteY - importanteHeight + 5, importanteWidth, importanteHeight, 12);
+            // Fondo para designación importante
+            ctx.fillStyle = opciones.colorFondo === "negro" ? "#192734" : "#f7f9f9";
+            const anchoImportante = ctx.measureText(opciones.importante).width + 20;
+            const altoImportante = 24;
+            dibujarRectanguloRedondeado(ctx, importanteX, importanteY - altoImportante + 5, anchoImportante, altoImportante, 12);
             ctx.fill();
             
-            // Draw the text with special color
-            ctx.fillStyle = "#1DA1F2"; // Twitter blue for important
+            // Dibujar el texto con color especial
+            ctx.fillStyle = "#1DA1F2"; // Azul de Twitter para importante
             ctx.font = "14px 'Roboto Bold', Arial, sans-serif";
-            ctx.fillText(options.importante, importanteX + 10, importanteY);
+            ctx.fillText(opciones.importante, importanteX + 10, importanteY);
         }
         
-        // Draw affiliation badge if provided
-        let afilacionY = options.importante ? nameY + 70 : nameY + 45;
+        // Dibujar insignia de afiliación si se proporciona
+        let afilacionY = opciones.importante ? nombreY + 70 : nombreY + 45;
         
-        if (options.afilacion) {
-            if (options.afilacion.startsWith("http")) {
-                // It's an image URL
+        if (opciones.afilacion) {
+            if (opciones.afilacion.startsWith("http")) {
+                // Es una URL de imagen
                 try {
-                    const afilacionImage = await loadImage(options.afilacion);
-                    const afilacionSize = 24;
-                    ctx.drawImage(afilacionImage, nameX, afilacionY - afilacionSize, afilacionSize, afilacionSize);
+                    const imagenAfiliacion = await loadImage(opciones.afilacion);
+                    const tamañoAfiliacion = 24;
+                    ctx.drawImage(imagenAfiliacion, nombreX, afilacionY - tamañoAfiliacion, tamañoAfiliacion, tamañoAfiliacion);
                     afilacionY += 30;
                 } catch (error) {
-                    console.error("Failed to load affiliation image:", error);
+                    console.error("Error al cargar imagen de afiliación:", error);
                 }
             } else {
-                // It's text
-                ctx.fillStyle = "#1DA1F2"; // Twitter blue
+                // Es texto
+                ctx.fillStyle = "#1DA1F2"; // Azul de Twitter
                 ctx.font = "14px 'Roboto Bold', Arial, sans-serif";
-                ctx.fillText(options.afilacion, nameX, afilacionY);
+                ctx.fillText(opciones.afilacion, nombreX, afilacionY);
                 afilacionY += 25;
             }
         }
         
-        // Draw tweet text
-        ctx.fillStyle = textColor;
+        // Dibujar texto del tweet
+        ctx.fillStyle = colorTexto;
         ctx.font = "18px 'Roboto', Arial, sans-serif";
         
-        const textX = paddingX;
-        let textY = afilacionY + 10;
+        const textoX = padding;
+        let textoY = afilacionY + 10;
         
-        // Handle text wrapping
-        const maxWidth = width - (paddingX * 2);
-        const wrappedText = wrapText(ctx, options.texto, maxWidth);
+        // Manejar ajuste de texto
+        const anchoMaximo = ancho - (padding * 2);
+        const textoAjustado = ajustarTexto(ctx, opciones.texto, anchoMaximo);
         
-        wrappedText.forEach(line => {
-            ctx.fillText(line, textX, textY);
-            textY += 25;
+        textoAjustado.forEach(linea => {
+            ctx.fillText(linea, textoX, textoY);
+            textoY += 25;
         });
         
-        // Draw attached image if provided
-        let currentY = textY + 15;
+        // Dibujar imagen adjunta si se proporciona
+        let alturaActual = textoY + 15;
         
-        if (options.imagen) {
+        if (opciones.imagen) {
             try {
-                const tweetImage = await loadImage(options.imagen);
-                const maxImageHeight = 250;
-                const maxImageWidth = width - (paddingX * 2);
+                const imagenTweet = await loadImage(opciones.imagen);
+                const altoMaximoImagen = 250;
+                const anchoMaximoImagen = ancho - (padding * 2);
                 
-                // Calculate dimensions while preserving aspect ratio
-                let imgWidth = tweetImage.width;
-                let imgHeight = tweetImage.height;
+                // Calcular dimensiones manteniendo proporción de aspecto
+                let anchoImg = imagenTweet.width;
+                let altoImg = imagenTweet.height;
                 
-                if (imgWidth > maxImageWidth) {
-                    imgHeight = (maxImageWidth / imgWidth) * imgHeight;
-                    imgWidth = maxImageWidth;
+                if (anchoImg > anchoMaximoImagen) {
+                    altoImg = (anchoMaximoImagen / anchoImg) * altoImg;
+                    anchoImg = anchoMaximoImagen;
                 }
                 
-                if (imgHeight > maxImageHeight) {
-                    imgWidth = (maxImageHeight / imgHeight) * imgWidth;
-                    imgHeight = maxImageHeight;
+                if (altoImg > altoMaximoImagen) {
+                    anchoImg = (altoMaximoImagen / altoImg) * anchoImg;
+                    altoImg = altoMaximoImagen;
                 }
                 
-                // Draw the image with rounded corners
-                const imageX = paddingX;
-                const imageY = currentY;
+                // Dibujar la imagen con esquinas redondeadas
+                const imagenX = padding;
+                const imagenY = alturaActual;
                 
                 ctx.save();
-                drawRoundRect(ctx, imageX, imageY, imgWidth, imgHeight, 16);
+                dibujarRectanguloRedondeado(ctx, imagenX, imagenY, anchoImg, altoImg, 16);
                 ctx.clip();
-                ctx.drawImage(tweetImage, imageX, imageY, imgWidth, imgHeight);
+                ctx.drawImage(imagenTweet, imagenX, imagenY, anchoImg, altoImg);
                 ctx.restore();
                 
-                currentY += imgHeight + 20;
+                alturaActual += altoImg + 20;
             } catch (error) {
-                console.error("Failed to load tweet image:", error);
+                console.error("Error al cargar imagen del tweet:", error);
             }
         }
         
-        // Draw interaction counts (likes, retweets, etc.)
-        currentY += 10;
+        // Dibujar contadores de interacción (likes, retweets, etc.)
+        alturaActual += 10;
         
-        const iconSpacing = 150;
-        const iconY = currentY;
+        const espacioIconos = 150;
+        const iconosY = alturaActual;
         
-        // Comment icon
-        ctx.fillStyle = secondaryColor;
-        drawCommentIcon(ctx, paddingX, iconY, secondaryColor);
+        // Icono de comentario
+        ctx.fillStyle = colorSecundario;
+        dibujarIconoComentario(ctx, padding, iconosY, colorSecundario);
         ctx.font = "14px 'Roboto', Arial, sans-serif";
-        ctx.fillText(formatNumber(options.favoritos), paddingX + 30, iconY + 5);
+        ctx.fillText(formatearNumero(opciones.favoritos), padding + 30, iconosY + 5);
         
-        // Retweet icon
-        drawRetweetIcon(ctx, paddingX + iconSpacing, iconY, secondaryColor);
-        ctx.fillText(formatNumber(options.compartidos), paddingX + iconSpacing + 30, iconY + 5);
+        // Icono de retweet
+        dibujarIconoRetweet(ctx, padding + espacioIconos, iconosY, colorSecundario);
+        ctx.fillText(formatearNumero(opciones.compartidos), padding + espacioIconos + 30, iconosY + 5);
         
-        // Like icon
-        drawLikeIcon(ctx, paddingX + (iconSpacing * 2), iconY, secondaryColor);
-        ctx.fillText(formatNumber(options.likes), paddingX + (iconSpacing * 2) + 30, iconY + 5);
+        // Icono de me gusta
+        dibujarIconoMeGusta(ctx, padding + (espacioIconos * 2), iconosY, colorSecundario);
+        ctx.fillText(formatearNumero(opciones.likes), padding + (espacioIconos * 2) + 30, iconosY + 5);
         
-        // Add timestamp and Twitter branding
-        ctx.fillStyle = secondaryColor;
+        // Añadir marca de tiempo y marca de Twitter
+        ctx.fillStyle = colorSecundario;
         ctx.font = "12px 'Roboto', Arial, sans-serif";
-        const now = new Date();
-        const timestamp = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')} · ${now.toLocaleDateString()}`;
-        ctx.fillText(timestamp, width - 150, height - 15);
+        const ahora = new Date();
+        const marcaTiempo = `${ahora.getHours()}:${ahora.getMinutes().toString().padStart(2, '0')} · ${ahora.toLocaleDateString()}`;
+        ctx.fillText(marcaTiempo, ancho - 150, alto - 15);
         
-        // Twitter logo at bottom right
+        // Logo de Twitter en la esquina inferior derecha
         ctx.fillStyle = "#1DA1F2";
-        drawTwitterIcon(ctx, width - 25, height - 20, 15);
+        dibujarIconoTwitter(ctx, ancho - 25, alto - 20, 15);
         
-        // Return the image buffer
+        // Devolver el buffer de imagen
         return canvas.toBuffer("image/png");
         
     } catch (error) {
-        console.error("Error in Twitter card generation:", error);
+        console.error("Error en generación de tarjeta Twitter:", error);
         throw error;
     }
 }
 
 /**
- * Wrap text to fit within a specified width
+ * Ajusta el texto para que quepa dentro de un ancho especificado
  */
-function wrapText(ctx, text, maxWidth) {
-    const words = text.split(' ');
-    const lines = [];
-    let currentLine = words[0];
+function ajustarTexto(ctx, texto, anchoMaximo) {
+    const palabras = texto.split(' ');
+    const lineas = [];
+    let lineaActual = palabras[0];
     
-    for (let i = 1; i < words.length; i++) {
-        const word = words[i];
-        const width = ctx.measureText(currentLine + " " + word).width;
+    for (let i = 1; i < palabras.length; i++) {
+        const palabra = palabras[i];
+        const ancho = ctx.measureText(lineaActual + " " + palabra).width;
         
-        if (width < maxWidth) {
-            currentLine += " " + word;
+        if (ancho < anchoMaximo) {
+            lineaActual += " " + palabra;
         } else {
-            lines.push(currentLine);
-            currentLine = word;
+            lineas.push(lineaActual);
+            lineaActual = palabra;
         }
     }
     
-    lines.push(currentLine);
-    return lines;
+    lineas.push(lineaActual);
+    return lineas;
 }
 
 /**
- * Format numbers for display (e.g., 1000 -> 1K)
+ * Formatea números para mostrar (ej. 1000 -> 1K)
  */
-function formatNumber(num) {
+function formatearNumero(num) {
     if (num >= 1000000) {
         return (num / 1000000).toFixed(1) + 'M';
     }
@@ -369,33 +343,33 @@ function formatNumber(num) {
 }
 
 /**
- * Draw a rounded rectangle
+ * Dibuja un rectángulo redondeado
  */
-function drawRoundRect(ctx, x, y, width, height, radius) {
+function dibujarRectanguloRedondeado(ctx, x, y, ancho, alto, radio) {
     ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + width - radius, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-    ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    ctx.lineTo(x + radius, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.moveTo(x + radio, y);
+    ctx.lineTo(x + ancho - radio, y);
+    ctx.quadraticCurveTo(x + ancho, y, x + ancho, y + radio);
+    ctx.lineTo(x + ancho, y + alto - radio);
+    ctx.quadraticCurveTo(x + ancho, y + alto, x + ancho - radio, y + alto);
+    ctx.lineTo(x + radio, y + alto);
+    ctx.quadraticCurveTo(x, y + alto, x, y + alto - radio);
+    ctx.lineTo(x, y + radio);
+    ctx.quadraticCurveTo(x, y, x + radio, y);
     ctx.closePath();
 }
 
 /**
- * Draw Twitter icon
+ * Dibuja icono de Twitter
  */
-function drawTwitterIcon(ctx, x, y, size) {
+function dibujarIconoTwitter(ctx, x, y, tamaño) {
     ctx.save();
     
-    // Scale and translate to position
-    ctx.translate(x - size, y - size);
-    ctx.scale(size/12, size/12);
+    // Escalar y trasladar a posición
+    ctx.translate(x - tamaño, y - tamaño);
+    ctx.scale(tamaño/12, tamaño/12);
     
-    // Draw Twitter bird
+    // Dibujar pájaro de Twitter
     ctx.beginPath();
     ctx.moveTo(23.643, 4.937);
     ctx.bezierCurveTo(22.809, 5.307, 21.902, 5.557, 20.944, 5.67);
@@ -432,32 +406,6 @@ function drawTwitterIcon(ctx, x, y, size) {
     ctx.bezierCurveTo(17.474, 6.197, 16.456, 6.321, 15.539, 6.748);
     ctx.bezierCurveTo(14.623, 7.175, 13.851, 7.882, 13.330, 8.770);
     ctx.bezierCurveTo(12.809, 9.659, 12.564, 10.688, 12.629, 11.721);
-    ctx.bezierCurveTo(10.562, 11.623, 8.542, 11.098, 6.684, 10.177);
-    ctx.bezierCurveTo(4.826, 9.256, 3.171, 7.957, 1.819, 6.361);
-    ctx.bezierCurveTo(1.301, 7.326, 1.151, 8.446, 1.397, 9.517);
-    ctx.bezierCurveTo(1.644, 10.589, 2.273, 11.541, 3.168, 12.200);
-    ctx.bezierCurveTo(2.506, 12.177, 1.858, 11.999, 1.275, 11.680);
-    ctx.bezierCurveTo(1.275, 11.700, 1.275, 11.721, 1.275, 11.743);
-    ctx.bezierCurveTo(1.275, 12.784, 1.652, 13.791, 2.333, 14.582);
-    ctx.bezierCurveTo(3.014, 15.373, 3.951, 15.895, 4.979, 16.058);
-    ctx.bezierCurveTo(4.366, 16.225, 3.725, 16.254, 3.099, 16.143);
-    ctx.bezierCurveTo(3.379, 17.040, 3.936, 17.825, 4.687, 18.385);
-    ctx.bezierCurveTo(5.438, 18.944, 6.346, 19.250, 7.282, 19.260);
-    ctx.bezierCurveTo(5.636, 20.558, 3.622, 21.256, 1.553, 21.253);
-    ctx.bezierCurveTo(1.203, 21.253, 0.854, 21.232, 0.507, 21.190);
-    ctx.bezierCurveTo(2.611, 22.558, 5.080, 23.277, 7.605, 23.273);
-    ctx.bezierCurveTo(15.826, 23.273, 20.261, 16.360, 20.261, 10.375);
-    ctx.lineTo(20.261, 9.768);
-    ctx.bezierCurveTo(21.113, 9.165, 21.867, 8.414, 22.491, 7.547);
-    ctx.bezierCurveTo(21.713, 7.900, 20.880, 8.134, 20.023, 8.243);
-    ctx.bezierCurveTo(20.907, 7.705, 21.579, 6.880, 21.901, 5.909);
-    ctx.bezierCurveTo(21.061, 6.395, 20.146, 6.738, 19.192, 6.923);
-    ctx.bezierCurveTo(18.480, 6.152, 17.515, 5.668, 16.471, 5.563);
-    ctx.bezierCurveTo(15.428, 5.458, 14.383, 5.738, 13.523, 6.352);
-    ctx.bezierCurveTo(12.664, 6.966, 12.039, 7.879, 11.755, 8.929);
-    ctx.bezierCurveTo(11.471, 9.979, 11.547, 11.096, 11.970, 12.096);
-    ctx.bezierCurveTo(10.118, 12.004, 8.303, 11.540, 6.642, 10.734);
-    ctx.bezierCurveTo(4.982, 9.927, 3.515, 8.798, 2.330, 7.419);
     ctx.stroke();
     ctx.fill();
     
@@ -465,13 +413,13 @@ function drawTwitterIcon(ctx, x, y, size) {
 }
 
 /**
- * Draw comment icon
+ * Dibuja icono de comentario
  */
-function drawCommentIcon(ctx, x, y, color) {
+function dibujarIconoComentario(ctx, x, y, color) {
     ctx.save();
     ctx.fillStyle = color;
     
-    // Comment bubble
+    // Burbuja de comentario
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x + 20, y);
@@ -487,28 +435,28 @@ function drawCommentIcon(ctx, x, y, color) {
 }
 
 /**
- * Draw retweet icon
+ * Dibuja icono de retweet
  */
-function drawRetweetIcon(ctx, x, y, color) {
+function dibujarIconoRetweet(ctx, x, y, color) {
     ctx.save();
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     
-    // Retweet arrows
+    // Flechas de retweet
     ctx.beginPath();
-    // Left arrow
+    // Flecha izquierda
     ctx.moveTo(x, y + 8);
     ctx.lineTo(x + 6, y + 2);
     ctx.lineTo(x + 12, y + 8);
-    // Arrow stem
+    // Tallo de flecha
     ctx.moveTo(x + 6, y + 2);
     ctx.lineTo(x + 6, y + 14);
     
-    // Right arrow
+    // Flecha derecha
     ctx.moveTo(x + 24, y + 8);
     ctx.lineTo(x + 18, y + 14);
     ctx.lineTo(x + 12, y + 8);
-    // Arrow stem
+    // Tallo de flecha
     ctx.moveTo(x + 18, y + 14);
     ctx.lineTo(x + 18, y + 2);
     
@@ -518,14 +466,14 @@ function drawRetweetIcon(ctx, x, y, color) {
 }
 
 /**
- * Draw like icon
+ * Dibuja icono de me gusta
  */
-function drawLikeIcon(ctx, x, y, color) {
+function dibujarIconoMeGusta(ctx, x, y, color) {
     ctx.save();
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     
-    // Heart shape
+    // Forma de corazón
     ctx.beginPath();
     ctx.moveTo(x + 12, y + 16);
     ctx.bezierCurveTo(x + 6, y + 10, x, y + 8, x, y + 4);
@@ -539,27 +487,5 @@ function drawLikeIcon(ctx, x, y, color) {
     
     ctx.restore();
 }
-
-// Clean up old images every hour
-setInterval(() => {
-    try {
-        const files = fs.readdirSync(IMAGES_DIR);
-        const now = Date.now();
-        
-        files.forEach(file => {
-            const filePath = path.join(IMAGES_DIR, file);
-            const stats = fs.statSync(filePath);
-            const fileAge = now - stats.mtimeMs;
-            
-            // Delete files older than 24 hours
-            if (fileAge > 24 * 60 * 60 * 1000) {
-                fs.unlinkSync(filePath);
-                console.log(`Deleted old Twitter card: ${file}`);
-            }
-        });
-    } catch (error) {
-        console.error("Error cleaning up Twitter card files:", error);
-    }
-}, 60 * 60 * 1000);
 
 module.exports = router;
