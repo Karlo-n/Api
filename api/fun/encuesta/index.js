@@ -4,8 +4,8 @@ const { createCanvas } = require("canvas");
 const router = express.Router();
 
 /**
- * API de Encuestas - Genera una imagen que simula una encuesta visual estilizada
- * Permite especificar título, opciones, colores y porcentajes
+ * API de Encuestas - Genera una imagen que simula una encuesta visual
+ * Diseño limpio y simple similar a Twitter/Instagram
  */
 router.get("/", async (req, res) => {
     try {
@@ -58,38 +58,32 @@ function procesarParametrosEncuesta(textoParam, colorParam, porcentajeParam) {
     // Mapear colores a valores hexadecimales
     const mapaColores = {
         // Colores básicos
-        "rojo": "#FF3040",
-        "azul": "#1D9BF0",
-        "verde": "#00BA7C",
-        "amarillo": "#FFD700",
-        "naranja": "#FF8C00",
-        "morado": "#8A2BE2",
-        "rosa": "#FF69B4",
+        "rojo": "#E53935",
+        "azul": "#2196F3",
+        "verde": "#00C853",
+        "amarillo": "#FFD600",
+        "naranja": "#FF9100",
+        "morado": "#AA00FF",
+        "rosa": "#FF4081",
         "negro": "#000000",
         "blanco": "#FFFFFF",
-        "gris": "#808080",
-        "turquesa": "#40E0D0",
-        "violeta": "#EE82EE",
-        "marron": "#A52A2A",
+        "gris": "#757575",
+        "turquesa": "#00BCD4",
+        "violeta": "#673AB7",
+        "marron": "#795548",
         
-        // Variantes de azul Twitter
-        "twitter": "#1D9BF0",
-        "azul_twitter": "#1D9BF0",
-        "azul_claro": "#7CC0FF",
-        "azul_oscuro": "#0F1B2A",
+        // Colores específicos de Twitter
+        "twitter": "#1DA1F2",
+        "azul_twitter": "#1DA1F2",
+        "rojo_twitter": "#E0245E",
         
-        // Variantes de rojo
-        "rojo_claro": "#FF6B6B",
-        "rojo_oscuro": "#8B0000",
-        
-        // Variantes de verde
-        "verde_claro": "#90EE90",
-        "verde_oscuro": "#006400",
-        
-        // Grises de Twitter
-        "gris_claro": "#D9D9D9",
-        "gris_medio": "#8B98A5",
-        "gris_oscuro": "#536471"
+        // Opciones adicionales
+        "azul_claro": "#03A9F4",
+        "rojo_claro": "#FF5252",
+        "verde_claro": "#00E676",
+        "azul_oscuro": "#0D47A1",
+        "rojo_oscuro": "#B71C1C",
+        "verde_oscuro": "#1B5E20"
     };
 
     // Crear array de opciones
@@ -109,11 +103,11 @@ function procesarParametrosEncuesta(textoParam, colorParam, porcentajeParam) {
                 color = colorTexto;
             } else {
                 // Buscar en nuestro mapa de colores
-                color = mapaColores[colorTexto] || "#1D9BF0"; // Color por defecto: azul Twitter
+                color = mapaColores[colorTexto] || "#2196F3"; // Color por defecto: azul
             }
         } else {
             // Colores por defecto para cada posición
-            const coloresPredeterminados = ["#1D9BF0", "#00BA7C", "#FF3040", "#FFD700"];
+            const coloresPredeterminados = ["#2196F3", "#E53935", "#00C853", "#FFD600"];
             color = coloresPredeterminados[i % coloresPredeterminados.length];
         }
         
@@ -135,7 +129,7 @@ function procesarParametrosEncuesta(textoParam, colorParam, porcentajeParam) {
 }
 
 /**
- * Genera la imagen de la encuesta en formato PNG con diseño mejorado
+ * Genera la imagen de la encuesta en formato PNG
  */
 async function generarImagenEncuesta(titulo, opciones) {
     // Configurar dimensiones del canvas
@@ -153,48 +147,24 @@ async function generarImagenEncuesta(titulo, opciones) {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
     
-    // Colores de la encuesta (estilo mejorado)
+    // Colores de la encuesta
     const colors = {
-        background: "#000000",
-        text: "#E7E9EA",
-        secondaryText: "#8B98A5",
-        border: "#2F3336",
-        shadowColor: "rgba(0, 0, 0, 0.5)"
+        background: "#000000", // Fondo negro
+        text: "#FFFFFF",       // Texto blanco
+        secondaryText: "#999999", // Texto secundario
+        barBackground: "#2A2A2A" // Fondo de las barras de progreso
     };
     
-    // Dibujar fondo con degradado sutil
-    const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-    bgGradient.addColorStop(0, "#121212");
-    bgGradient.addColorStop(1, "#000000");
-    ctx.fillStyle = bgGradient;
+    // Dibujar fondo negro
+    ctx.fillStyle = colors.background;
     ctx.fillRect(0, 0, width, height);
     
-    // Añadir efecto de vignette (oscurecer bordes)
-    const vignetteGradient = ctx.createRadialGradient(
-        width/2, height/2, height * 0.3, 
-        width/2, height/2, height * 0.8
-    );
-    vignetteGradient.addColorStop(0, "rgba(0, 0, 0, 0)");
-    vignetteGradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
-    ctx.fillStyle = vignetteGradient;
-    ctx.fillRect(0, 0, width, height);
-    
-    // Dibujar título con efecto de brillo
+    // Dibujar título
     ctx.fillStyle = colors.text;
     ctx.font = "bold 24px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    
-    // Añadir sombra al texto del título
-    ctx.shadowColor = "rgba(255, 255, 255, 0.1)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
     ctx.fillText(titulo, width / 2, headerHeight / 2);
-    
-    // Resetear sombra
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
     
     // Determinar la opción con mayor porcentaje (ganadora)
     const maxPorcentaje = Math.max(...opciones.map(opt => opt.porcentaje));
@@ -207,57 +177,23 @@ async function generarImagenEncuesta(titulo, opciones) {
         // Verificar si esta es la opción ganadora
         const esGanadora = hayGanador && opcion.porcentaje === maxPorcentaje;
         
-        // Dibujar el fondo de la barra de progreso
+        // Dibujar el fondo de la barra de progreso (caja oscura)
         const barX = padding;
         const barY = currentY;
         const barHeight = optionHeight;
         const barFullWidth = width - (padding * 2);
         
-        // Añadir sombra sutil a la barra
-        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 3;
-        
-        // Barra de fondo (gris oscuro con degradado)
-        const bgBarGradient = ctx.createLinearGradient(barX, barY, barX, barY + barHeight);
-        bgBarGradient.addColorStop(0, "#2F3336");
-        bgBarGradient.addColorStop(1, "#252A2D");
-        ctx.fillStyle = bgBarGradient;
+        // Barra de fondo
+        ctx.fillStyle = colors.barBackground;
         roundedRect(ctx, barX, barY, barFullWidth, barHeight, 10);
         ctx.fill();
         
-        // Resetear sombra para la barra de progreso
-        ctx.shadowColor = "transparent";
-        ctx.shadowBlur = 0;
-        
-        // Barra de progreso (color personalizado con degradado)
+        // Barra de progreso (color personalizado)
         if (opcion.porcentaje > 0) {
             const progressWidth = (opcion.porcentaje / 100) * barFullWidth;
+            ctx.fillStyle = opcion.color;
             
-            // Crear un degradado para la barra de progreso
-            const progressGradient = ctx.createLinearGradient(barX, barY, barX, barY + barHeight);
-            
-            // Extraer componentes RGB del color
-            const hexToRgb = (hex) => {
-                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-                return result ? {
-                    r: parseInt(result[1], 16),
-                    g: parseInt(result[2], 16),
-                    b: parseInt(result[3], 16)
-                } : null;
-            };
-            
-            const rgb = hexToRgb(opcion.color);
-            const colorBrighter = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)` : opcion.color;
-            const colorDarker = rgb ? `rgba(${rgb.r * 0.7}, ${rgb.g * 0.7}, ${rgb.b * 0.7}, 1)` : opcion.color;
-            
-            progressGradient.addColorStop(0, colorBrighter);
-            progressGradient.addColorStop(1, colorDarker);
-            
-            ctx.fillStyle = progressGradient;
-            
-            // Usar la misma función para crear esquinas redondeadas
+            // Barras con esquinas redondeadas
             ctx.save();
             ctx.beginPath();
             
@@ -276,110 +212,58 @@ async function generarImagenEncuesta(titulo, opciones) {
                 ctx.closePath();
             }
             ctx.fill();
-            
-            // Añadir brillo sutil en la parte superior
-            const brightness = ctx.createLinearGradient(barX, barY, barX, barY + barHeight * 0.3);
-            brightness.addColorStop(0, "rgba(255, 255, 255, 0.15)");
-            brightness.addColorStop(1, "rgba(255, 255, 255, 0)");
-            
-            ctx.fillStyle = brightness;
-            // Usar el mismo path que ya recortamos
-            ctx.fill();
-            
             ctx.restore();
         }
         
-        // Dibujar texto de la opción con sombra
+        // Dibujar texto de la opción
         ctx.fillStyle = colors.text;
-        ctx.font = esGanadora ? "bold 16px Arial" : "16px Arial";
+        ctx.font = "bold 16px Arial";
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
         
-        // Añadir sombra sutil al texto
-        ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
-        
-        // Dibujar el texto con un pequeño padding
+        // Texto de la opción
         const textX = barX + 15;
         const textY = barY + barHeight / 2;
         ctx.fillText(opcion.texto, textX, textY);
         
-        // Resetear sombra para el porcentaje
-        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-        ctx.shadowBlur = 3;
-        
         // Dibujar porcentaje a la derecha
-        ctx.font = esGanadora ? "bold 18px Arial" : "16px Arial";
         ctx.textAlign = "right";
         const percentX = barX + barFullWidth - 15;
-        ctx.fillText(`${Math.round(opcion.porcentaje)}%`, percentX, textY);
         
-        // Resetear sombra
-        ctx.shadowColor = "transparent";
-        ctx.shadowBlur = 0;
-        
-        // Añadir badge de verificación si es la opción ganadora
+        // Si es la opción ganadora, dibujar primero el círculo de verificación
         if (esGanadora && opciones.length > 1) {
-            const checkX = barX + barFullWidth - 60;
+            // Dibujar círculo de verificación justo a la izquierda del porcentaje
+            const textWidth = ctx.measureText(`${Math.round(opcion.porcentaje)}%`).width;
+            const checkX = percentX - textWidth - 18; // Posicionado antes del texto
             const checkY = textY;
-            const checkSize = 18;
             
-            // Dibujar círculo con gradiente
-            const checkGradient = ctx.createRadialGradient(
-                checkX, checkY, 0,
-                checkX, checkY, checkSize
-            );
-            checkGradient.addColorStop(0, "#FFFFFF");
-            checkGradient.addColorStop(1, "#F0F0F0");
-            
+            // Círculo blanco
             ctx.beginPath();
-            ctx.arc(checkX, checkY, checkSize / 2, 0, Math.PI * 2);
-            ctx.fillStyle = checkGradient;
-            
-            // Sombra para el círculo
-            ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 1;
-            ctx.shadowOffsetY = 1;
+            ctx.arc(checkX, checkY, 8, 0, Math.PI * 2);
+            ctx.fillStyle = "#FFFFFF";
             ctx.fill();
             
-            // Resetear sombra
-            ctx.shadowColor = "transparent";
-            ctx.shadowBlur = 0;
-            
-            // Dibujar check con estilo
+            // Dibujar check
             ctx.beginPath();
-            ctx.moveTo(checkX - 4, checkY);
-            ctx.lineTo(checkX, checkY + 4);
-            ctx.lineTo(checkX + 6, checkY - 4);
-            
-            // Crear degradado para el check
-            const strokeGradient = ctx.createLinearGradient(
-                checkX - 4, checkY, 
-                checkX + 6, checkY
-            );
-            strokeGradient.addColorStop(0, opcion.color);
-            strokeGradient.addColorStop(1, colorBrighter(opcion.color, 30));
-            
-            ctx.strokeStyle = strokeGradient;
-            ctx.lineWidth = 2.5;
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
+            ctx.moveTo(checkX - 3, checkY);
+            ctx.lineTo(checkX, checkY + 3);
+            ctx.lineTo(checkX + 3, checkY - 2);
+            ctx.strokeStyle = opcion.color;
+            ctx.lineWidth = 2;
             ctx.stroke();
+            
+            // Dibujar porcentaje con el símbolo de verificación a su izquierda
+            ctx.fillStyle = colors.text;
+            ctx.fillText(`${Math.round(opcion.porcentaje)}%`, percentX, textY);
+        } else {
+            // Dibujar solo el porcentaje (sin verificación)
+            ctx.fillStyle = colors.text;
+            ctx.fillText(`${Math.round(opcion.porcentaje)}%`, percentX, textY);
         }
         
         // Actualizar posición Y para la siguiente opción
         currentY += optionHeight + optionGap;
     });
-    
-    // Añadir brillo sutil en la parte superior del canvas
-    const topGlow = ctx.createLinearGradient(0, 0, 0, 150);
-    topGlow.addColorStop(0, "rgba(255, 255, 255, 0.05)");
-    topGlow.addColorStop(1, "rgba(255, 255, 255, 0)");
-    ctx.fillStyle = topGlow;
-    ctx.fillRect(0, 0, width, 150);
     
     // Devolver la imagen como buffer
     return canvas.toBuffer('image/png');
@@ -400,24 +284,6 @@ function roundedRect(ctx, x, y, width, height, radius) {
     ctx.lineTo(x, y + radius);
     ctx.quadraticCurveTo(x, y, x + radius, y);
     ctx.closePath();
-}
-
-/**
- * Función para aclarar un color
- */
-function colorBrighter(hexColor, percent) {
-    // Convertir hex a rgb
-    let r = parseInt(hexColor.substring(1, 3), 16);
-    let g = parseInt(hexColor.substring(3, 5), 16);
-    let b = parseInt(hexColor.substring(5, 7), 16);
-    
-    // Aclarar cada componente
-    r = Math.min(255, r + Math.floor(r * (percent / 100)));
-    g = Math.min(255, g + Math.floor(g * (percent / 100)));
-    b = Math.min(255, b + Math.floor(b * (percent / 100)));
-    
-    // Convertir de nuevo a hex
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
 module.exports = router;
