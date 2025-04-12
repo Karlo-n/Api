@@ -21,6 +21,7 @@ const ruletaRouter = require("./api/fun/ruleta");
 const sleepingRouter = require("./api/fun/sleeping");
 const akinator = require("./api/fun/akinator");
 const twitterCardRouter = require("./api/fun/twitter");
+const leaderboardRouter = require("./api/fun/leaderboard");
 const bienvenidaRouter = require('./api/utility/bienvenida');
 const qrRouter = require("./api/utility/qr");
 const boostCardRouter = require("./api/utility/boostcard");
@@ -35,7 +36,6 @@ const binarioRouter = require("./api/utility/binario");
 const invertidoRouter = require("./api/utility/invertido");
 const obfuscarRouter = require("./api/utility/obfuscar");
 const captchaRouter = require("./api/utility/captcha");
-const leaderboardRouter = require("./api/utility/leaderboard");
 
 // Usar rutas
 app.use("/api/fun/ship", shipRouter);
@@ -52,6 +52,7 @@ app.use("/api/fun/ruleta", ruletaRouter);
 app.use("/api/fun/sleeping", sleepingRouter);
 app.use("/api/fun/akinator", akinator);
 app.use("/api/fun/twitter", twitterCardRouter);
+app.use("/api/fun/leaderboard", leaderboardRouter);
 app.use('/api/utility/bienvenida', bienvenidaRouter);
 app.use("/api/utility/qr", qrRouter);
 app.use("/api/utility/boostcard", boostCardRouter);
