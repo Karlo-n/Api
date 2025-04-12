@@ -22,6 +22,7 @@ const sleepingRouter = require("./api/fun/sleeping");
 const akinator = require("./api/fun/akinator");
 const twitterCardRouter = require("./api/fun/twitter");
 const leaderboardRouter = require("./api/fun/leaderboard");
+const encuestaRouter = require("./api/fun/encuesta");
 const bienvenidaRouter = require('./api/utility/bienvenida');
 const qrRouter = require("./api/utility/qr");
 const boostCardRouter = require("./api/utility/boostcard");
@@ -53,6 +54,7 @@ app.use("/api/fun/sleeping", sleepingRouter);
 app.use("/api/fun/akinator", akinator);
 app.use("/api/fun/twitter", twitterCardRouter);
 app.use("/api/fun/leaderboard", leaderboardRouter);
+app.use("/api/fun/encuesta", encuestaRouter);
 app.use('/api/utility/bienvenida', bienvenidaRouter);
 app.use("/api/utility/qr", qrRouter);
 app.use("/api/utility/boostcard", boostCardRouter);
@@ -92,6 +94,8 @@ app.get("/", (req, res) => {
     "/api/fun/sleeping",
     "/api/fun/akinator",
     "/api/fun/twitter",
+    "/api/fun/leaderboard",
+    "/api/fun/encuesta",
     "/api/utility/boostcard",
     "/api/utility/traductor",
     "/api/utility/bienvenida",
@@ -105,8 +109,7 @@ app.get("/", (req, res) => {
     "/api/utility/ip",
     "/api/utility/youtube",
     "/api/utility/binario",
-    "/api/utility/captcha",
-    "/api/utility/leaderboard"
+    "/api/utility/captcha"
 ]
     }, null, 4)); // <--- Aquí está bien formateado
 });
