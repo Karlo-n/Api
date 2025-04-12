@@ -1,15 +1,14 @@
 // api/fun/twitter/index.js
 const express = require("express");
-const { createCanvas, loadImage, registerFont } = require("canvas");
+const { createCanvas, loadImage } = require("canvas");
 const router = express.Router();
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
-const twemoji = require("twemoji");
 
 /**
  * API de Tarjetas de Twitter - Genera una imagen que simula un tweet
- * Versión final con soporte de emojis usando Twemoji
+ * Versión simple sin dependencias adicionales
  */
 router.get("/", async (req, res) => {
     try {
@@ -18,7 +17,7 @@ router.get("/", async (req, res) => {
             nombre = "Usuario", 
             usuario = "usuario", 
             pfp, 
-            texto = "Tweet de ejemplo 👍",
+            texto = "Tweet de ejemplo",
             verificado = "false",
             imagen,
             likes = "0",
@@ -61,15 +60,12 @@ router.get("/", async (req, res) => {
             }
         }
 
-        // Procesar texto para identificar y separar emojis
-        const textElements = await procesarTextoConEmojis(texto);
-
         // Generar la imagen del tweet
         const tweetBuffer = await generarTweetExacto({
             nombre,
             usuario,
             profileImage,
-            textElements, // Elementos procesados del texto con emojis
+            texto, 
             verificado: verificado.toLowerCase() === "true",
             tweetImage,
             likes: parseInt(likes) || 0,
@@ -93,87 +89,15 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * Procesa texto para identificar emojis y cargarlos como imágenes
- * @param {string} texto - Texto original con emojis
- * @returns {Array} - Array de elementos de texto y emojis procesados
- */
-async function procesarTextoConEmojis(texto) {
-    const elements = [];
-    
-    // Función para verificar si un carácter es emoji
-    function isEmoji(str) {
-        // Expresión regular para detectar emojis
-        const emojiRegex = /[\u{1F300}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
-        return emojiRegex.test(str);
-    }
-    
-    // Procesar cada carácter
-    let currentText = '';
-    
-    for (let i = 0; i < texto.length; i++) {
-        const char = texto[i];
-        
-        if (isEmoji(char)) {
-            // Si hay texto acumulado, añadirlo como elemento de texto
-            if (currentText) {
-                elements.push({ type: 'text', content: currentText });
-                currentText = '';
-            }
-            
-            // Procesar el emoji usando twemoji
-            try {
-                // Obtener la URL del emoji de Twitter
-                const emojiUrl = twemoji.parse(char, { assetType: 'png' })
-                    .match(/src="([^"]+)"/)[1];
-                
-                // Cargar la imagen del emoji
-                try {
-                    const emojiImage = await loadImage(emojiUrl);
-                    elements.push({ type: 'emoji', content: emojiImage });
-                } catch (error) {
-                    // Si falla la carga, usar el carácter original
-                    elements.push({ type: 'text', content: char });
-                }
-            } catch (error) {
-                // Si algo falla en el proceso, usar el carácter original
-                elements.push({ type: 'text', content: char });
-            }
-        } else {
-            // Acumular caracteres normales
-            currentText += char;
-        }
-    }
-    
-    // Añadir el texto restante si hay
-    if (currentText) {
-        elements.push({ type: 'text', content: currentText });
-    }
-    
-    return elements;
-}
-
-/**
  * Genera una imagen de tweet idéntica a la interfaz de Twitter con fondo negro
- * Con soporte para emojis como imágenes
  */
 async function generarTweetExacto(opciones) {
     // Configurar dimensiones del canvas
     const width = 600;
     let height = 250; // Altura base
-    
-    // Estimar altura necesaria basada en los elementos de texto
-    // Esto es una aproximación basada en el contenido del texto
-    const textElements = opciones.textElements || [];
-    let textLength = 0;
-    
-    textElements.forEach(element => {
-        if (element.type === 'text') {
-            textLength += element.content.length;
-        } else if (element.type === 'emoji') {
-            textLength += 2; // Un emoji cuenta como aproximadamente 2 caracteres en espacio
-        }
-    });
-    
+
+    // Estimar altura necesaria basada en el texto
+    const textLength = opciones.texto.length;
     const textLines = Math.ceil(textLength / 50);
     height += Math.max(0, textLines - 2) * 24;
 
@@ -301,77 +225,20 @@ async function generarTweetExacto(opciones) {
         ctx.fill();
     }
     
-    // Dibujar texto del tweet con emojis
-    ctx.font = "16px Arial";
+    // Dibujar texto del tweet
+    ctx.font = "16px Arial, sans-serif";
     ctx.fillStyle = colores.texto;
     const textX = contentX;
     let textY = avatarY + avatarSize + 10;
     const lineHeight = 24;
     const maxWidth = width - contentX - padding;
-    const emojiSize = 16; // Tamaño de los emojis en píxeles
     
-    // Dividir los elementos en líneas teniendo en cuenta el ancho máximo
-    const textLines = [];
-    let currentLine = [];
-    let currentLineWidth = 0;
+    // Dividir texto en líneas
+    const lines = wrapText(ctx, opciones.texto, maxWidth);
     
-    for (const element of opciones.textElements) {
-        if (element.type === 'text') {
-            // Dividir el texto por palabras
-            const words = element.content.split(' ');
-            
-            for (const word of words) {
-                const wordWidth = ctx.measureText(word + ' ').width;
-                
-                if (currentLineWidth + wordWidth > maxWidth) {
-                    // Si la palabra no cabe, empezar nueva línea
-                    if (currentLine.length > 0) {
-                        textLines.push([...currentLine]);
-                        currentLine = [];
-                        currentLineWidth = 0;
-                    }
-                }
-                
-                // Añadir palabra a la línea actual
-                currentLine.push({ type: 'text', content: word + ' ' });
-                currentLineWidth += wordWidth;
-            }
-        } else if (element.type === 'emoji') {
-            // Comprobar si el emoji cabe en la línea actual
-            if (currentLineWidth + emojiSize > maxWidth) {
-                if (currentLine.length > 0) {
-                    textLines.push([...currentLine]);
-                    currentLine = [];
-                    currentLineWidth = 0;
-                }
-            }
-            
-            // Añadir emoji a la línea actual
-            currentLine.push({ type: 'emoji', content: element.content });
-            currentLineWidth += emojiSize;
-        }
-    }
-    
-    // Añadir la última línea si no está vacía
-    if (currentLine.length > 0) {
-        textLines.push(currentLine);
-    }
-    
-    // Dibujar cada línea con sus elementos
-    textLines.forEach(line => {
-        let posX = textX;
-        
-        line.forEach(element => {
-            if (element.type === 'text') {
-                ctx.fillText(element.content, posX, textY);
-                posX += ctx.measureText(element.content).width;
-            } else if (element.type === 'emoji') {
-                // Dibujar emoji como imagen
-                ctx.drawImage(element.content, posX, textY, emojiSize, emojiSize);
-                posX += emojiSize;
-            }
-        });
-        
+    // Dibujar cada línea del tweet
+    lines.forEach(line => {
+        ctx.fillText(line, textX, textY);
         textY += lineHeight;
     });
     
@@ -598,6 +465,40 @@ function getInitials(name) {
     }
     
     return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+}
+
+/**
+ * Divide el texto en líneas que caben en el ancho especificado
+ * Versión básica que funciona con el texto y emojis nativos
+ */
+function wrapText(ctx, text, maxWidth) {
+    // Si el texto está vacío, devolver un array vacío
+    if (!text || text.trim() === '') return [''];
+    
+    // Versión simplificada pero efectiva para dividir el texto en líneas
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+    
+    for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        
+        const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+        const metrics = ctx.measureText(testLine);
+        
+        if (metrics.width <= maxWidth) {
+            currentLine = testLine;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    
+    if (currentLine.length > 0) {
+        lines.push(currentLine);
+    }
+    
+    return lines;
 }
 
 /**
