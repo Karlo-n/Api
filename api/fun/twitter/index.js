@@ -8,7 +8,7 @@ const path = require("path");
 
 /**
  * API de Tarjetas de Twitter - Genera una imagen que simula un tweet
- * Versión rediseñada para replicar exactamente la interfaz de Twitter/X con fondo negro
+ * Versión final rediseñada para replicar exactamente la interfaz de Twitter con fondo negro
  */
 router.get("/", async (req, res) => {
     try {
@@ -22,7 +22,8 @@ router.get("/", async (req, res) => {
             imagen,
             likes = "0",
             retweets = "0", 
-            comentarios = "0"
+            comentarios = "0",
+            reproducciones = "43000"
         } = req.query;
 
         // Cargar imagen de perfil
@@ -69,7 +70,8 @@ router.get("/", async (req, res) => {
             tweetImage,
             likes: parseInt(likes) || 0,
             retweets: parseInt(retweets) || 0,
-            comentarios: parseInt(comentarios) || 0
+            comentarios: parseInt(comentarios) || 0,
+            reproducciones: parseInt(reproducciones) || 43000
         });
 
         // Responder con la imagen
@@ -115,7 +117,8 @@ async function generarTweetExacto(opciones) {
         verificado: "#1D9BF0",
         corazon: "#F91880",
         retweet: "#00BA7C",
-        iconos: "#8B98A5"
+        iconos: "#8B98A5",
+        flechaVolver: "#1D9BF0"
     };
 
     // Dibujar fondo negro
@@ -126,11 +129,26 @@ async function generarTweetExacto(opciones) {
     ctx.fillStyle = colores.separador;
     ctx.fillRect(0, 0, width, 1);
 
+    // Dibujar flecha azul de volver atrás en la esquina superior izquierda
+    const flechaX = 20;
+    const flechaY = 20;
+    ctx.strokeStyle = colores.flechaVolver;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    // Línea horizontal de la flecha
+    ctx.moveTo(flechaX + 10, flechaY);
+    ctx.lineTo(flechaX, flechaY);
+    // Punta de la flecha
+    ctx.lineTo(flechaX + 5, flechaY - 5);
+    ctx.moveTo(flechaX, flechaY);
+    ctx.lineTo(flechaX + 5, flechaY + 5);
+    ctx.stroke();
+
     // Calcular posiciones
     const padding = 16;
     const avatarSize = 48;
     const avatarX = padding;
-    const avatarY = padding;
+    const avatarY = padding + 20; // Añadir espacio para la flecha de volver
     const contentX = avatarX + avatarSize + 12;
 
     // Dibujar avatar
@@ -261,43 +279,29 @@ async function generarTweetExacto(opciones) {
         currentY = imgY + imgHeight + 12;
     }
     
-    // Dibujar información de interacciones
-    const statsY = currentY;
-    ctx.font = "13px Arial";
-    ctx.fillStyle = colores.textoSecundario;
-    
-    // Formato: "36 respuestas · 144 Retweets · 3 mil Me gusta · 43 mil reproducciones"
-    const statsText = [
-        opciones.comentarios > 0 ? `${formatNumber(opciones.comentarios)} ${opciones.comentarios === 1 ? 'respuesta' : 'respuestas'}` : null,
-        opciones.retweets > 0 ? `${formatNumber(opciones.retweets)} Retweets` : null,
-        opciones.likes > 0 ? `${formatNumber(opciones.likes)} Me gusta` : null,
-        "43 mil reproducciones"
-    ].filter(Boolean).join(" · ");
-    
-    ctx.fillText(statsText, contentX, statsY);
-    
     // Dibujar línea divisoria antes de la barra de acciones
-    const actionBarY = statsY + 24;
+    const actionBarY = currentY + 5;
     ctx.fillStyle = colores.separador;
     ctx.fillRect(0, actionBarY, width, 1);
     
-    // Dibujar barra de acciones (íconos)
+    // Dibujar barra de acciones (íconos con sus números)
     const iconSize = 18;
-    const iconY = actionBarY + 20;
-    const iconSpacing = (width - padding * 2) / 5;
+    const iconY = actionBarY + 24;
+    const iconSpacing = width / 5.5; // Ajustar espaciado
     
-    // Íconos y posiciones
-    const icons = [
-        { x: padding + iconSpacing/2 - 10, type: 'comment' },
-        { x: padding + iconSpacing*1.5 - 10, type: 'retweet' },
-        { x: padding + iconSpacing*2.5 - 10, type: 'heart' },
-        { x: padding + iconSpacing*3.5 - 10, type: 'bookmark' },
-        { x: padding + iconSpacing*4.5 - 10, type: 'share' }
+    // Íconos de interacción con sus contadores
+    const iconInfo = [
+        { x: padding + 5, type: 'comment', count: opciones.comentarios, align: 'left' },
+        { x: padding + iconSpacing, type: 'retweet', count: opciones.retweets, align: 'left' },
+        { x: padding + iconSpacing * 2, type: 'heart', count: opciones.likes, align: 'left' },
+        { x: padding + iconSpacing * 3, type: 'stats', count: opciones.reproducciones, align: 'left' },
+        { x: width - padding - iconSpacing + 35, type: 'bookmark', count: 0, align: 'right' },
+        { x: width - padding - 28, type: 'share', count: 0, align: 'right' }
     ];
     
-    // Dibujar cada icono
-    icons.forEach(icon => {
-        drawTwitterIcon(ctx, icon.type, icon.x, iconY, iconSize, colores);
+    // Dibujar cada icono con su contador
+    iconInfo.forEach(icon => {
+        drawTwitterIconWithCounter(ctx, icon.type, icon.x, iconY, iconSize, icon.count, colores, icon.align);
     });
     
     // Dibujar línea divisoria inferior
@@ -308,69 +312,82 @@ async function generarTweetExacto(opciones) {
 }
 
 /**
- * Dibuja los iconos de Twitter con alta fidelidad
+ * Dibuja los iconos de Twitter con sus contadores
  */
-function drawTwitterIcon(ctx, type, x, y, size, colores) {
+function drawTwitterIconWithCounter(ctx, type, x, y, size, count, colores, align) {
     ctx.save();
+    
+    // Configuración por defecto para iconos
     ctx.strokeStyle = colores.iconos;
     ctx.fillStyle = colores.iconos;
     ctx.lineWidth = 1.5;
     
-    // La posición y es el centro del icono
-    const halfSize = size / 2;
-    
+    // Dibujar icono
     switch (type) {
         case 'comment':
             // Dibujar icono de comentario (bocadillo)
             ctx.beginPath();
-            // Forma de bocadillo
-            ctx.moveTo(x + halfSize - 8, y - 6);
-            ctx.lineTo(x + halfSize + 8, y - 6);
-            ctx.quadraticCurveTo(x + halfSize + 10, y - 6, x + halfSize + 10, y - 4);
-            ctx.lineTo(x + halfSize + 10, y + 2);
-            ctx.quadraticCurveTo(x + halfSize + 10, y + 4, x + halfSize + 8, y + 4);
-            ctx.lineTo(x + halfSize + 2, y + 4);
-            ctx.lineTo(x + halfSize, y + 8);
-            ctx.lineTo(x + halfSize - 2, y + 4);
-            ctx.lineTo(x + halfSize - 8, y + 4);
-            ctx.quadraticCurveTo(x + halfSize - 10, y + 4, x + halfSize - 10, y + 2);
-            ctx.lineTo(x + halfSize - 10, y - 4);
-            ctx.quadraticCurveTo(x + halfSize - 10, y - 6, x + halfSize - 8, y - 6);
+            ctx.moveTo(x + 5, y - 3);
+            ctx.lineTo(x + 17, y - 3);
+            ctx.quadraticCurveTo(x + 19, y - 3, x + 19, y - 1);
+            ctx.lineTo(x + 19, y + 5);
+            ctx.quadraticCurveTo(x + 19, y + 7, x + 17, y + 7);
+            ctx.lineTo(x + 13, y + 7);
+            ctx.lineTo(x + 11, y + 10);
+            ctx.lineTo(x + 9, y + 7);
+            ctx.lineTo(x + 5, y + 7);
+            ctx.quadraticCurveTo(x + 3, y + 7, x + 3, y + 5);
+            ctx.lineTo(x + 3, y - 1);
+            ctx.quadraticCurveTo(x + 3, y - 3, x + 5, y - 3);
             ctx.stroke();
             break;
             
         case 'retweet':
             // Dibujar icono de retweet (flechas circulares)
             ctx.beginPath();
-            // Flecha izquierda
-            ctx.moveTo(x + halfSize - 7, y - 1);
-            ctx.lineTo(x + halfSize - 3, y - 5);
-            ctx.lineTo(x + halfSize + 1, y - 1);
-            // Flecha derecha
-            ctx.moveTo(x + halfSize + 7, y + 1);
-            ctx.lineTo(x + halfSize + 3, y + 5);
-            ctx.lineTo(x + halfSize - 1, y + 1);
+            // Flecha izquierda (arriba)
+            ctx.moveTo(x + 5, y - 3);
+            ctx.lineTo(x + 9, y - 6);
+            ctx.lineTo(x + 13, y - 3);
+            // Flecha derecha (abajo)
+            ctx.moveTo(x + 13, y + 3);
+            ctx.lineTo(x + 9, y + 6);
+            ctx.lineTo(x + 5, y + 3);
             // Líneas conectoras
-            ctx.moveTo(x + halfSize - 3, y - 5);
-            ctx.lineTo(x + halfSize - 3, y);
-            ctx.lineTo(x + halfSize + 3, y);
-            ctx.lineTo(x + halfSize + 3, y + 5);
+            ctx.moveTo(x + 9, y - 6);
+            ctx.lineTo(x + 9, y - 1);
+            ctx.lineTo(x + 15, y - 1);
+            ctx.lineTo(x + 15, y + 6);
+            ctx.moveTo(x + 9, y + 6);
+            ctx.lineTo(x + 9, y + 1);
+            ctx.lineTo(x + 3, y + 1);
+            ctx.lineTo(x + 3, y - 6);
             ctx.stroke();
             break;
             
         case 'heart':
             // Dibujar icono de corazón
             ctx.beginPath();
-            ctx.moveTo(x + halfSize, y + 5);
+            ctx.moveTo(x + 11, y + 6);
             ctx.bezierCurveTo(
-                x + halfSize - 8, y - 3,
-                x + halfSize - 8, y - 8,
-                x + halfSize, y - 3
+                x + 6, y - 1,
+                x + 1, y + 1,
+                x + 5, y - 4
             );
             ctx.bezierCurveTo(
-                x + halfSize + 8, y - 8,
-                x + halfSize + 8, y - 3,
-                x + halfSize, y + 5
+                x + 7, y - 6,
+                x + 11, y - 3,
+                x + 11, y - 3
+            );
+            ctx.bezierCurveTo(
+                x + 11, y - 3,
+                x + 15, y - 6,
+                x + 17, y - 4
+            );
+            ctx.bezierCurveTo(
+                x + 21, y + 1,
+                x + 16, y - 1,
+                x + 11, y + 6
             );
             ctx.stroke();
             break;
@@ -378,11 +395,11 @@ function drawTwitterIcon(ctx, type, x, y, size, colores) {
         case 'bookmark':
             // Dibujar icono de marcador
             ctx.beginPath();
-            ctx.moveTo(x + halfSize - 5, y - 7);
-            ctx.lineTo(x + halfSize - 5, y + 7);
-            ctx.lineTo(x + halfSize, y + 4);
-            ctx.lineTo(x + halfSize + 5, y + 7);
-            ctx.lineTo(x + halfSize + 5, y - 7);
+            ctx.moveTo(x + 6, y - 6);
+            ctx.lineTo(x + 6, y + 6);
+            ctx.lineTo(x + 11, y + 3);
+            ctx.lineTo(x + 16, y + 6);
+            ctx.lineTo(x + 16, y - 6);
             ctx.closePath();
             ctx.stroke();
             break;
@@ -390,16 +407,45 @@ function drawTwitterIcon(ctx, type, x, y, size, colores) {
         case 'share':
             // Dibujar icono de compartir (flecha hacia arriba con línea)
             ctx.beginPath();
-            ctx.moveTo(x + halfSize, y - 7);
-            ctx.lineTo(x + halfSize, y + 5);
-            ctx.moveTo(x + halfSize - 5, y - 2);
-            ctx.lineTo(x + halfSize, y - 7);
-            ctx.lineTo(x + halfSize + 5, y - 2);
+            ctx.moveTo(x + 11, y - 6);
+            ctx.lineTo(x + 11, y + 4);
+            ctx.moveTo(x + 6, y - 3);
+            ctx.lineTo(x + 11, y - 6);
+            ctx.lineTo(x + 16, y - 3);
             // Base
-            ctx.moveTo(x + halfSize - 6, y + 5);
-            ctx.lineTo(x + halfSize + 6, y + 5);
+            ctx.moveTo(x + 5, y + 4);
+            ctx.lineTo(x + 17, y + 4);
             ctx.stroke();
             break;
+            
+        case 'stats':
+            // Dibujar icono de estadísticas
+            ctx.beginPath();
+            // Barras verticales de diferentes alturas
+            ctx.moveTo(x + 4, y);
+            ctx.lineTo(x + 4, y + 6);
+            ctx.moveTo(x + 9, y - 4);
+            ctx.lineTo(x + 9, y + 6);
+            ctx.moveTo(x + 14, y - 2);
+            ctx.lineTo(x + 14, y + 6);
+            ctx.moveTo(x + 19, y - 6);
+            ctx.lineTo(x + 19, y + 6);
+            // Línea base
+            ctx.moveTo(x + 2, y + 6);
+            ctx.lineTo(x + 21, y + 6);
+            ctx.stroke();
+            break;
+    }
+    
+    // Dibujar contador si hay
+    if (count > 0) {
+        ctx.font = "13px Arial";
+        ctx.fillStyle = colores.textoSecundario;
+        ctx.textAlign = align === 'right' ? "right" : "left";
+        ctx.textBaseline = "middle";
+        
+        const textX = align === 'right' ? x - 5 : x + 22;
+        ctx.fillText(formatNumber(count), textX, y);
     }
     
     ctx.restore();
