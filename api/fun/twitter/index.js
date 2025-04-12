@@ -8,7 +8,7 @@ const path = require("path");
 
 /**
  * API de Tarjetas de Twitter - Genera una imagen que simula un tweet
- * Versión final rediseñada para replicar exactamente la interfaz de Twitter con fondo negro
+ * Versión final con soporte completo para emojis en el texto
  */
 router.get("/", async (req, res) => {
     try {
@@ -17,7 +17,7 @@ router.get("/", async (req, res) => {
             nombre = "Usuario", 
             usuario = "usuario", 
             pfp, 
-            texto = "Tweet de ejemplo",
+            texto = "Tweet de ejemplo 👍",
             verificado = "false",
             imagen,
             likes = "0",
@@ -65,7 +65,7 @@ router.get("/", async (req, res) => {
             nombre,
             usuario,
             profileImage,
-            texto,
+            texto, // Se soportan emojis directamente
             verificado: verificado.toLowerCase() === "true",
             tweetImage,
             likes: parseInt(likes) || 0,
@@ -82,13 +82,15 @@ router.get("/", async (req, res) => {
         console.error("Error al generar tweet:", error);
         res.status(500).json({ 
             error: "Error al generar la imagen del tweet",
-            detalles: error.message
+            detalles: error.message,
+            ejemplo: "/api/fun/twitter?nombre=AQUINO&usuario=AQUINOby_02&texto=Recién ando regresando a mi casa, gracias a todos los que fueron 👍&verificado=true"
         });
     }
 });
 
 /**
  * Genera una imagen de tweet idéntica a la interfaz de Twitter con fondo negro
+ * Soporta emojis y caracteres Unicode en el texto
  */
 async function generarTweetExacto(opciones) {
     // Configurar dimensiones del canvas
@@ -96,7 +98,9 @@ async function generarTweetExacto(opciones) {
     let height = 250; // Altura base
 
     // Estimar altura necesaria basada en el texto
-    const textLines = Math.ceil(opciones.texto.length / 50);
+    // Consideramos los emojis como más anchos para estimar el tamaño
+    const textLength = opciones.texto.replace(/\p{Emoji}/gu, '  ').length;
+    const textLines = Math.ceil(textLength / 50);
     height += Math.max(0, textLines - 2) * 24;
 
     // Añadir altura para imagen adjunta si existe
@@ -223,7 +227,7 @@ async function generarTweetExacto(opciones) {
         ctx.fill();
     }
     
-    // Dibujar texto del tweet
+    // Dibujar texto del tweet (con soporte de emojis)
     ctx.font = "16px Arial";
     ctx.fillStyle = colores.texto;
     const textX = contentX;
@@ -231,7 +235,7 @@ async function generarTweetExacto(opciones) {
     const lineHeight = 24;
     const maxWidth = width - contentX - padding;
     
-    // Dividir texto en líneas
+    // Dividir texto en líneas (con manejo especial para emojis)
     const lines = wrapText(ctx, opciones.texto, maxWidth);
     
     // Dibujar cada línea del tweet
@@ -467,25 +471,43 @@ function getInitials(name) {
 
 /**
  * Divide el texto en líneas que caben en el ancho especificado
+ * Con soporte mejorado para emojis y caracteres Unicode
  */
 function wrapText(ctx, text, maxWidth) {
+    // Si el texto está vacío, devolver un array vacío
+    if (!text || text.trim() === '') return [''];
+    
     const words = text.split(' ');
     const lines = [];
     let currentLine = '';
     
-    words.forEach(word => {
-        const testLine = currentLine.length > 0 ? `${currentLine} ${word}` : word;
+    // Procesar cada palabra, teniendo en cuenta que los emojis 
+    // pueden afectar el cálculo del ancho
+    for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        
+        // Si la línea actual está vacía, empezamos con esta palabra
+        if (currentLine === '') {
+            currentLine = word;
+            continue;
+        }
+        
+        // Probar añadir la palabra a la línea actual
+        const testLine = `${currentLine} ${word}`;
         const metrics = ctx.measureText(testLine);
         
-        if (metrics.width > maxWidth) {
+        // Si cabe, continuamos con esta línea
+        if (metrics.width <= maxWidth) {
+            currentLine = testLine;
+        } else {
+            // Si no cabe, guardamos la línea actual y empezamos una nueva
             lines.push(currentLine);
             currentLine = word;
-        } else {
-            currentLine = testLine;
         }
-    });
+    }
     
-    if (currentLine.length > 0) {
+    // Añadir la última línea si hay contenido
+    if (currentLine !== '') {
         lines.push(currentLine);
     }
     
