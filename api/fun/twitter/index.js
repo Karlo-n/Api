@@ -1,6 +1,6 @@
 // api/fun/twitter/index.js
 const express = require("express");
-const { createCanvas, loadImage, registerFont } = require("canvas");
+const { createCanvas, loadImage } = require("canvas");
 const router = express.Router();
 const axios = require("axios");
 const fs = require("fs");
@@ -8,7 +8,7 @@ const path = require("path");
 
 /**
  * API de Tarjetas de Twitter - Genera una imagen que simula un tweet
- * Versión mejorada con diseño más cercano a Twitter actual
+ * Versión completamente rediseñada para imitar con precisión el diseño original
  */
 router.get("/", async (req, res) => {
     try {
@@ -21,13 +21,10 @@ router.get("/", async (req, res) => {
             verificado = "false",
             color = "blanco",
             imagen,
-            afiliacion,
-            importante,
             likes = "0",
-            replies = "0", 
-            retweets = "0",
-            fecha = "",
-            idioma = "es"
+            retweets = "0", 
+            comentarios = "0",
+            fecha = "Ahora"
         } = req.query;
 
         // Validar parámetros obligatorios
@@ -39,7 +36,7 @@ router.get("/", async (req, res) => {
             });
         }
 
-        // Cargar imagen de perfil primero
+        // Cargar imagen de perfil
         let profileImageBuffer;
         if (pfp) {
             try {
@@ -52,8 +49,7 @@ router.get("/", async (req, res) => {
                 });
                 profileImageBuffer = Buffer.from(profileResponse.data);
             } catch (profileError) {
-                console.warn("Error cargando imagen de perfil, se usará imagen predeterminada:", profileError.message);
-                // Se usará imagen genérica en el proceso de generación
+                console.warn("Error cargando imagen de perfil, se usará imagen predeterminada");
             }
         }
 
@@ -70,12 +66,14 @@ router.get("/", async (req, res) => {
                 });
                 attachedImageBuffer = Buffer.from(imageResponse.data);
             } catch (imageError) {
-                console.warn("Error cargando imagen adjunta:", imageError.message);
-                // Si falla, continuamos sin la imagen
+                console.warn("Error cargando imagen adjunta");
             }
         }
 
-        // Generar imagen de tarjeta de Twitter con diseño mejorado
+        // Cargar iconos necesarios
+        const iconos = await cargarIconos();
+
+        // Generar imagen de tarjeta de Twitter
         try {
             const cardBuffer = await generarTarjetaTwitter({
                 nombre,
@@ -83,22 +81,20 @@ router.get("/", async (req, res) => {
                 profileImageBuffer,
                 texto,
                 verificado: verificado.toLowerCase() === "true",
-                colorFondo: color.toLowerCase(),
+                tema: color.toLowerCase(),
                 attachedImageBuffer,
-                afiliacion,
-                importante,
                 likes: parseInt(likes) || 0,
-                replies: parseInt(replies) || 0,
                 retweets: parseInt(retweets) || 0,
+                comentarios: parseInt(comentarios) || 0,
                 fecha,
-                idioma
+                iconos
             });
 
             // Devolver la imagen directamente
             res.setHeader('Content-Type', 'image/png');
             res.send(cardBuffer);
         } catch (imageError) {
-            console.error("Error específico en la generación de la imagen:", imageError);
+            console.error("Error en la generación de la imagen:", imageError);
             res.status(500).json({
                 error: "Error al generar la imagen",
                 detalles: imageError.message
@@ -115,481 +111,508 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * Genera una imagen de tarjeta similar a Twitter con diseño actualizado
+ * Carga los iconos necesarios para la generación del tweet
+ */
+async function cargarIconos() {
+    const iconos = {};
+    const iconsPath = path.join(__dirname);
+    
+    try {
+        // Cargar iconos si existen
+        const iconFiles = {
+            verificado: 'verificado.png',
+            like: 'like.png',
+            retweet: 'retweet.png',
+            comentario: 'comentario.png',
+            compartir: 'compartir.png',
+            logo: 'logo.png',
+            defaultAvatar: 'default_profile.png'
+        };
+        
+        for (const [nombre, archivo] of Object.entries(iconFiles)) {
+            const iconPath = path.join(iconsPath, archivo);
+            if (fs.existsSync(iconPath)) {
+                iconos[nombre] = await loadImage(iconPath);
+            }
+        }
+        
+        return iconos;
+    } catch (error) {
+        console.error("Error al cargar iconos:", error);
+        return {};
+    }
+}
+
+/**
+ * Genera una imagen de tarjeta de Twitter
+ * Función rediseñada para imitar con precisión el diseño original
  */
 async function generarTarjetaTwitter(opciones) {
-    // Establecer dimensiones base
+    // Calcular la altura necesaria según el contenido
     const ancho = 600;
-    let alto = opciones.attachedImageBuffer ? 600 : 350;
     
-    // Aumentar altura si hay mucho texto
-    const lineasEstimadas = Math.ceil(opciones.texto.length / 50);
-    if (lineasEstimadas > 4) {
-        alto += (lineasEstimadas - 4) * 24;
+    // Estimar altura para texto y posibles imágenes
+    const lineasEstimadas = Math.ceil(opciones.texto.length / 60);
+    let altoEstimado = 200 + (lineasEstimadas * 22);
+    
+    // Añadir espacio para imagen si existe
+    if (opciones.attachedImageBuffer) {
+        altoEstimado += 300; // Espacio para imagen
     }
     
-    const padding = 20;
+    const alto = Math.max(altoEstimado, 350); // Mínimo 350px
     
     // Crear canvas
     const canvas = createCanvas(ancho, alto);
     const ctx = canvas.getContext("2d");
     
-    // Definir colores según tema (actualizado a Twitter 2023)
-    const colores = {
+    // Temas disponibles (colores precisos de Twitter)
+    const temas = {
         blanco: {
             fondo: "#ffffff",
             texto: "#0f1419",
             textoSecundario: "#536471",
             borde: "#eff3f4",
             separador: "#eff3f4",
-            iconos: "#536471",
-            iconosHover: "#1d9bf0",
-            azulTwitter: "#1d9bf0",
-            linkColor: "#1d9bf0",
-            verifiedBadge: "#1d9bf0",
-            replyLine: "#eff3f4"
+            iconoInactivo: "#536471",
+            like: {
+                inactivo: "#536471",
+                activo: "#f91880"
+            },
+            retweet: {
+                inactivo: "#536471", 
+                activo: "#00ba7c"
+            },
+            comentario: "#536471",
+            verificado: "#1d9bf0"
         },
         negro: {
-            fondo: "#15202b",
-            texto: "#ffffff",
-            textoSecundario: "#8899a6",
-            borde: "#38444d",
-            separador: "#38444d",
-            iconos: "#8899a6",
-            iconosHover: "#1d9bf0",
-            azulTwitter: "#1d9bf0",
-            linkColor: "#1d9bf0",
-            verifiedBadge: "#1d9bf0",
-            replyLine: "#38444d"
-        },
-        oscuro: {
             fondo: "#000000",
             texto: "#e7e9ea",
             textoSecundario: "#71767b",
             borde: "#2f3336",
             separador: "#2f3336",
-            iconos: "#71767b",
-            iconosHover: "#1d9bf0",
-            azulTwitter: "#1d9bf0",
-            linkColor: "#1d9bf0",
-            verifiedBadge: "#1d9bf0",
-            replyLine: "#2f3336"
+            iconoInactivo: "#71767b",
+            like: {
+                inactivo: "#71767b",
+                activo: "#f91880"
+            },
+            retweet: {
+                inactivo: "#71767b",
+                activo: "#00ba7c"
+            },
+            comentario: "#71767b",
+            verificado: "#1d9bf0"
+        },
+        oscuro: {
+            fondo: "#15202b",
+            texto: "#f7f9f9",
+            textoSecundario: "#8899a6",
+            borde: "#38444d",
+            separador: "#38444d",
+            iconoInactivo: "#8899a6",
+            like: {
+                inactivo: "#8899a6",
+                activo: "#f91880"
+            },
+            retweet: {
+                inactivo: "#8899a6",
+                activo: "#00ba7c"
+            },
+            comentario: "#8899a6",
+            verificado: "#1d9bf0"
         }
     };
     
     // Seleccionar tema o usar blanco como predeterminado
-    const tema = colores[opciones.colorFondo] || colores.blanco;
+    const tema = temas[opciones.tema] || temas.blanco;
     
-    // Textos según idioma
-    const textos = {
-        es: {
-            responder: "Responder",
-            retwittear: "Retwittear",
-            meGusta: "Me gusta",
-            via: "vía Twitter Web App"
-        },
-        en: {
-            responder: "Reply",
-            retwittear: "Retweet",
-            meGusta: "Like",
-            via: "via Twitter Web App"
-        },
-        fr: {
-            responder: "Répondre",
-            retwittear: "Retweeter",
-            meGusta: "J'aime",
-            via: "via Twitter Web App"
-        },
-        pt: {
-            responder: "Responder",
-            retwittear: "Retuitar",
-            meGusta: "Curtir",
-            via: "via Twitter Web App"
-        }
-    };
-    
-    // Seleccionar idioma o usar español como predeterminado
-    const idioma = textos[opciones.idioma] || textos.es;
-    
-    // Establecer color de fondo
+    // Rellenar fondo
     ctx.fillStyle = tema.fondo;
     ctx.fillRect(0, 0, ancho, alto);
     
-    // Dibujar línea separadora superior sutil
+    // Dibujar línea superior de borde
     ctx.fillStyle = tema.separador;
     ctx.fillRect(0, 0, ancho, 1);
     
-    // Variables para posicionamiento
-    const tamañoPerfil = 48;
-    const perfilX = padding;
-    const perfilY = padding + tamañoPerfil/2;
-    const nombreX = perfilX + tamañoPerfil + 12;
-    const nombreY = padding + 18;
+    // Constantes de diseño
+    const padding = 16;
+    const avatarSize = 48;
+    const avatarX = padding;
+    const avatarY = padding;
+    const contentStartX = avatarX + avatarSize + 12;
     
-    // Cargar imagen de perfil
+    // Dibujar avatar
     try {
-        let imagenPerfil;
+        let avatarImage;
         
         if (opciones.profileImageBuffer) {
-            imagenPerfil = await loadImage(opciones.profileImageBuffer);
+            avatarImage = await loadImage(opciones.profileImageBuffer);
+        } else if (opciones.iconos.defaultAvatar) {
+            avatarImage = opciones.iconos.defaultAvatar;
         } else {
-            // Cargar imagen predeterminada
-            const defaultImagePath = path.join(__dirname, 'default_profile.png');
-            if (fs.existsSync(defaultImagePath)) {
-                imagenPerfil = await loadImage(defaultImagePath);
-            } else {
-                // Si no hay imagen predeterminada, crear un círculo de color
-                ctx.beginPath();
-                ctx.arc(perfilX + tamañoPerfil/2, perfilY, tamañoPerfil/2, 0, Math.PI * 2);
-                ctx.fillStyle = tema.azulTwitter;
-                ctx.fill();
-                
-                // Añadir iniciales si no hay imagen
-                const iniciales = obtenerIniciales(opciones.nombre);
-                ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 18px 'Arial'";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(iniciales, perfilX + tamañoPerfil/2, perfilY);
-            }
+            // Si no hay imagen, dibujar círculo con iniciales
+            ctx.beginPath();
+            ctx.arc(avatarX + avatarSize/2, avatarY + avatarSize/2, avatarSize/2, 0, Math.PI * 2);
+            ctx.fillStyle = "#1d9bf0";
+            ctx.fill();
+            
+            // Añadir iniciales
+            const iniciales = getInitials(opciones.nombre);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 20px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(iniciales, avatarX + avatarSize/2, avatarY + avatarSize/2);
         }
         
-        // Dibujar perfil con recorte circular si tenemos la imagen
-        if (imagenPerfil) {
+        // Si hay imagen, dibujarla en círculo
+        if (avatarImage) {
             ctx.save();
             ctx.beginPath();
-            ctx.arc(perfilX + tamañoPerfil/2, perfilY, tamañoPerfil/2, 0, Math.PI * 2);
+            ctx.arc(avatarX + avatarSize/2, avatarY + avatarSize/2, avatarSize/2, 0, Math.PI * 2);
             ctx.closePath();
             ctx.clip();
-            ctx.drawImage(imagenPerfil, perfilX, perfilY - tamañoPerfil/2, tamañoPerfil, tamañoPerfil);
+            ctx.drawImage(avatarImage, avatarX, avatarY, avatarSize, avatarSize);
             ctx.restore();
         }
         
-        // Dibujar nombre con estilo actual de Twitter
+        // Dibujar nombre y usuario
         ctx.fillStyle = tema.texto;
-        ctx.font = "bold 16px 'Arial'";
+        ctx.font = "bold 15px Arial";
         ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.fillText(opciones.nombre, nombreX, nombreY);
+        ctx.textBaseline = "top";
+        ctx.fillText(opciones.nombre, contentStartX, avatarY + 2);
         
-        // Dibujar insignia de verificación si está verificado
+        // Dibujar insignia verificada si aplica
         if (opciones.verificado) {
-            const tamañoInsignia = 16;
-            const insigniaX = nombreX + ctx.measureText(opciones.nombre).width + 2;
-            const insigniaY = nombreY - tamañoInsignia/2;
+            const nombreWidth = ctx.measureText(opciones.nombre).width;
             
-            // Dibuja un círculo azul para la insignia de verificación
-            ctx.beginPath();
-            ctx.arc(insigniaX + tamañoInsignia/2, insigniaY + tamañoInsignia/2, tamañoInsignia/2, 0, Math.PI * 2);
-            ctx.fillStyle = tema.verifiedBadge;
-            ctx.fill();
-            
-            // Dibuja el check blanco
-            ctx.beginPath();
-            ctx.moveTo(insigniaX + 4, insigniaY + tamañoInsignia/2);
-            ctx.lineTo(insigniaX + 7, insigniaY + tamañoInsignia/2 + 3);
-            ctx.lineTo(insigniaX + 12, insigniaY + tamañoInsignia/2 - 3);
-            ctx.strokeStyle = "#ffffff";
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
+            if (opciones.iconos.verificado) {
+                // Usar la imagen de verificación si está disponible
+                const badgeSize = 18;
+                ctx.drawImage(
+                    opciones.iconos.verificado, 
+                    contentStartX + nombreWidth + 4, 
+                    avatarY + 2, 
+                    badgeSize, 
+                    badgeSize
+                );
+            } else {
+                // Dibujar un círculo azul con un check blanco
+                const badgeX = contentStartX + nombreWidth + 8;
+                const badgeY = avatarY + 6;
+                const badgeSize = 16;
+                
+                // Círculo azul
+                ctx.beginPath();
+                ctx.arc(badgeX, badgeY, badgeSize/2, 0, Math.PI * 2);
+                ctx.fillStyle = tema.verificado;
+                ctx.fill();
+                
+                // Check blanco
+                ctx.beginPath();
+                ctx.moveTo(badgeX - 4, badgeY);
+                ctx.lineTo(badgeX - 1, badgeY + 3);
+                ctx.lineTo(badgeX + 4, badgeY - 2);
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
         }
         
-        // Dibujar nombre de usuario y fecha
+        // Dibujar @usuario
         ctx.fillStyle = tema.textoSecundario;
-        ctx.font = "14px 'Arial'";
+        ctx.font = "14px Arial";
+        ctx.fillText(`@${opciones.usuario}`, contentStartX, avatarY + 22);
         
-        let textoUsuario = `@${opciones.usuario}`;
-        if (opciones.fecha) {
-            textoUsuario += ` · ${opciones.fecha}`;
-        }
+        // Dibujar fecha
+        const usuarioWidth = ctx.measureText(`@${opciones.usuario}`).width;
+        ctx.fillText(` · ${opciones.fecha}`, contentStartX + usuarioWidth, avatarY + 22);
         
-        ctx.fillText(textoUsuario, nombreX, nombreY + 20);
-        
-        // Dibujar etiqueta importante si existe
-        let offsetY = nombreY + 45;
-        
-        if (opciones.importante) {
-            ctx.fillStyle = tema.azulTwitter;
-            ctx.font = "14px 'Arial'";
-            ctx.fillText(opciones.importante, nombreX, offsetY);
-            offsetY += 25;
-        }
-        
-        // Dibujar texto del tweet con formato mejorado
+        // Dibujar texto del tweet
         ctx.fillStyle = tema.texto;
-        ctx.font = "16px 'Arial'";
+        ctx.font = "16px Arial";
+        ctx.textBaseline = "top";
         
         // Ajustar texto a múltiples líneas
-        const textoAjustado = ajustarTexto(ctx, opciones.texto, ancho - (padding * 2) - tamañoPerfil - 10);
+        const maxWidth = ancho - contentStartX - padding;
+        const lines = wrapText(ctx, opciones.texto, maxWidth);
         
-        // Dibujar cada línea
-        let alturaTexto = 0;
-        textoAjustado.forEach((linea, index) => {
-            // Destacar menciones, hashtags y enlaces
-            const palabras = linea.split(' ');
-            let posX = nombreX;
+        let textY = avatarY + avatarSize + 10;
+        let lineHeight = 22;
+        
+        // Dibujar cada línea del texto
+        lines.forEach((line, index) => {
+            // Procesar la línea para resaltar enlaces, hashtags y menciones
+            const segments = processTextForHighlighting(line);
+            let currentX = contentStartX;
             
-            palabras.forEach(palabra => {
-                const anchoPalabra = ctx.measureText(palabra + ' ').width;
-                
-                // Colorear menciones, hashtags y enlaces
-                if (palabra.startsWith('@') || palabra.startsWith('#') || 
-                    palabra.startsWith('http') || palabra.includes('.com')) {
-                    ctx.fillStyle = tema.linkColor;
-                    ctx.fillText(palabra, posX, offsetY + alturaTexto);
-                    ctx.fillStyle = tema.texto;
-                } else {
-                    ctx.fillText(palabra, posX, offsetY + alturaTexto);
-                }
-                
-                posX += anchoPalabra;
-                // Añadir espacio después de cada palabra excepto la última
-                if (palabra !== palabras[palabras.length - 1]) {
-                    ctx.fillText(' ', posX - anchoPalabra/8, offsetY + alturaTexto);
-                }
+            segments.forEach(segment => {
+                // Establecer el color según el tipo de texto
+                ctx.fillStyle = segment.isHighlighted ? "#1d9bf0" : tema.texto;
+                ctx.fillText(segment.text, currentX, textY);
+                currentX += ctx.measureText(segment.text).width;
             });
             
-            alturaTexto += 24; // Espacio entre líneas
+            textY += lineHeight;
         });
         
-        // Posición actual después del texto
-        let posicionActual = offsetY + alturaTexto + 15;
-        
         // Dibujar imagen adjunta si existe
+        let currentY = textY + 10;
+        
         if (opciones.attachedImageBuffer) {
             try {
-                const imagenTweet = await loadImage(opciones.attachedImageBuffer);
+                const tweetImage = await loadImage(opciones.attachedImageBuffer);
                 
-                // Dimensiones máximas para la imagen
+                // Calcular dimensiones manteniendo proporción
                 const maxImgWidth = ancho - (padding * 2);
                 const maxImgHeight = 280;
                 
-                // Calcular dimensiones preservando relación de aspecto
-                let imgWidth = Math.min(maxImgWidth, imagenTweet.width);
-                let imgHeight = (imgWidth / imagenTweet.width) * imagenTweet.height;
+                // Ajustar dimensiones
+                let imgWidth = maxImgWidth;
+                let imgHeight = (imgWidth / tweetImage.width) * tweetImage.height;
                 
-                // Si la altura excede el máximo, ajustar
                 if (imgHeight > maxImgHeight) {
                     imgHeight = maxImgHeight;
-                    imgWidth = (imgHeight / imagenTweet.height) * imagenTweet.width;
+                    imgWidth = (imgHeight / tweetImage.height) * tweetImage.width;
                 }
                 
-                // Coordenadas para centrar la imagen
-                const imgX = (ancho - imgWidth) / 2;
-                const imgY = posicionActual;
-                
                 // Dibujar imagen con bordes redondeados
+                const imgX = padding;
+                const imgY = currentY;
+                
+                // Bordes redondeados
                 ctx.save();
-                ctx.beginPath();
-                dibujarRectanguloRedondeado(ctx, imgX, imgY, imgWidth, imgHeight, 16);
-                ctx.closePath();
+                roundedRect(ctx, imgX, imgY, imgWidth, imgHeight, 16);
                 ctx.clip();
-                ctx.drawImage(imagenTweet, imgX, imgY, imgWidth, imgHeight);
+                ctx.drawImage(tweetImage, imgX, imgY, imgWidth, imgHeight);
                 ctx.restore();
                 
-                // Añadir un borde sutil
-                ctx.strokeStyle = tema.borde;
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                dibujarRectanguloRedondeado(ctx, imgX, imgY, imgWidth, imgHeight, 16);
-                ctx.stroke();
-                
-                // Actualizar posición actual después de la imagen
-                posicionActual = imgY + imgHeight + 15;
+                // Actualizar posición actual
+                currentY = imgY + imgHeight + 12;
             } catch (imgError) {
-                console.warn("Error dibujando imagen adjunta:", imgError.message);
+                console.warn("Error al dibujar imagen adjunta:", imgError);
             }
         }
         
-        // Dibujar barra de interacciones (con estilo actualizado de Twitter)
-        const iconosY = posicionActual + 20;
-        const espacioIconos = (ancho - padding * 2) / 3;
-        
-        // Dibujar línea separadora antes de los iconos
-        ctx.fillStyle = tema.separador;
-        ctx.fillRect(padding, posicionActual, ancho - padding * 2, 1);
-        
-        // Función para dibujar un icono de interacción
-        function dibujarIconoInteraccion(x, y, tipo, numero, texto) {
-            const radio = 10;
-            
-            // Dibujar círculo de fondo para el icono
-            ctx.beginPath();
-            ctx.arc(x + radio, y, radio, 0, Math.PI * 2);
-            ctx.fillStyle = `${tema.iconos}20`; // Color semitransparente
-            ctx.fill();
-            
-            // Dibujar el icono según su tipo
-            ctx.beginPath();
-            
-            switch (tipo) {
-                case "reply":
-                    // Dibujar icono de respuesta (bocadillo)
-                    ctx.moveTo(x + radio - 5, y - 3);
-                    ctx.lineTo(x + radio + 5, y - 3);
-                    ctx.quadraticCurveTo(x + radio + 8, y - 3, x + radio + 8, y);
-                    ctx.quadraticCurveTo(x + radio + 8, y + 5, x + radio + 5, y + 5);
-                    ctx.lineTo(x + radio + 2, y + 5);
-                    ctx.lineTo(x + radio, y + 8);
-                    ctx.lineTo(x + radio, y + 5);
-                    ctx.lineTo(x + radio - 5, y + 5);
-                    ctx.quadraticCurveTo(x + radio - 8, y + 5, x + radio - 8, y);
-                    ctx.quadraticCurveTo(x + radio - 8, y - 3, x + radio - 5, y - 3);
-                    break;
-                    
-                case "retweet":
-                    // Dibujar icono de retweet (flechas)
-                    ctx.moveTo(x + radio - 5, y - 2);
-                    ctx.lineTo(x + radio, y - 6);
-                    ctx.lineTo(x + radio + 5, y - 2);
-                    ctx.moveTo(x + radio, y - 6);
-                    ctx.lineTo(x + radio, y + 1);
-                    
-                    ctx.moveTo(x + radio + 5, y + 2);
-                    ctx.lineTo(x + radio, y + 6);
-                    ctx.lineTo(x + radio - 5, y + 2);
-                    ctx.moveTo(x + radio, y + 6);
-                    ctx.lineTo(x + radio, y);
-                    break;
-                    
-                case "like":
-                    // Dibujar icono de corazón
-                    ctx.moveTo(x + radio, y + 5);
-                    ctx.bezierCurveTo(
-                        x + radio - 7, y - 2,
-                        x + radio - 10, y - 2,
-                        x + radio - 5, y - 6
-                    );
-                    ctx.bezierCurveTo(
-                        x + radio - 3, y - 8,
-                        x + radio, y - 5,
-                        x + radio, y - 5
-                    );
-                    ctx.bezierCurveTo(
-                        x + radio, y - 5,
-                        x + radio + 3, y - 8,
-                        x + radio + 5, y - 6
-                    );
-                    ctx.bezierCurveTo(
-                        x + radio + 10, y - 2,
-                        x + radio + 7, y - 2,
-                        x + radio, y + 5
-                    );
-                    break;
-            }
-            
-            // Dibujar el contorno del icono
-            ctx.strokeStyle = tema.iconos;
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-            
-            // Mostrar el número si es mayor que 0
-            if (numero && numero > 0) {
-                ctx.fillStyle = tema.textoSecundario;
-                ctx.font = "13px 'Arial'";
-                ctx.textAlign = "left";
-                ctx.fillText(formatearNumero(numero), x + radio*2 + 5, y + 4);
-            }
-            
-            // Mostrar el texto
-            if (texto) {
-                ctx.fillStyle = tema.textoSecundario;
-                ctx.font = "13px 'Arial'";
-                ctx.fillText(texto, x + radio*2 + 5 + (numero > 0 ? ctx.measureText(formatearNumero(numero)).width + 5 : 0), y + 4);
-            }
-        }
-        
-        // Dibujar iconos de interacción
-        dibujarIconoInteraccion(padding, iconosY, "reply", opciones.replies, idioma.responder);
-        dibujarIconoInteraccion(padding + espacioIconos, iconosY, "retweet", opciones.retweets, idioma.retwittear);
-        dibujarIconoInteraccion(padding + espacioIconos * 2, iconosY, "like", opciones.likes, idioma.meGusta);
-        
-        // Dibujar línea separadora después de los iconos
-        ctx.fillStyle = tema.separador;
-        ctx.fillRect(padding, iconosY + 25, ancho - padding * 2, 1);
-        
-        // Añadir indicador "vía Twitter Web App" en la parte inferior
+        // Dibujar línea de tiempo
+        const timeInfoY = currentY + 4;
         ctx.fillStyle = tema.textoSecundario;
-        ctx.font = "13px 'Arial'";
-        ctx.textAlign = "left";
-        ctx.fillText(idioma.via, padding, iconosY + 45);
+        ctx.font = "14px Arial";
+        ctx.fillText("3:42 PM · Abr 9, 2025 · ", contentStartX, timeInfoY);
         
-        // Añadir marca de agua sutil con el logo de Twitter/X
-        ctx.fillStyle = `${tema.textoSecundario}50`; // Semi-transparente
-        ctx.font = "12px 'Arial'";
-        ctx.textAlign = "right";
-        ctx.fillText("X", ancho - padding, iconosY + 45);
+        // Texto "Twitter Web App"
+        ctx.fillStyle = "#1d9bf0";
+        const timeTextWidth = ctx.measureText("3:42 PM · Abr 9, 2025 · ").width;
+        ctx.fillText("Twitter Web App", contentStartX + timeTextWidth, timeInfoY);
         
-        // Devolver el buffer de imagen
-        return canvas.toBuffer("image/png");
+        // Dibujar línea separadora antes de las estadísticas
+        const statsSeparatorY = timeInfoY + 24;
+        ctx.fillStyle = tema.separador;
+        ctx.fillRect(padding, statsSeparatorY, ancho - (padding * 2), 1);
+        
+        // Dibujar estadísticas (retweets, citas, likes)
+        const statsY = statsSeparatorY + 12;
+        ctx.fillStyle = tema.textoSecundario;
+        ctx.font = "14px Arial";
+        
+        // Formatear números para estadísticas
+        const retweetsText = formatNumber(opciones.retweets);
+        const likesText = formatNumber(opciones.likes);
+        const commentsText = formatNumber(opciones.comentarios);
+        
+        // Dibujar estadísticas con sus valores
+        if (opciones.retweets > 0) {
+            ctx.fillStyle = tema.texto;
+            ctx.font = "bold 14px Arial";
+            ctx.fillText(retweetsText, contentStartX, statsY);
+            
+            ctx.fillStyle = tema.textoSecundario;
+            ctx.font = "14px Arial";
+            const retweetsNumWidth = ctx.measureText(retweetsText).width;
+            ctx.fillText(" Retweets", contentStartX + retweetsNumWidth, statsY);
+        }
+        
+        // Comentarios si hay
+        if (opciones.comentarios > 0) {
+            const commentsX = contentStartX + 100;
+            ctx.fillStyle = tema.texto;
+            ctx.font = "bold 14px Arial";
+            ctx.fillText(commentsText, commentsX, statsY);
+            
+            ctx.fillStyle = tema.textoSecundario;
+            ctx.font = "14px Arial";
+            const commentsNumWidth = ctx.measureText(commentsText).width;
+            ctx.fillText(" Comentarios", commentsX + commentsNumWidth, statsY);
+        }
+        
+        // Likes si hay
+        if (opciones.likes > 0) {
+            const likesX = contentStartX + 250;
+            ctx.fillStyle = tema.texto;
+            ctx.font = "bold 14px Arial";
+            ctx.fillText(likesText, likesX, statsY);
+            
+            ctx.fillStyle = tema.textoSecundario;
+            ctx.font = "14px Arial";
+            const likesNumWidth = ctx.measureText(likesText).width;
+            ctx.fillText(" Me gusta", likesX + likesNumWidth, statsY);
+        }
+        
+        // Dibujar línea separadora después de las estadísticas
+        const actionsSeparatorY = statsY + 24;
+        ctx.fillStyle = tema.separador;
+        ctx.fillRect(padding, actionsSeparatorY, ancho - (padding * 2), 1);
+        
+        // Dibujar iconos de acciones (comentar, retweet, like, compartir)
+        const actionsY = actionsSeparatorY + 12 + 12; // +12 para centrar verticalmente
+        const actionIconSize = 20;
+        const actionSpacing = (ancho - padding * 2) / 4;
+        
+        // Dibujar cada icono
+        const iconPositions = [
+            { x: padding + actionSpacing/2 - actionIconSize/2, icon: 'comentario' },
+            { x: padding + actionSpacing*1.5 - actionIconSize/2, icon: 'retweet' },
+            { x: padding + actionSpacing*2.5 - actionIconSize/2, icon: 'like' },
+            { x: padding + actionSpacing*3.5 - actionIconSize/2, icon: 'compartir' }
+        ];
+        
+        // Dibujar los iconos
+        iconPositions.forEach(pos => {
+            if (opciones.iconos[pos.icon]) {
+                // Usar el icono cargado si está disponible
+                ctx.drawImage(opciones.iconos[pos.icon], pos.x, actionsY - actionIconSize/2, actionIconSize, actionIconSize);
+            } else {
+                // Dibujar el icono manualmente si no está disponible
+                drawActionIcon(ctx, pos.icon, pos.x, actionsY, actionIconSize, tema);
+            }
+        });
+        
+        // Dibujar línea separadora final
+        ctx.fillStyle = tema.separador;
+        ctx.fillRect(0, alto - 1, ancho, 1);
+        
+        // Devolver la imagen como buffer
+        return canvas.toBuffer('image/png');
         
     } catch (error) {
-        console.error("Error en generación de tarjeta Twitter:", error);
+        console.error("Error generando tarjeta de Twitter:", error);
         throw error;
     }
 }
 
 /**
+ * Dibuja un icono de acción si no está disponible como imagen
+ */
+function drawActionIcon(ctx, iconType, x, y, size, tema) {
+    ctx.save();
+    
+    switch (iconType) {
+        case 'comentario':
+            // Dibujar icono de comentario (bocadillo)
+            ctx.beginPath();
+            ctx.moveTo(x + size/2, y - size/2 + size/5);
+            ctx.quadraticCurveTo(x, y - size/2 + size/5, x, y);
+            ctx.quadraticCurveTo(x, y + size/2, x + size/2, y + size/2);
+            ctx.lineTo(x + size - size/4, y + size/2);
+            ctx.lineTo(x + size - size/4, y + size/2 + size/4);
+            ctx.lineTo(x + size - size/2, y + size/2);
+            ctx.lineTo(x + size - size/4, y + size/2);
+            ctx.quadraticCurveTo(x + size, y + size/2, x + size, y);
+            ctx.quadraticCurveTo(x + size, y - size/2 + size/5, x + size/2, y - size/2 + size/5);
+            ctx.strokeStyle = tema.comentario;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            break;
+            
+        case 'retweet':
+            // Dibujar icono de retweet
+            ctx.beginPath();
+            // Flecha superior
+            ctx.moveTo(x + size * 0.25, y - size * 0.2);
+            ctx.lineTo(x + size * 0.5, y - size * 0.4);
+            ctx.lineTo(x + size * 0.75, y - size * 0.2);
+            // Línea vertical superior
+            ctx.moveTo(x + size * 0.5, y - size * 0.4);
+            ctx.lineTo(x + size * 0.5, y + size * 0.1);
+            // Flecha inferior
+            ctx.moveTo(x + size * 0.75, y + size * 0.2);
+            ctx.lineTo(x + size * 0.5, y + size * 0.4);
+            ctx.lineTo(x + size * 0.25, y + size * 0.2);
+            // Línea vertical inferior
+            ctx.moveTo(x + size * 0.5, y + size * 0.4);
+            ctx.lineTo(x + size * 0.5, y - size * 0.1);
+            
+            ctx.strokeStyle = tema.retweet.inactivo;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            break;
+            
+        case 'like':
+            // Dibujar icono de corazón
+            ctx.beginPath();
+            ctx.moveTo(x + size/2, y + size/2);
+            ctx.bezierCurveTo(
+                x + size/2, y + size/4,
+                x, y - size/4,
+                x + size/4, y - size/2
+            );
+            ctx.bezierCurveTo(
+                x + size/2, y - size/2 - size/4,
+                x + size - size/4, y - size/2,
+                x + size - size/2, y - size/4
+            );
+            ctx.bezierCurveTo(
+                x + size, y,
+                x + size/2, y + size/4,
+                x + size/2, y + size/2
+            );
+            
+            ctx.strokeStyle = tema.like.inactivo;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            break;
+            
+        case 'compartir':
+            // Dibujar icono de compartir
+            ctx.beginPath();
+            // Caja de compartir
+            ctx.rect(x + size * 0.25, y - size * 0.2, size * 0.5, size * 0.4);
+            // Flecha hacia arriba
+            ctx.moveTo(x + size * 0.5, y - size * 0.4);
+            ctx.lineTo(x + size * 0.5, y + size * 0.4);
+            ctx.moveTo(x + size * 0.3, y - size * 0.2);
+            ctx.lineTo(x + size * 0.5, y - size * 0.4);
+            ctx.lineTo(x + size * 0.7, y - size * 0.2);
+            
+            ctx.strokeStyle = tema.iconoInactivo;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            break;
+    }
+    
+    ctx.restore();
+}
+
+/**
  * Obtiene las iniciales de un nombre
  */
-function obtenerIniciales(nombre) {
-    if (!nombre) return "??";
+function getInitials(name) {
+    if (!name) return "??";
     
-    const palabras = nombre.split(' ');
-    if (palabras.length === 1) {
-        return nombre.substring(0, 2).toUpperCase();
+    const words = name.split(' ');
+    if (words.length === 1) {
+        return name.substring(0, 2).toUpperCase();
     }
     
-    return (palabras[0].charAt(0) + palabras[1].charAt(0)).toUpperCase();
+    return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
 }
 
 /**
- * Ajusta el texto para que quepa dentro de un ancho especificado
+ * Formatea números para mostrar con sufijos K, M
  */
-function ajustarTexto(ctx, texto, anchoMaximo) {
-    const palabras = texto.split(' ');
-    const lineas = [];
-    let lineaActual = '';
-    
-    // Ajustar palabras a líneas
-    for (let i = 0; i < palabras.length; i++) {
-        const palabra = palabras[i];
-        const lineaConPalabra = lineaActual + (lineaActual ? ' ' : '') + palabra;
-        
-        if (ctx.measureText(lineaConPalabra).width <= anchoMaximo) {
-            lineaActual = lineaConPalabra;
-        } else {
-            // Si la línea actual no está vacía, agregarla
-            if (lineaActual) {
-                lineas.push(lineaActual);
-                lineaActual = palabra;
-            } else {
-                // Si la palabra por sí sola es más ancha que el límite
-                let fragmento = '';
-                for (let j = 0; j < palabra.length; j++) {
-                    fragmento += palabra[j];
-                    if (ctx.measureText(fragmento).width >= anchoMaximo) {
-                        lineas.push(fragmento.slice(0, -1));
-                        fragmento = palabra[j];
-                    }
-                }
-                lineaActual = fragmento;
-            }
-        }
-    }
-    
-    // Agregar la última línea si tiene contenido
-    if (lineaActual) {
-        lineas.push(lineaActual);
-    }
-    
-    return lineas;
-}
-
-/**
- * Formatea números para mostrar (ej. 1000 -> 1K)
- */
-function formatearNumero(num) {
+function formatNumber(num) {
     num = parseInt(num) || 0;
     
     if (num >= 1000000) {
@@ -602,18 +625,106 @@ function formatearNumero(num) {
 }
 
 /**
- * Dibuja un rectángulo redondeado
+ * Divide texto en líneas que quepan en el ancho especificado
  */
-function dibujarRectanguloRedondeado(ctx, x, y, ancho, alto, radio) {
-    ctx.moveTo(x + radio, y);
-    ctx.lineTo(x + ancho - radio, y);
-    ctx.quadraticCurveTo(x + ancho, y, x + ancho, y + radio);
-    ctx.lineTo(x + ancho, y + alto - radio);
-    ctx.quadraticCurveTo(x + ancho, y + alto, x + ancho - radio, y + alto);
-    ctx.lineTo(x + radio, y + alto);
-    ctx.quadraticCurveTo(x, y + alto, x, y + alto - radio);
-    ctx.lineTo(x, y + radio);
-    ctx.quadraticCurveTo(x, y, x + radio, y);
+function wrapText(ctx, text, maxWidth) {
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+
+    for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+
+        if (testWidth > maxWidth) {
+            // Si la palabra es demasiado larga para caber en una línea
+            if (!currentLine) {
+                // Dividir la palabra si es necesario
+                let partialWord = '';
+                for (let j = 0; j < word.length; j++) {
+                    const testChar = partialWord + word[j];
+                    if (ctx.measureText(testChar).width <= maxWidth) {
+                        partialWord = testChar;
+                    } else {
+                        lines.push(partialWord);
+                        partialWord = word[j];
+                    }
+                }
+                if (partialWord) {
+                    currentLine = partialWord;
+                }
+            } else {
+                lines.push(currentLine);
+                currentLine = word;
+            }
+        } else {
+            currentLine = testLine;
+        }
+    }
+
+    if (currentLine) {
+        lines.push(currentLine);
+    }
+
+    return lines;
+}
+
+/**
+ * Procesa texto para resaltar enlaces, hashtags y menciones
+ */
+function processTextForHighlighting(text) {
+    // Dividir el texto en partes normales y resaltadas
+    const segments = [];
+    const regex = /(@\w+|#\w+|https?:\/\/\S+|\.\w+)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+        // Añadir texto normal antes del resaltado
+        if (match.index > lastIndex) {
+            segments.push({
+                text: text.substring(lastIndex, match.index),
+                isHighlighted: false
+            });
+        }
+
+        // Añadir texto resaltado
+        segments.push({
+            text: match[0],
+            isHighlighted: true
+        });
+
+        lastIndex = match.index + match[0].length;
+    }
+
+    // Añadir cualquier texto restante
+    if (lastIndex < text.length) {
+        segments.push({
+            text: text.substring(lastIndex),
+            isHighlighted: false
+        });
+    }
+
+    return segments;
+}
+
+/**
+ * Dibuja un rectángulo con bordes redondeados
+ */
+function roundedRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
 }
 
 module.exports = router;
