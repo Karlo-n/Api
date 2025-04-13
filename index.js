@@ -23,6 +23,7 @@ const akinator = require("./api/fun/akinator");
 const twitterCardRouter = require("./api/fun/twitter");
 const leaderboardRouter = require("./api/fun/leaderboard");
 const encuestaRouter = require("./api/fun/encuesta");
+const nsfwRouter = require("./api/fun/nsfw");
 const bienvenidaRouter = require('./api/utility/bienvenida');
 const qrRouter = require("./api/utility/qr");
 const boostCardRouter = require("./api/utility/boostcard");
@@ -55,6 +56,7 @@ app.use("/api/fun/akinator", akinator);
 app.use("/api/fun/twitter", twitterCardRouter);
 app.use("/api/fun/leaderboard", leaderboardRouter);
 app.use("/api/fun/encuesta", encuestaRouter);
+app.use("/api/fun/nsfw", nsfwRouter);
 app.use('/api/utility/bienvenida', bienvenidaRouter);
 app.use("/api/utility/qr", qrRouter);
 app.use("/api/utility/boostcard", boostCardRouter);
@@ -96,6 +98,7 @@ app.get("/", (req, res) => {
     "/api/fun/twitter",
     "/api/fun/leaderboard",
     "/api/fun/encuesta",
+    "/api/fun/nsfw",
     "/api/utility/boostcard",
     "/api/utility/traductor",
     "/api/utility/bienvenida",
