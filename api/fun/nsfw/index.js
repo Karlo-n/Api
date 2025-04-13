@@ -62,6 +62,67 @@ const SOURCES = {
     RANDOM_VID: "random_vid"
 };
 
+// Clasificaciones disponibles
+const CLASIFICACIONES = {
+    NUEVO: "nuevo",        // Contenido más reciente
+    FAMOSO: "famoso",      // Contenido más popular/con más vistas
+    ALEATORIO: "aleatorio", // Contenido aleatorio (por defecto)
+    GAY: "gay",           // Contenido gay
+    AMATEUR: "amateur",    // Contenido amateur
+    HD: "hd",             // Contenido en alta definición
+    PROFESIONAL: "profesional", // Contenido profesional
+    VERIFICADO: "verificado"    // Contenido de usuarios verificados
+};
+
+// Mapeo de términos similares a clasificaciones estándar
+const CLASIFICACIONES_ALIAS = {
+    // Nuevo y reciente
+    "reciente": CLASIFICACIONES.NUEVO,
+    "nuevos": CLASIFICACIONES.NUEVO,
+    "recent": CLASIFICACIONES.NUEVO,
+    "new": CLASIFICACIONES.NUEVO,
+    "ultima": CLASIFICACIONES.NUEVO,
+    "ultimos": CLASIFICACIONES.NUEVO,
+    
+    // Famoso y popular
+    "popular": CLASIFICACIONES.FAMOSO,
+    "mejores": CLASIFICACIONES.FAMOSO,
+    "best": CLASIFICACIONES.FAMOSO,
+    "top": CLASIFICACIONES.FAMOSO,
+    "trending": CLASIFICACIONES.FAMOSO,
+    "tendencia": CLASIFICACIONES.FAMOSO,
+    "viral": CLASIFICACIONES.FAMOSO,
+    
+    // Aleatorio
+    "random": CLASIFICACIONES.ALEATORIO,
+    "cualquiera": CLASIFICACIONES.ALEATORIO,
+    "any": CLASIFICACIONES.ALEATORIO,
+    
+    // Gay y LGBT
+    "homosexual": CLASIFICACIONES.GAY,
+    "lgbt": CLASIFICACIONES.GAY,
+    
+    // Amateur y casero
+    "casero": CLASIFICACIONES.AMATEUR,
+    "homemade": CLASIFICACIONES.AMATEUR,
+    
+    // Alta definición
+    "alta definicion": CLASIFICACIONES.HD,
+    "high definition": CLASIFICACIONES.HD,
+    "4k": CLASIFICACIONES.HD,
+    
+    // Profesional y producido
+    "producido": CLASIFICACIONES.PROFESIONAL,
+    "studio": CLASIFICACIONES.PROFESIONAL,
+    "produced": CLASIFICACIONES.PROFESIONAL,
+    
+    // Verificado
+    "verificado": CLASIFICACIONES.VERIFICADO,
+    "verified": CLASIFICACIONES.VERIFICADO,
+    "oficial": CLASIFICACIONES.VERIFICADO,
+    "official": CLASIFICACIONES.VERIFICADO
+};
+
 // Configuración de cada fuente
 const sourceConfig = {
     [SOURCES.RULE34]: {
@@ -158,7 +219,8 @@ router.get("/", async (req, res) => {
             pagina, 
             fuente = "random",
             fallback = "true",
-            mostrar_errores = "false"
+            mostrar_errores = "false",
+            clasificacion = "aleatorio"
         } = req.query;
         
         // Validación de parámetros
@@ -166,9 +228,12 @@ router.get("/", async (req, res) => {
             return res.status(400).json({
                 error: true,
                 message: "Se requiere el parámetro 'tags' para realizar la búsqueda",
-                ejemplo: "/api/fun/nsfw?tags=tag1,tag2&cantidad=5&fuente=rule34"
+                ejemplo: "/api/fun/nsfw?tags=tag1,tag2&cantidad=5&fuente=rule34&clasificacion=nuevo"
             });
         }
+        
+        // Normalizar clasificación
+        const clasificacionNormalizada = normalizarClasificacion(clasificacion);
         
         // Limitar la cantidad para evitar abusos y tiempos de espera largos
         let cantidadLimitada;
@@ -181,6 +246,11 @@ router.get("/", async (req, res) => {
         
         // Normalizar los tags
         const tagsList = tags.split(",").map(tag => tag.trim().toLowerCase());
+        
+        // Si la clasificación es GAY y no está en los tags, añadirlo a los tags
+        if (clasificacionNormalizada === CLASIFICACIONES.GAY && !tagsList.includes('gay')) {
+            tagsList.push('gay');
+        }
         
         // Determinar la fuente a utilizar
         let fuenteSeleccionada = fuente.toLowerCase();
@@ -238,6 +308,7 @@ router.get("/", async (req, res) => {
             tagsList, 
             cantidadLimitada, 
             pagina, 
+            clasificacionNormalizada,
             fallback === "true"
         );
         
@@ -258,120 +329,131 @@ router.get("/", async (req, res) => {
             return res.status(404).json(respuestaError);
         }
 
-        // NUEVA FUNCIONALIDAD: DESCARGAR CONTENIDO Y DEVOLVER INFORMACIÓN COMPLETA
-        // Seleccionar un resultado aleatorio
-        const resultadoAleatorio = resultados[Math.floor(Math.random() * resultados.length)];
+        // NUEVA FUNCIONALIDAD: DESCARGAR MÚLTIPLES CONTENIDOS Y DEVOLVER INFORMACIÓN COMPLETA
+        // Limitar la cantidad real de resultados que procesaremos
+        const cantidadResultados = Math.min(resultados.length, cantidadLimitada);
+        const resultadosProcesados = [];
         
-        // Determinar la URL directa a descargar
-        let urlDescarga;
-        if (sourceConfig[fuenteUsada].type === "video") {
-            urlDescarga = resultadoAleatorio.direct_video_url || resultadoAleatorio.video_url;
-        } else {
-            urlDescarga = resultadoAleatorio.file_url;
+        // Si no hay suficientes resultados, informar al usuario
+        if (resultados.length < cantidadLimitada) {
+            console.log(`Advertencia: Solo se encontraron ${resultados.length} resultados de los ${cantidadLimitada} solicitados`);
         }
         
-        if (!urlDescarga) {
-            return res.status(404).json({
-                error: true,
-                message: "No se encontró URL directa para descargar el contenido",
-                fuente: fuenteUsada,
-                tipo: sourceConfig[fuenteUsada].type
-            });
-        }
-        
-        try {
-            console.log(`Descargando contenido desde: ${urlDescarga}`);
+        // Procesar cada resultado hasta alcanzar la cantidad solicitada
+        for (let i = 0; i < cantidadResultados; i++) {
+            const resultado = resultados[i];
             
-            // Descargar el contenido
-            const response = await axios.get(urlDescarga, { 
-                responseType: 'arraybuffer',
-                headers: {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                    "Referer": sourceConfig[fuenteUsada].baseUrl
-                },
-                timeout: 30000, // 30 segundos para descarga
-                maxContentLength: 100 * 1024 * 1024 // Limitar a 100MB
-            });
-            
-            // Determinar el tipo de contenido basado en los encabezados o la extensión
-            let contentType = response.headers['content-type'];
-            
-            if (!contentType || contentType === 'application/octet-stream') {
-                // Intentar determinar por la URL
-                if (urlDescarga.endsWith('.jpg') || urlDescarga.endsWith('.jpeg')) {
-                    contentType = 'image/jpeg';
-                } else if (urlDescarga.endsWith('.png')) {
-                    contentType = 'image/png';
-                } else if (urlDescarga.endsWith('.gif')) {
-                    contentType = 'image/gif';
-                } else if (urlDescarga.endsWith('.webp')) {
-                    contentType = 'image/webp';
-                } else if (urlDescarga.endsWith('.mp4')) {
-                    contentType = 'video/mp4';
-                } else if (urlDescarga.endsWith('.webm')) {
-                    contentType = 'video/webm';
-                } else {
-                    // Por defecto para imágenes
-                    contentType = sourceConfig[fuenteUsada].type === "video" ? 'video/mp4' : 'image/jpeg';
-                }
+            // Determinar la URL directa a descargar
+            let urlDescarga;
+            if (sourceConfig[fuenteUsada].type === "video") {
+                urlDescarga = resultado.direct_video_url || resultado.video_url;
+            } else {
+                urlDescarga = resultado.file_url;
             }
             
-            // Generar nombre único para el archivo
-            const extension = contentType.split('/')[1];
-            const safeTag = tagsList[0].replace(/[^a-z0-9]/gi, '_').substring(0, 15);
-            const uniqueId = crypto.randomBytes(8).toString('hex');
-            const filename = `nsfw_${safeTag}_${uniqueId}.${extension}`;
-            const filePath = path.join(CONTENT_DIR, filename);
+            if (!urlDescarga) {
+                console.log(`Advertencia: No se encontró URL directa para el resultado ${i+1}`);
+                continue; // Saltar este resultado
+            }
             
-            // Guardar el archivo descargado
-            fs.writeFileSync(filePath, Buffer.from(response.data));
-            
-            // Generar URL pública para el contenido descargado
-            const contentUrl = `${PUBLIC_URL_BASE}${PUBLIC_PATH}/${filename}`;
-            
-            // Programar eliminación del archivo después de 24 horas
-            setTimeout(() => {
-                if (fs.existsSync(filePath)) {
-                    fs.unlinkSync(filePath);
-                    console.log(`Archivo NSFW eliminado: ${filename}`);
+            try {
+                console.log(`Descargando contenido ${i+1}/${cantidadResultados} desde: ${urlDescarga}`);
+                
+                // Descargar el contenido
+                const response = await axios.get(urlDescarga, { 
+                    responseType: 'arraybuffer',
+                    headers: {
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                        "Referer": sourceConfig[fuenteUsada].baseUrl
+                    },
+                    timeout: 30000, // 30 segundos para descarga
+                    maxContentLength: 100 * 1024 * 1024 // Limitar a 100MB
+                });
+                
+                // Determinar el tipo de contenido basado en los encabezados o la extensión
+                let contentType = response.headers['content-type'];
+                
+                if (!contentType || contentType === 'application/octet-stream') {
+                    // Intentar determinar por la URL
+                    if (urlDescarga.endsWith('.jpg') || urlDescarga.endsWith('.jpeg')) {
+                        contentType = 'image/jpeg';
+                    } else if (urlDescarga.endsWith('.png')) {
+                        contentType = 'image/png';
+                    } else if (urlDescarga.endsWith('.gif')) {
+                        contentType = 'image/gif';
+                    } else if (urlDescarga.endsWith('.webp')) {
+                        contentType = 'image/webp';
+                    } else if (urlDescarga.endsWith('.mp4')) {
+                        contentType = 'video/mp4';
+                    } else if (urlDescarga.endsWith('.webm')) {
+                        contentType = 'video/webm';
+                    } else {
+                        // Por defecto para imágenes
+                        contentType = sourceConfig[fuenteUsada].type === "video" ? 'video/mp4' : 'image/jpeg';
+                    }
                 }
-            }, 24 * 60 * 60 * 1000);
-            
-            // Preparar respuesta con todos los datos solicitados
-            return res.json({
-                success: true,
-                titulo: resultadoAleatorio.title || "Sin título",
-                descripcion: resultadoAleatorio.description || "",
-                pagina_web: resultadoAleatorio.video_url || urlDescarga, // URL de la página del contenido
-                recurso: urlDescarga, // URL directa original 
-                thumbnail: resultadoAleatorio.thumbnail || resultadoAleatorio.preview_url || "",
-                [sourceConfig[fuenteUsada].type]: contentUrl, // video o imagen según el tipo
-                autor: resultadoAleatorio.author || "Unknown",
-                fuente: fuenteUsada,
-                tipo: sourceConfig[fuenteUsada].type,
-                tags: tagsList,
-                duracion: resultadoAleatorio.duration || null,
-                expira_en: "24 horas"
-            });
-            
-        } catch (downloadError) {
-            console.error("Error descargando contenido:", downloadError);
-            
-            // Si falla la descarga, enviar un JSON con error y la URL para que el cliente lo intente
+                
+                // Generar nombre único para el archivo
+                const extension = contentType.split('/')[1];
+                const safeTag = tagsList[0].replace(/[^a-z0-9]/gi, '_').substring(0, 15);
+                const uniqueId = crypto.randomBytes(8).toString('hex');
+                const filename = `nsfw_${safeTag}_${uniqueId}.${extension}`;
+                const filePath = path.join(CONTENT_DIR, filename);
+                
+                // Guardar el archivo descargado
+                fs.writeFileSync(filePath, Buffer.from(response.data));
+                
+                // Generar URL pública para el contenido descargado
+                const contentUrl = `${PUBLIC_URL_BASE}${PUBLIC_PATH}/${filename}`;
+                
+                // Programar eliminación del archivo después de 24 horas
+                setTimeout(() => {
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                        console.log(`Archivo NSFW eliminado: ${filename}`);
+                    }
+                }, 24 * 60 * 60 * 1000);
+                
+                // Guardar la información procesada
+                resultadosProcesados.push({
+                    titulo: resultado.title || "Sin título",
+                    descripcion: resultado.description || "",
+                    pagina_web: resultado.video_url || urlDescarga, // URL de la página del contenido
+                    recurso: urlDescarga, // URL directa original 
+                    thumbnail: resultado.thumbnail || resultado.preview_url || "",
+                    [sourceConfig[fuenteUsada].type]: contentUrl, // video o imagen según el tipo
+                    autor: resultado.author || "Unknown",
+                    duracion: resultado.duration || null,
+                    expira_en: "24 horas"
+                });
+                
+            } catch (downloadError) {
+                console.error(`Error descargando contenido ${i+1}:`, downloadError);
+                // No añadimos los resultados fallidos
+            }
+        }
+        
+        // Si no se pudo procesar ningún resultado
+        if (resultadosProcesados.length === 0) {
             return res.status(500).json({
                 error: true,
-                message: "Error descargando el contenido directamente",
-                detalle: downloadError.message,
-                url_directa: urlDescarga,
-                titulo: resultadoAleatorio.title || "Sin título",
-                descripcion: resultadoAleatorio.description || "",
-                pagina_web: resultadoAleatorio.video_url || urlDescarga,
-                thumbnail: resultadoAleatorio.thumbnail || resultadoAleatorio.preview_url || "",
+                message: "No se pudo descargar ningún contenido correctamente",
                 fuente: fuenteUsada,
                 tipo: sourceConfig[fuenteUsada].type,
-                sugerencia: "Intenta descargar manualmente desde la URL proporcionada"
+                tags: tagsList
             });
         }
+        
+        // Preparar respuesta con todos los datos solicitados
+        return res.json({
+            success: true,
+            total: resultadosProcesados.length,
+            solicitados: cantidadLimitada,
+            fuente: fuenteUsada,
+            tipo: sourceConfig[fuenteUsada].type,
+            tags: tagsList,
+            resultados: resultadosProcesados
+        });
         
     } catch (error) {
         console.error("Error en búsqueda NSFW:", error);
@@ -384,9 +466,33 @@ router.get("/", async (req, res) => {
 });
 
 /**
+ * Normaliza el valor de clasificación proporcionado
+ * @param {string} clasificacion - Clasificación proporcionada por el usuario 
+ * @returns {string} - Clasificación normalizada
+ */
+function normalizarClasificacion(clasificacion) {
+    if (!clasificacion) return CLASIFICACIONES.ALEATORIO;
+    
+    const clasificacionLower = clasificacion.toLowerCase().trim();
+    
+    // Verificar si es una clasificación directa
+    if (Object.values(CLASIFICACIONES).includes(clasificacionLower)) {
+        return clasificacionLower;
+    }
+    
+    // Verificar si es un alias
+    if (CLASIFICACIONES_ALIAS[clasificacionLower]) {
+        return CLASIFICACIONES_ALIAS[clasificacionLower];
+    }
+    
+    // Si no coincide con nada, devolver aleatorio
+    return CLASIFICACIONES.ALEATORIO;
+}
+
+/**
  * Función principal para buscar contenido con fallback
  */
-async function buscarContenido(fuente, tags, cantidad, pagina, permitirFallback = true) {
+async function buscarContenido(fuente, tags, cantidad, pagina, clasificacion, permitirFallback = true) {
     const errores = [];
     let resultados = [];
     
@@ -397,28 +503,28 @@ async function buscarContenido(fuente, tags, cantidad, pagina, permitirFallback 
             switch (fuenteActual) {
                 // Fuentes de imágenes
                 case SOURCES.RULE34:
-                    resultadosBusqueda = await buscarEnRule34(tags, cantidad, pagina);
+                    resultadosBusqueda = await buscarEnRule34(tags, cantidad, pagina, clasificacion);
                     break;
                     
                 case SOURCES.DANBOORU:
-                    resultadosBusqueda = await buscarEnDanbooru(tags, cantidad, pagina);
+                    resultadosBusqueda = await buscarEnDanbooru(tags, cantidad, pagina, clasificacion);
                     break;
                     
                 case SOURCES.GELBOORU:
-                    resultadosBusqueda = await buscarEnGelbooru(tags, cantidad, pagina);
+                    resultadosBusqueda = await buscarEnGelbooru(tags, cantidad, pagina, clasificacion);
                     break;
                 
                 // Fuentes de videos
                 case SOURCES.XVIDEOS:
-                    resultadosBusqueda = await buscarEnXVideos(tags, cantidad, pagina);
+                    resultadosBusqueda = await buscarEnXVideos(tags, cantidad, pagina, clasificacion);
                     break;
                     
                 case SOURCES.PORNHUB:
-                    resultadosBusqueda = await buscarEnPornhub(tags, cantidad, pagina);
+                    resultadosBusqueda = await buscarEnPornhub(tags, cantidad, pagina, clasificacion);
                     break;
                     
                 case SOURCES.XNXX:
-                    resultadosBusqueda = await buscarEnXnxx(tags, cantidad, pagina);
+                    resultadosBusqueda = await buscarEnXnxx(tags, cantidad, pagina, clasificacion);
                     break;
                     
                 default:
@@ -469,11 +575,24 @@ async function buscarContenido(fuente, tags, cantidad, pagina, permitirFallback 
 /**
  * Buscar en Rule34.xxx con datos simplificados
  */
-async function buscarEnRule34(tags, cantidad, pagina) {
+async function buscarEnRule34(tags, cantidad, pagina, clasificacion) {
     try {
         const tagsStr = tags.join("+");
         const page = pagina ? parseInt(pagina) : Math.floor(Math.random() * 10);
-        const searchUrl = `https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&tags=${tagsStr}&limit=${cantidad}&pid=${page}`;
+        
+        // Construir URL según clasificación
+        let searchUrl;
+        switch (clasificacion) {
+            case CLASIFICACIONES.NUEVO:
+                searchUrl = `https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&tags=${tagsStr}&limit=${cantidad}&pid=${page}&order=date`;
+                break;
+            case CLASIFICACIONES.FAMOSO:
+                searchUrl = `https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&tags=${tagsStr}&limit=${cantidad}&pid=${page}&order=score`;
+                break;
+            default:
+                searchUrl = `https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&tags=${tagsStr}&limit=${cantidad}&pid=${page}`;
+                break;
+        }
         
         const response = await axiosClient.get(searchUrl);
         
@@ -511,12 +630,25 @@ async function buscarEnRule34(tags, cantidad, pagina) {
 /**
  * Buscar en Danbooru con datos simplificados
  */
-async function buscarEnDanbooru(tags, cantidad, pagina) {
+async function buscarEnDanbooru(tags, cantidad, pagina, clasificacion) {
     try {
         const tagsLimitados = tags.slice(0, 2);
         const tagsStr = tagsLimitados.join("+");
         const page = pagina ? parseInt(pagina) : Math.floor(Math.random() * 10) + 1;
-        const searchUrl = `https://danbooru.donmai.us/posts.json?tags=${tagsStr}&limit=${cantidad}&page=${page}`;
+        
+        // Construir URL según clasificación
+        let searchUrl;
+        switch (clasificacion) {
+            case CLASIFICACIONES.NUEVO:
+                searchUrl = `https://danbooru.donmai.us/posts.json?tags=${tagsStr}&limit=${cantidad}&page=${page}&order=date`;
+                break;
+            case CLASIFICACIONES.FAMOSO:
+                searchUrl = `https://danbooru.donmai.us/posts.json?tags=${tagsStr}&limit=${cantidad}&page=${page}&order=score`;
+                break;
+            default:
+                searchUrl = `https://danbooru.donmai.us/posts.json?tags=${tagsStr}&limit=${cantidad}&page=${page}`;
+                break;
+        }
         
         const response = await axiosClient.get(searchUrl);
         
@@ -547,11 +679,24 @@ async function buscarEnDanbooru(tags, cantidad, pagina) {
 /**
  * Buscar en Gelbooru con datos simplificados
  */
-async function buscarEnGelbooru(tags, cantidad, pagina) {
+async function buscarEnGelbooru(tags, cantidad, pagina, clasificacion) {
     try {
         const tagsStr = tags.join("+");
         const page = pagina ? parseInt(pagina) : Math.floor(Math.random() * 10);
-        const searchUrl = `https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=${tagsStr}&limit=${cantidad}&pid=${page}&json=1`;
+        
+        // Construir URL según clasificación
+        let searchUrl;
+        switch (clasificacion) {
+            case CLASIFICACIONES.NUEVO:
+                searchUrl = `https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=${tagsStr}&limit=${cantidad}&pid=${page}&json=1&sort=date`;
+                break;
+            case CLASIFICACIONES.FAMOSO:
+                searchUrl = `https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=${tagsStr}&limit=${cantidad}&pid=${page}&json=1&sort=score`;
+                break;
+            default:
+                searchUrl = `https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=${tagsStr}&limit=${cantidad}&pid=${page}&json=1`;
+                break;
+        }
         
         const response = await axiosClient.get(searchUrl);
         
@@ -578,11 +723,36 @@ async function buscarEnGelbooru(tags, cantidad, pagina) {
 /**
  * Buscar en XVideos con obtención automática de URL directa
  */
-async function buscarEnXVideos(tags, cantidad, pagina) {
+async function buscarEnXVideos(tags, cantidad, pagina, clasificacion) {
     try {
         const tagsStr = tags.join("+");
         const page = pagina ? parseInt(pagina) : Math.floor(Math.random() * 10) + 1;
-        const searchUrl = `https://www.xvideos.com/?k=${tagsStr}&p=${page}`;
+        
+        // Modificar la URL de búsqueda según la clasificación
+        let searchUrl;
+        switch (clasificacion) {
+            case CLASIFICACIONES.NUEVO:
+                searchUrl = `https://www.xvideos.com/?k=${tagsStr}&p=${page}&sort=uploaddate`;
+                break;
+            case CLASIFICACIONES.FAMOSO:
+                searchUrl = `https://www.xvideos.com/?k=${tagsStr}&p=${page}&sort=views`;
+                break;
+            case CLASIFICACIONES.VERIFICADO:
+                searchUrl = `https://www.xvideos.com/?k=${tagsStr}&p=${page}&sort=relevance&verified=1`;
+                break;
+            case CLASIFICACIONES.HD:
+                searchUrl = `https://www.xvideos.com/?k=${tagsStr}&p=${page}&sort=relevance&quality=hd`;
+                break;
+            case CLASIFICACIONES.PROFESIONAL:
+                searchUrl = `https://www.xvideos.com/?k=${tagsStr}&p=${page}&sort=relevance&quality=hd&verified=1`;
+                break;
+            case CLASIFICACIONES.AMATEUR:
+                searchUrl = `https://www.xvideos.com/?k=${tagsStr}+amateur&p=${page}`;
+                break;
+            default:
+                searchUrl = `https://www.xvideos.com/?k=${tagsStr}&p=${page}`;
+                break;
+        }
         
         const cookieHeader = {
             Cookie: "age_verified=1; gdpr_registered=1"
@@ -686,11 +856,36 @@ async function buscarEnXVideos(tags, cantidad, pagina) {
 /**
  * Buscar en Pornhub con obtención automática de URL directa
  */
-async function buscarEnPornhub(tags, cantidad, pagina) {
+async function buscarEnPornhub(tags, cantidad, pagina, clasificacion) {
     try {
         const tagsStr = tags.join("+");
         const page = pagina ? parseInt(pagina) : Math.floor(Math.random() * 10) + 1;
-        const searchUrl = `https://www.pornhub.com/video/search?search=${tagsStr}&page=${page}`;
+        
+        // Construir URL según clasificación
+        let searchUrl;
+        switch (clasificacion) {
+            case CLASIFICACIONES.NUEVO:
+                searchUrl = `https://www.pornhub.com/video/search?search=${tagsStr}&page=${page}&o=mr`; // Most Recent
+                break;
+            case CLASIFICACIONES.FAMOSO:
+                searchUrl = `https://www.pornhub.com/video/search?search=${tagsStr}&page=${page}&o=mv`; // Most Viewed
+                break;
+            case CLASIFICACIONES.HD:
+                searchUrl = `https://www.pornhub.com/video/search?search=${tagsStr}&page=${page}&hd=1`;
+                break;
+            case CLASIFICACIONES.PROFESIONAL:
+                searchUrl = `https://www.pornhub.com/video/search?search=${tagsStr}&page=${page}&p=professional`;
+                break;
+            case CLASIFICACIONES.AMATEUR:
+                searchUrl = `https://www.pornhub.com/video/search?search=${tagsStr}&page=${page}&p=homemade`;
+                break;
+            case CLASIFICACIONES.VERIFICADO:
+                searchUrl = `https://www.pornhub.com/video/search?search=${tagsStr}&page=${page}&verified=1`;
+                break;
+            default:
+                searchUrl = `https://www.pornhub.com/video/search?search=${tagsStr}&page=${page}`;
+                break;
+        }
         
         const cookieHeader = {
             Cookie: "age_verified=1; gdpr_registered=1"
@@ -812,11 +1007,30 @@ async function buscarEnPornhub(tags, cantidad, pagina) {
 /**
  * Buscar en XNXX con obtención automática de URL directa
  */
-async function buscarEnXnxx(tags, cantidad, pagina) {
+async function buscarEnXnxx(tags, cantidad, pagina, clasificacion) {
     try {
         const tagsStr = tags.join("+");
         const page = pagina ? parseInt(pagina) : Math.floor(Math.random() * 10) + 1;
-        const searchUrl = `https://www.xnxx.com/search/${tagsStr}/${page}`;
+        
+        // Construir URL según clasificación
+        let searchUrl;
+        switch (clasificacion) {
+            case CLASIFICACIONES.NUEVO:
+                searchUrl = `https://www.xnxx.com/search/${tagsStr}/${page}/rec`;  // Recent = rec
+                break;
+            case CLASIFICACIONES.FAMOSO:
+                searchUrl = `https://www.xnxx.com/search/${tagsStr}/${page}/views`; // Most viewed
+                break;
+            case CLASIFICACIONES.HD:
+                searchUrl = `https://www.xnxx.com/search/${tagsStr}/${page}/hd`; // HD only
+                break;
+            case CLASIFICACIONES.AMATEUR:
+                searchUrl = `https://www.xnxx.com/search/${tagsStr}+amateur/${page}`;
+                break;
+            default:
+                searchUrl = `https://www.xnxx.com/search/${tagsStr}/${page}`;
+                break;
+        }
         
         const cookieHeader = {
             Cookie: "age_verified=1; gdpr_registered=1"
@@ -939,10 +1153,27 @@ router.get("/fuentes", (req, res) => {
         [SOURCES.RANDOM_VID]: "Cualquier fuente de videos"
     };
     
+    // Incluir clasificaciones disponibles
+    const clasificacionesDisponibles = Object.values(CLASIFICACIONES);
+    
     return res.json({
         success: true,
         fuentes_disponibles: fuentesActivas,
-        opciones_aleatorias: opcionesAleatorias
+        opciones_aleatorias: opcionesAleatorias,
+        clasificaciones: clasificacionesDisponibles,
+        parametros: {
+            tags: "Tags separados por comas (obligatorio)",
+            cantidad: "Número de resultados (máx. 10 para imágenes, 5 para videos)",
+            fuente: "Fuente específica o aleatoria",
+            clasificacion: "Categoría o criterio de orden (nuevo, famoso, etc.)",
+            pagina: "Página de resultados (opcional)",
+            fallback: "true/false - Usar fuentes alternativas si la principal falla (por defecto: true)"
+        },
+        ejemplos: [
+            "/api/fun/nsfw?tags=anime&cantidad=5&clasificacion=nuevo",
+            "/api/fun/nsfw?tags=cosplay&fuente=rule34&clasificacion=famoso",
+            "/api/fun/nsfw?tags=amateur&fuente=xvideos&clasificacion=hd"
+        ]
     });
 });
 
