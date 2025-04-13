@@ -71,7 +71,7 @@ router.get("/", async (req, res) => {
             }
             
             // Cargar imagen de rejas (debe estar en la misma carpeta o usar una ruta absoluta)
-            const rejasImg = await loadImage(path.join(__dirname, "jail_bars.png"));
+            const rejasImg = await loadImage(path.join(__dirname, "jail_bars.svg"));
             
             // Generar la imagen
             const canvas = await generarImagenJail(avatarImg, backgroundImg, rejasImg, nombre, precio, razon);
