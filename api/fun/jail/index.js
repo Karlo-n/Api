@@ -7,28 +7,8 @@ const path = require("path");
 const crypto = require("crypto");
 const router = express.Router();
 
-// Configuración para guardar imágenes
-const IMAGES_DIR = path.join(__dirname, "output");
-const PUBLIC_URL_BASE = process.env.PUBLIC_URL || "https://api.apikarl.com";
-const PUBLIC_PATH = "/api/fun/jail/output";
+// Ya no necesitamos almacenar las imágenes ya que se devuelven directamente
 
-// Crear directorio de salida si no existe
-if (!fs.existsSync(IMAGES_DIR)) {
-    fs.mkdirSync(IMAGES_DIR, { recursive: true });
-}
-
-// Ruta para servir las imágenes guardadas
-router.get("/output/:filename", (req, res) => {
-    const filePath = path.join(IMAGES_DIR, req.params.filename);
-    
-    if (fs.existsSync(filePath)) {
-        res.setHeader("Content-Type", "image/png");
-        res.setHeader("Cache-Control", "public, max-age=86400"); // Cache por 24 horas
-        res.sendFile(filePath);
-    } else {
-        res.status(404).json({ error: "Imagen no encontrada" });
-    }
-});
 
 /**
  * API JAIL - Genera imágenes de avatares detrás de rejas
@@ -70,38 +50,15 @@ router.get("/", async (req, res) => {
                 backgroundImg = await loadImage(Buffer.from(bgResponse.data));
             }
             
-            // Cargar imagen de rejas (debe estar en la misma carpeta o usar una ruta absoluta)
+            // Cargar imagen de rejas (SVG)
             const rejasImg = await loadImage(path.join(__dirname, "jail_bars.svg"));
             
             // Generar la imagen
             const canvas = await generarImagenJail(avatarImg, backgroundImg, rejasImg, nombre, precio, razon);
             
-            // Generar nombre único para la imagen
-            const hash = crypto.randomBytes(8).toString('hex');
-            const filename = `jail-${hash}.png`;
-            const filePath = path.join(IMAGES_DIR, filename);
-            
-            // Guardar la imagen como PNG
-            const buffer = canvas.toBuffer('image/png');
-            fs.writeFileSync(filePath, buffer);
-            
-            // Generar URL pública
-            const imageUrl = `${PUBLIC_URL_BASE}${PUBLIC_PATH}/${filename}`;
-            
-            // Programar eliminación del archivo después de 24 horas
-            setTimeout(() => {
-                if (fs.existsSync(filePath)) {
-                    fs.unlinkSync(filePath);
-                    console.log(`Imagen JAIL eliminada: ${filename}`);
-                }
-            }, 24 * 60 * 60 * 1000);
-            
-            // Responder con JSON que contiene la URL de la imagen
-            return res.json({
-                success: true,
-                url: imageUrl,
-                message: "Imagen JAIL generada correctamente"
-            });
+            // Responder directamente con la imagen PNG
+            res.setHeader('Content-Type', 'image/png');
+            canvas.createPNGStream().pipe(res);
             
         } catch (loadError) {
             console.error("Error cargando imágenes:", loadError);
@@ -227,26 +184,6 @@ async function generarImagenJail(avatarImg, backgroundImg, rejasImg, nombre, pre
     return canvas;
 }
 
-// Limpieza periódica de archivos antiguos (cada 12 horas)
-setInterval(() => {
-    try {
-        const files = fs.readdirSync(IMAGES_DIR);
-        const now = Date.now();
-        
-        files.forEach(file => {
-            const filePath = path.join(IMAGES_DIR, file);
-            const stats = fs.statSync(filePath);
-            const fileAge = now - stats.mtimeMs;
-            
-            // Eliminar archivos mayores a 24 horas
-            if (fileAge > 24 * 60 * 60 * 1000) {
-                fs.unlinkSync(filePath);
-                console.log(`Archivo JAIL eliminado: ${file}`);
-            }
-        });
-    } catch (error) {
-        console.error("Error en limpieza de archivos:", error);
-    }
-}, 12 * 60 * 60 * 1000);
+// Ya no necesitamos la limpieza periódica porque no estamos guardando archivos
 
 module.exports = router;
