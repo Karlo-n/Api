@@ -1,8 +1,48 @@
-// api/adult/nsfw/index.js - Versión final simplificada
+// api/fun/nsfw/index.js - Versión modificada con descarga directa
 const express = require("express");
 const axios = require("axios");
 const cheerio = require("cheerio");
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
 const router = express.Router();
+
+// Configuración para guardar imágenes y videos descargados
+const CONTENT_DIR = path.join(__dirname, "downloads");
+const PUBLIC_URL_BASE = process.env.PUBLIC_URL || "https://api.apikarl.com";
+const PUBLIC_PATH = "/api/fun/nsfw/downloads";
+
+// Crear directorio de salida si no existe
+if (!fs.existsSync(CONTENT_DIR)) {
+    fs.mkdirSync(CONTENT_DIR, { recursive: true });
+}
+
+// Ruta para servir los archivos descargados
+router.get("/downloads/:filename", (req, res) => {
+    const filePath = path.join(CONTENT_DIR, req.params.filename);
+    
+    if (fs.existsSync(filePath)) {
+        // Detectar el tipo de contenido basado en la extensión
+        const ext = path.extname(filePath).toLowerCase();
+        let contentType = 'application/octet-stream';
+        
+        if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+        else if (ext === '.png') contentType = 'image/png';
+        else if (ext === '.gif') contentType = 'image/gif';
+        else if (ext === '.webp') contentType = 'image/webp';
+        else if (ext === '.mp4') contentType = 'video/mp4';
+        else if (ext === '.webm') contentType = 'video/webm';
+        
+        // Configurar headers para el contenido
+        res.setHeader("Content-Type", contentType);
+        res.setHeader("Cache-Control", "public, max-age=86400"); // Cache por 24 horas
+        
+        // Enviar el archivo
+        res.sendFile(filePath);
+    } else {
+        res.status(404).json({ error: "Archivo no encontrado o expirado" });
+    }
+});
 
 // Fuentes disponibles para búsqueda
 const SOURCES = {
@@ -126,7 +166,7 @@ router.get("/", async (req, res) => {
             return res.status(400).json({
                 error: true,
                 message: "Se requiere el parámetro 'tags' para realizar la búsqueda",
-                ejemplo: "/api/adult/nsfw?tags=tag1,tag2&cantidad=5&fuente=rule34"
+                ejemplo: "/api/fun/nsfw?tags=tag1,tag2&cantidad=5&fuente=rule34"
             });
         }
         
@@ -217,42 +257,121 @@ router.get("/", async (req, res) => {
             
             return res.status(404).json(respuestaError);
         }
+
+        // NUEVA FUNCIONALIDAD: DESCARGAR CONTENIDO Y DEVOLVER INFORMACIÓN COMPLETA
+        // Seleccionar un resultado aleatorio
+        const resultadoAleatorio = resultados[Math.floor(Math.random() * resultados.length)];
         
-        // Simplificar los resultados para la respuesta final
-        const resultadosSimplificados = {};
-        
-        resultados.forEach((item, index) => {
-            const clave = sourceConfig[fuenteUsada].type === "video" ? 
-                        `video${index + 1}` : 
-                        `imagen${index + 1}`;
-            
-            resultadosSimplificados[clave] = {
-                titulo: item.title || item.titulo || "",
-                autor: item.author || item.uploader || "",
-                descripcion: item.description || "",
-                thumbnail: item.thumbnail || item.preview_url || "",
-                url: item.direct_video_url || item.file_url || item.video_url || "",
-                duracion: item.duration || "",
-                fuente: item.source || fuenteUsada,
-                tipo: sourceConfig[fuenteUsada].type
-            };
-        });
-        
-        // Construir la respuesta
-        const respuesta = {
-            success: true,
-            fuente: fuenteUsada,
-            tipo: sourceConfig[fuenteUsada].type,
-            tags: tagsList,
-            cantidad: Object.keys(resultadosSimplificados).length,
-            ...resultadosSimplificados
-        };
-        
-        if (mostrar_errores === "true" && errores.length > 0) {
-            respuesta.errores = errores;
+        // Determinar la URL directa a descargar
+        let urlDescarga;
+        if (sourceConfig[fuenteUsada].type === "video") {
+            urlDescarga = resultadoAleatorio.direct_video_url || resultadoAleatorio.video_url;
+        } else {
+            urlDescarga = resultadoAleatorio.file_url;
         }
         
-        return res.json(respuesta);
+        if (!urlDescarga) {
+            return res.status(404).json({
+                error: true,
+                message: "No se encontró URL directa para descargar el contenido",
+                fuente: fuenteUsada,
+                tipo: sourceConfig[fuenteUsada].type
+            });
+        }
+        
+        try {
+            console.log(`Descargando contenido desde: ${urlDescarga}`);
+            
+            // Descargar el contenido
+            const response = await axios.get(urlDescarga, { 
+                responseType: 'arraybuffer',
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    "Referer": sourceConfig[fuenteUsada].baseUrl
+                },
+                timeout: 30000, // 30 segundos para descarga
+                maxContentLength: 100 * 1024 * 1024 // Limitar a 100MB
+            });
+            
+            // Determinar el tipo de contenido basado en los encabezados o la extensión
+            let contentType = response.headers['content-type'];
+            
+            if (!contentType || contentType === 'application/octet-stream') {
+                // Intentar determinar por la URL
+                if (urlDescarga.endsWith('.jpg') || urlDescarga.endsWith('.jpeg')) {
+                    contentType = 'image/jpeg';
+                } else if (urlDescarga.endsWith('.png')) {
+                    contentType = 'image/png';
+                } else if (urlDescarga.endsWith('.gif')) {
+                    contentType = 'image/gif';
+                } else if (urlDescarga.endsWith('.webp')) {
+                    contentType = 'image/webp';
+                } else if (urlDescarga.endsWith('.mp4')) {
+                    contentType = 'video/mp4';
+                } else if (urlDescarga.endsWith('.webm')) {
+                    contentType = 'video/webm';
+                } else {
+                    // Por defecto para imágenes
+                    contentType = sourceConfig[fuenteUsada].type === "video" ? 'video/mp4' : 'image/jpeg';
+                }
+            }
+            
+            // Generar nombre único para el archivo
+            const extension = contentType.split('/')[1];
+            const safeTag = tagsList[0].replace(/[^a-z0-9]/gi, '_').substring(0, 15);
+            const uniqueId = crypto.randomBytes(8).toString('hex');
+            const filename = `nsfw_${safeTag}_${uniqueId}.${extension}`;
+            const filePath = path.join(CONTENT_DIR, filename);
+            
+            // Guardar el archivo descargado
+            fs.writeFileSync(filePath, Buffer.from(response.data));
+            
+            // Generar URL pública para el contenido descargado
+            const contentUrl = `${PUBLIC_URL_BASE}${PUBLIC_PATH}/${filename}`;
+            
+            // Programar eliminación del archivo después de 24 horas
+            setTimeout(() => {
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                    console.log(`Archivo NSFW eliminado: ${filename}`);
+                }
+            }, 24 * 60 * 60 * 1000);
+            
+            // Preparar respuesta con todos los datos solicitados
+            return res.json({
+                success: true,
+                titulo: resultadoAleatorio.title || "Sin título",
+                descripcion: resultadoAleatorio.description || "",
+                pagina_web: resultadoAleatorio.video_url || urlDescarga, // URL de la página del contenido
+                recurso: urlDescarga, // URL directa original 
+                thumbnail: resultadoAleatorio.thumbnail || resultadoAleatorio.preview_url || "",
+                [sourceConfig[fuenteUsada].type]: contentUrl, // video o imagen según el tipo
+                autor: resultadoAleatorio.author || "Unknown",
+                fuente: fuenteUsada,
+                tipo: sourceConfig[fuenteUsada].type,
+                tags: tagsList,
+                duracion: resultadoAleatorio.duration || null,
+                expira_en: "24 horas"
+            });
+            
+        } catch (downloadError) {
+            console.error("Error descargando contenido:", downloadError);
+            
+            // Si falla la descarga, enviar un JSON con error y la URL para que el cliente lo intente
+            return res.status(500).json({
+                error: true,
+                message: "Error descargando el contenido directamente",
+                detalle: downloadError.message,
+                url_directa: urlDescarga,
+                titulo: resultadoAleatorio.title || "Sin título",
+                descripcion: resultadoAleatorio.description || "",
+                pagina_web: resultadoAleatorio.video_url || urlDescarga,
+                thumbnail: resultadoAleatorio.thumbnail || resultadoAleatorio.preview_url || "",
+                fuente: fuenteUsada,
+                tipo: sourceConfig[fuenteUsada].type,
+                sugerencia: "Intenta descargar manualmente desde la URL proporcionada"
+            });
+        }
         
     } catch (error) {
         console.error("Error en búsqueda NSFW:", error);
@@ -828,5 +947,27 @@ router.get("/fuentes", (req, res) => {
 });
 
 // ADVERTENCIA: Esta API es para uso exclusivo de adultos mayores de 18 años.
+
+// Limpieza periódica de archivos antiguos (cada 6 horas)
+setInterval(() => {
+    try {
+        const files = fs.readdirSync(CONTENT_DIR);
+        const now = Date.now();
+        
+        files.forEach(file => {
+            const filePath = path.join(CONTENT_DIR, file);
+            const stats = fs.statSync(filePath);
+            const fileAge = now - stats.mtimeMs;
+            
+            // Eliminar archivos mayores a 24 horas
+            if (fileAge > 24 * 60 * 60 * 1000) {
+                fs.unlinkSync(filePath);
+                console.log(`Archivo NSFW eliminado por limpieza programada: ${file}`);
+            }
+        });
+    } catch (error) {
+        console.error("Error en limpieza de archivos NSFW:", error);
+    }
+}, 6 * 60 * 60 * 1000);
 
 module.exports = router;
