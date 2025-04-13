@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <!-- Barras verticales de la celda -->
+  <g fill="none" stroke="#333" stroke-width="12">
+    <!-- Barras verticales principales -->
+    <line x1="60" y1="0" x2="60" y2="600" stroke="#000" stroke-width="16"/>
+    <line x1="120" y1="0" x2="120" y2="600" stroke="#111" stroke-width="14"/>
+    <line x1="180" y1="0" x2="180" y2="600" stroke="#222" stroke-width="14"/>
+    <line x1="240" y1="0" x2="240" y2="600" stroke="#111" stroke-width="14"/>
+    <line x1="300" y1="0" x2="300" y2="600" stroke="#000" stroke-width="16"/>
+    <line x1="360" y1="0" x2="360" y2="600" stroke="#111" stroke-width="14"/>
+    <line x1="420" y1="0" x2="420" y2="600" stroke="#222" stroke-width="14"/>
+    <line x1="480" y1="0" x2="480" y2="600" stroke="#111" stroke-width="14"/>
+    <line x1="540" y1="0" x2="540" y2="600" stroke="#000" stroke-width="16"/>
+    
+    <!-- Barras horizontales de refuerzo -->
+    <line x1="0" y1="100" x2="600" y2="100" stroke="#333" stroke-width="10"/>
+    <line x1="0" y1="300" x2="600" y2="300" stroke="#222" stroke-width="12"/>
+    <line x1="0" y1="500" x2="600" y2="500" stroke="#333" stroke-width="10"/>
+  </g>
+  
+  <!-- Sombras para dar profundidad a las barras -->
+  <g opacity="0.3">
+    <rect x="55" y="0" width="10" height="600" fill="#000"/>
+    <rect x="115" y="0" width="10" height="600" fill="#000"/>
+    <rect x="175" y="0" width="10" height="600" fill="#000"/>
+    <rect x="235" y="0" width="10" height="600" fill="#000"/>
+    <rect x="295" y="0" width="10" height="600" fill="#000"/>
+    <rect x="355" y="0" width="10" height="600" fill="#000"/>
+    <rect x="415" y="0" width="10" height="600" fill="#000"/>
+    <rect x="475" y="0" width="10" height="600" fill="#000"/>
+    <rect x="535" y="0" width="10" height="600" fill="#000"/>
+  </g>
+  
+  <!-- Brillo para efecto metálico -->
+  <g opacity="0.2" fill="#fff">
+    <rect x="58" y="0" width="4" height="600"/>
+    <rect x="118" y="0" width="4" height="600"/>
+    <rect x="178" y="0" width="4" height="600"/>
+    <rect x="238" y="0" width="4" height="600"/>
+    <rect x="298" y="0" width="4" height="600"/>
+    <rect x="358" y="0" width="4" height="600"/>
+    <rect x="418" y="0" width="4" height="600"/>
+    <rect x="478" y="0" width="4" height="600"/>
+    <rect x="538" y="0" width="4" height="600"/>
+  </g>
+</svg>
