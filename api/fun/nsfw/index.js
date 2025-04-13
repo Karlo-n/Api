@@ -1,4 +1,4 @@
-// api/adult/nsfw/index.js
+// api/adult/nsfw/index.js - Versión mejorada con manejo de errores robusto
 const express = require("express");
 const axios = require("axios");
 const cheerio = require("cheerio");
@@ -22,6 +22,81 @@ const SOURCES = {
     RANDOM_IMG: "random_img", // Solo fuentes de imágenes
     RANDOM_VID: "random_vid" // Solo fuentes de videos
 };
+
+// Configuración de cada fuente
+const sourceConfig = {
+    [SOURCES.RULE34]: {
+        type: "image",
+        name: "Rule34",
+        baseUrl: "https://rule34.xxx/",
+        enabled: true,
+        priority: 1
+    },
+    [SOURCES.DANBOORU]: {
+        type: "image",
+        name: "Danbooru",
+        baseUrl: "https://danbooru.donmai.us/",
+        enabled: true,
+        priority: 2
+    },
+    [SOURCES.GELBOORU]: {
+        type: "image",
+        name: "Gelbooru",
+        baseUrl: "https://gelbooru.com/",
+        enabled: true,
+        priority: 3
+    },
+    [SOURCES.XVIDEOS]: {
+        type: "video",
+        name: "XVideos",
+        baseUrl: "https://www.xvideos.com/",
+        enabled: true,
+        priority: 1
+    },
+    [SOURCES.PORNHUB]: {
+        type: "video",
+        name: "Pornhub",
+        baseUrl: "https://www.pornhub.com/",
+        enabled: true,
+        priority: 2
+    },
+    [SOURCES.XNXX]: {
+        type: "video",
+        name: "XNXX",
+        baseUrl: "https://www.xnxx.com/",
+        enabled: true,
+        priority: 3
+    },
+    [SOURCES.CHOCHOX]: {
+        type: "video",
+        name: "ChoChoX",
+        baseUrl: "https://chochox.com/",
+        enabled: false, // Desabilitado por defecto debido a errores 403
+        priority: 4
+    }
+};
+
+// Configuración del cliente HTTP para mejor simulación de navegador
+const axiosClient = axios.create({
+    headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Sec-Ch-Ua": '"Chromium";v="110", "Not A(Brand";v="24", "Google Chrome";v="110"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"Windows"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
+        "Referer": "https://www.google.com/"
+    },
+    timeout: 10000, // 10 segundos
+    maxContentLength: 20 * 1024 * 1024 // 20MB
+});
 
 /**
  * Middleware para verificación de edad
@@ -51,11 +126,19 @@ router.use(verificarEdad);
  * - cantidad: Número de resultados (por defecto 10, máximo 50)
  * - tags: Tags para buscar, separados por comas
  * - pagina: Página específica (opcional, por defecto aleatorio)
- * - fuente: Fuente específica (rule34, danbooru, gelbooru, random)
+ * - fuente: Fuente específica (rule34, danbooru, etc., random, random_img, random_vid)
+ * - mostrar_errores: Si se deben mostrar errores detallados (opcional, por defecto false)
  */
 router.get("/", async (req, res) => {
     try {
-        const { cantidad = 10, tags, pagina, fuente = "random" } = req.query;
+        const { 
+            cantidad = 10, 
+            tags, 
+            pagina, 
+            fuente = "random",
+            mostrar_errores = "false",
+            fallback = "true"
+        } = req.query;
         
         // Validación de parámetros
         if (!tags) {
@@ -81,77 +164,93 @@ router.get("/", async (req, res) => {
             
             if (fuenteSeleccionada === SOURCES.RANDOM_IMG) {
                 // Solo fuentes de imágenes
-                fuentesDisponibles = [SOURCES.RULE34, SOURCES.DANBOORU, SOURCES.GELBOORU];
+                fuentesDisponibles = Object.keys(sourceConfig).filter(key => 
+                    sourceConfig[key].type === "image" && sourceConfig[key].enabled
+                );
             } else if (fuenteSeleccionada === SOURCES.RANDOM_VID) {
                 // Solo fuentes de videos
-                fuentesDisponibles = [SOURCES.XVIDEOS, SOURCES.PORNHUB, SOURCES.XNXX, SOURCES.CHOCHOX];
+                fuentesDisponibles = Object.keys(sourceConfig).filter(key => 
+                    sourceConfig[key].type === "video" && sourceConfig[key].enabled
+                );
             } else {
                 // Todas las fuentes excepto las random
-                fuentesDisponibles = Object.values(SOURCES).filter(f => 
-                    ![SOURCES.RANDOM, SOURCES.RANDOM_IMG, SOURCES.RANDOM_VID].includes(f)
+                fuentesDisponibles = Object.keys(sourceConfig).filter(key => 
+                    ![SOURCES.RANDOM, SOURCES.RANDOM_IMG, SOURCES.RANDOM_VID].includes(key) && 
+                    sourceConfig[key].enabled
                 );
+            }
+            
+            // Si no hay fuentes disponibles, devolver error
+            if (fuentesDisponibles.length === 0) {
+                return res.status(500).json({
+                    error: true,
+                    message: "No hay fuentes disponibles para la búsqueda"
+                });
             }
             
             fuenteSeleccionada = fuentesDisponibles[Math.floor(Math.random() * fuentesDisponibles.length)];
         }
         
-        // Verificar si la fuente es válida
-        if (!Object.values(SOURCES).includes(fuenteSeleccionada)) {
+        // Verificar si la fuente es válida y está habilitada
+        if (!Object.keys(sourceConfig).includes(fuenteSeleccionada)) {
             return res.status(400).json({
                 error: true,
                 message: "Fuente no válida",
-                fuentes_validas: Object.values(SOURCES)
+                fuentes_validas: Object.keys(sourceConfig).filter(k => sourceConfig[k].enabled)
             });
         }
         
-        // Realizar la búsqueda según la fuente seleccionada
-        let resultados;
-        switch (fuenteSeleccionada) {
-            // Fuentes de imágenes
-            case SOURCES.RULE34:
-                resultados = await buscarEnRule34(tagsList, cantidadLimitada, pagina);
-                break;
-                
-            case SOURCES.DANBOORU:
-                resultados = await buscarEnDanbooru(tagsList, cantidadLimitada, pagina);
-                break;
-                
-            case SOURCES.GELBOORU:
-                resultados = await buscarEnGelbooru(tagsList, cantidadLimitada, pagina);
-                break;
-            
-            // Fuentes de videos
-            case SOURCES.XVIDEOS:
-                resultados = await buscarEnXVideos(tagsList, cantidadLimitada, pagina);
-                break;
-                
-            case SOURCES.PORNHUB:
-                resultados = await buscarEnPornhub(tagsList, cantidadLimitada, pagina);
-                break;
-                
-            case SOURCES.XNXX:
-                resultados = await buscarEnXnxx(tagsList, cantidadLimitada, pagina);
-                break;
-                
-            case SOURCES.CHOCHOX:
-                resultados = await buscarEnChochox(tagsList, cantidadLimitada, pagina);
-                break;
-                
-            default:
-                return res.status(400).json({
-                    error: true,
-                    message: "Fuente no implementada"
-                });
+        // Verificar si la fuente está habilitada
+        if (!sourceConfig[fuenteSeleccionada].enabled) {
+            return res.status(503).json({
+                error: true,
+                message: `La fuente '${fuenteSeleccionada}' está temporalmente deshabilitada`,
+                fuentes_alternativas: Object.keys(sourceConfig)
+                    .filter(k => sourceConfig[k].enabled && sourceConfig[k].type === sourceConfig[fuenteSeleccionada].type)
+            });
         }
         
-        // Devolver resultados
-        return res.json({
+        // Intentar búsqueda con posible fallback a otras fuentes si falla
+        const { resultados, fuente: fuenteUsada, errores } = await buscarContenido(
+            fuenteSeleccionada, tagsList, cantidadLimitada, pagina, fallback === "true"
+        );
+        
+        // Si no hay resultados y hay errores, mostrar el último error
+        if (resultados.length === 0 && errores.length > 0) {
+            const respuestaError = {
+                error: true,
+                message: "No se encontraron resultados en ninguna fuente",
+                fuente_intentada: fuenteSeleccionada,
+                fuentes_alternativas: Object.keys(sourceConfig)
+                    .filter(k => sourceConfig[k].enabled && k !== fuenteSeleccionada)
+            };
+            
+            // Incluir detalles de errores si se solicita
+            if (mostrar_errores === "true") {
+                respuestaError.errores = errores;
+            }
+            
+            return res.status(404).json(respuestaError);
+        }
+        
+        // Construir la respuesta exitosa
+        const respuesta = {
             success: true,
-            fuente: fuenteSeleccionada,
+            fuente: fuenteUsada,
+            fuente_original: fuenteSeleccionada !== fuenteUsada ? fuenteSeleccionada : undefined,
+            tipo: sourceConfig[fuenteUsada].type,
             tags: tagsList,
             cantidad: resultados.length,
             resultados: resultados
-        });
+        };
+        
+        // Incluir errores si se solicita
+        if (mostrar_errores === "true" && errores.length > 0) {
+            respuesta.errores = errores;
+        }
+        
+        // Devolver resultados
+        return res.json(respuesta);
         
     } catch (error) {
         console.error("Error en búsqueda NSFW:", error);
@@ -162,6 +261,92 @@ router.get("/", async (req, res) => {
         });
     }
 });
+
+/**
+ * Función principal para buscar contenido con posibilidad de fallback automático
+ * @param {String} fuente - Fuente seleccionada
+ * @param {Array} tags - Lista de tags
+ * @param {Number} cantidad - Cantidad de resultados
+ * @param {Number} pagina - Página específica (opcional)
+ * @param {Boolean} permitirFallback - Si se debe intentar con fuentes alternativas
+ * @returns {Object} - Resultados y fuente utilizada
+ */
+async function buscarContenido(fuente, tags, cantidad, pagina, permitirFallback = true) {
+    const errores = [];
+    let resultados = [];
+    
+    // Función de búsqueda que maneja errores
+    async function intentarBusqueda(fuenteActual) {
+        try {
+            switch (fuenteActual) {
+                // Fuentes de imágenes
+                case SOURCES.RULE34:
+                    return await buscarEnRule34(tags, cantidad, pagina);
+                    
+                case SOURCES.DANBOORU:
+                    return await buscarEnDanbooru(tags, cantidad, pagina);
+                    
+                case SOURCES.GELBOORU:
+                    return await buscarEnGelbooru(tags, cantidad, pagina);
+                
+                // Fuentes de videos
+                case SOURCES.XVIDEOS:
+                    return await buscarEnXVideos(tags, cantidad, pagina);
+                    
+                case SOURCES.PORNHUB:
+                    return await buscarEnPornhub(tags, cantidad, pagina);
+                    
+                case SOURCES.XNXX:
+                    return await buscarEnXnxx(tags, cantidad, pagina);
+                    
+                case SOURCES.CHOCHOX:
+                    return await buscarEnChochox(tags, cantidad, pagina);
+                    
+                default:
+                    throw new Error(`Fuente no implementada: ${fuenteActual}`);
+            }
+        } catch (error) {
+            errores.push({
+                fuente: fuenteActual,
+                error: error.message
+            });
+            return [];
+        }
+    }
+    
+    // Primer intento con la fuente seleccionada
+    resultados = await intentarBusqueda(fuente);
+    
+    // Si no hay resultados y se permite fallback, intentar con fuentes alternativas
+    if (resultados.length === 0 && permitirFallback) {
+        console.log(`Búsqueda en ${fuente} falló, intentando con fuentes alternativas...`);
+        
+        // Obtener fuentes alternativas del mismo tipo, ordenadas por prioridad
+        const tipo = sourceConfig[fuente].type;
+        const fuentesAlternativas = Object.keys(sourceConfig)
+            .filter(k => 
+                sourceConfig[k].enabled && 
+                sourceConfig[k].type === tipo && 
+                k !== fuente
+            )
+            .sort((a, b) => sourceConfig[a].priority - sourceConfig[b].priority);
+        
+        // Intentar cada fuente alternativa hasta encontrar resultados
+        for (const fuenteAlternativa of fuentesAlternativas) {
+            console.log(`Intentando con fuente alternativa: ${fuenteAlternativa}`);
+            
+            resultados = await intentarBusqueda(fuenteAlternativa);
+            
+            if (resultados.length > 0) {
+                console.log(`Éxito con fuente alternativa: ${fuenteAlternativa}`);
+                return { resultados, fuente: fuenteAlternativa, errores };
+            }
+        }
+    }
+    
+    // Devolver resultados con la fuente original
+    return { resultados, fuente, errores };
+}
 
 /**
  * Buscar en Rule34.xxx
@@ -181,11 +366,12 @@ async function buscarEnRule34(tags, cantidad, pagina) {
         const searchUrl = `https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&tags=${tagsStr}&limit=${cantidad}&pid=${page}`;
         
         // Realizar petición
-        const response = await axios.get(searchUrl, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-        });
+        const response = await axiosClient.get(searchUrl);
+        
+        // Verificar si la respuesta es válida
+        if (!response.data) {
+            throw new Error("Respuesta vacía de Rule34");
+        }
         
         // Procesar respuesta XML usando cheerio
         const $ = cheerio.load(response.data, { xmlMode: true });
@@ -205,11 +391,17 @@ async function buscarEnRule34(tags, cantidad, pagina) {
                 height: parseInt($(this).attr("height")),
                 rating: $(this).attr("rating"),
                 created_at: $(this).attr("created_at"),
-                type: $(this).attr("file_url").split('.').pop().toLowerCase()
+                type: $(this).attr("file_url").split('.').pop().toLowerCase(),
+                content_type: "image"
             };
             
             posts.push(post);
         });
+        
+        // Si no hay resultados, lanzar error
+        if (posts.length === 0) {
+            throw new Error("No se encontraron resultados en Rule34");
+        }
         
         return posts;
     } catch (error) {
@@ -237,11 +429,12 @@ async function buscarEnDanbooru(tags, cantidad, pagina) {
         const searchUrl = `https://danbooru.donmai.us/posts.json?tags=${tagsStr}&limit=${cantidad}&page=${page}`;
         
         // Realizar petición
-        const response = await axios.get(searchUrl, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-        });
+        const response = await axiosClient.get(searchUrl);
+        
+        // Verificar si la respuesta es válida
+        if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
+            throw new Error("No se encontraron resultados en Danbooru");
+        }
         
         // Procesar respuesta JSON
         const posts = response.data.map(post => ({
@@ -256,8 +449,14 @@ async function buscarEnDanbooru(tags, cantidad, pagina) {
             height: post.image_height,
             rating: post.rating,
             created_at: post.created_at,
-            type: post.file_ext
-        }));
+            type: post.file_ext,
+            content_type: "image"
+        })).filter(post => post.file_url); // Filtrar posts sin URL de archivo
+        
+        // Si no hay resultados después del filtrado, lanzar error
+        if (posts.length === 0) {
+            throw new Error("No se encontraron resultados válidos en Danbooru");
+        }
         
         return posts;
     } catch (error) {
@@ -284,219 +483,34 @@ async function buscarEnGelbooru(tags, cantidad, pagina) {
         const searchUrl = `https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=${tagsStr}&limit=${cantidad}&pid=${page}&json=1`;
         
         // Realizar petición
-        const response = await axios.get(searchUrl, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-        });
+        const response = await axiosClient.get(searchUrl);
         
-        // Procesar respuesta JSON
-        if (response.data && response.data.post) {
-            const posts = response.data.post.map(post => ({
-                id: post.id,
-                tags: (post.tags || "").split(" "),
-                source: post.source || null,
-                score: post.score,
-                file_url: post.file_url,
-                preview_url: post.preview_url,
-                sample_url: post.sample_url || null,
-                width: post.width,
-                height: post.height,
-                rating: post.rating,
-                created_at: post.created_at,
-                type: post.file_url.split('.').pop().toLowerCase()
-            }));
-            
-            return posts;
+        // Verificar si la respuesta es válida
+        if (!response.data || !response.data.post || !Array.isArray(response.data.post) || response.data.post.length === 0) {
+            throw new Error("No se encontraron resultados en Gelbooru");
         }
         
-        return [];
+        // Procesar respuesta JSON
+        const posts = response.data.post.map(post => ({
+            id: post.id,
+            tags: (post.tags || "").split(" "),
+            source: post.source || null,
+            score: post.score,
+            file_url: post.file_url,
+            preview_url: post.preview_url,
+            sample_url: post.sample_url || null,
+            width: post.width,
+            height: post.height,
+            rating: post.rating,
+            created_at: post.created_at,
+            type: post.file_url.split('.').pop().toLowerCase(),
+            content_type: "image"
+        }));
+        
+        return posts;
     } catch (error) {
         console.error("Error buscando en Gelbooru:", error);
         throw new Error(`Error en Gelbooru: ${error.message}`);
-    }
-}
-
-/**
- * Endpoint para obtener información sobre las fuentes disponibles
- */
-router.get("/fuentes", (req, res) => {
-    return res.json({
-        success: true,
-        fuentes_disponibles: Object.values(SOURCES),
-        descripcion: "Lista de fuentes disponibles para búsqueda de contenido NSFW"
-    });
-});
-
-/**
- * Endpoint para obtener tags populares de una fuente específica
- */
-router.get("/tags-populares", async (req, res) => {
-    try {
-        const { fuente = SOURCES.RULE34 } = req.query;
-        
-        // Verificar si la fuente es válida
-        if (!Object.values(SOURCES).includes(fuente) || fuente === SOURCES.RANDOM) {
-            return res.status(400).json({
-                error: true,
-                message: "Fuente no válida o no se puede usar 'random' para esta función",
-                fuentes_validas: Object.values(SOURCES).filter(f => f !== SOURCES.RANDOM)
-            });
-        }
-        
-        // Obtener tags populares según la fuente
-        let tagsList;
-        switch (fuente) {
-            // Fuentes de imágenes
-            case SOURCES.RULE34:
-                tagsList = await obtenerTagsPopularesRule34();
-                break;
-                
-            case SOURCES.DANBOORU:
-                tagsList = await obtenerTagsPopularesDanbooru();
-                break;
-                
-            case SOURCES.GELBOORU:
-                tagsList = await obtenerTagsPopularesGelbooru();
-                break;
-            
-            // Fuentes de videos
-            case SOURCES.XVIDEOS:
-                tagsList = await obtenerTagsPopularesXVideos();
-                break;
-                
-            case SOURCES.PORNHUB:
-                tagsList = await obtenerTagsPopularesPornhub();
-                break;
-                
-            case SOURCES.XNXX:
-                tagsList = await obtenerTagsPopularesXnxx();
-                break;
-                
-            case SOURCES.CHOCHOX:
-                tagsList = await obtenerTagsPopularesChochox();
-                break;
-                
-            default:
-                return res.status(400).json({
-                    error: true,
-                    message: "Fuente no implementada para obtención de tags populares"
-                });
-        }
-        
-        return res.json({
-            success: true,
-            fuente: fuente,
-            cantidad: tagsList.length,
-            tags: tagsList
-        });
-        
-    } catch (error) {
-        console.error("Error obteniendo tags populares:", error);
-        return res.status(500).json({
-            error: true,
-            message: "Error al obtener tags populares",
-            detalles: error.message
-        });
-    }
-});
-
-/**
- * Obtener tags populares de Rule34
- */
-async function obtenerTagsPopularesRule34() {
-    try {
-        // Realizar petición a la página de tags populares
-        const response = await axios.get("https://rule34.xxx/index.php?page=tags&s=list&sort=count&order=desc", {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-        });
-        
-        // Procesar HTML usando cheerio
-        const $ = cheerio.load(response.data);
-        
-        // Extraer tags populares
-        const tags = [];
-        $("table.highlightable tr").each(function(index) {
-            if (index > 0) { // Saltar la fila de encabezado
-                const tagName = $(this).find("td:nth-child(2)").text().trim();
-                const tagCount = parseInt($(this).find("td:nth-child(3)").text().trim().replace(",", ""));
-                
-                if (tagName && tagCount) {
-                    tags.push({
-                        name: tagName,
-                        count: tagCount
-                    });
-                }
-            }
-        });
-        
-        return tags.slice(0, 50); // Devolver los 50 más populares
-    } catch (error) {
-        console.error("Error obteniendo tags populares de Rule34:", error);
-        return [];
-    }
-}
-
-/**
- * Obtener tags populares de Danbooru
- */
-async function obtenerTagsPopularesDanbooru() {
-    try {
-        // Realizar petición a la API de tags
-        const response = await axios.get("https://danbooru.donmai.us/tags.json?search[order]=count&limit=50", {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-        });
-        
-        // Procesar respuesta JSON
-        return response.data.map(tag => ({
-            name: tag.name,
-            count: tag.post_count
-        }));
-    } catch (error) {
-        console.error("Error obteniendo tags populares de Danbooru:", error);
-        return [];
-    }
-}
-
-/**
- * Obtener tags populares de Gelbooru
- */
-async function obtenerTagsPopularesGelbooru() {
-    try {
-        // Realizar petición a la página de tags populares
-        const response = await axios.get("https://gelbooru.com/index.php?page=tags&s=list&sort=count&order=desc", {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-        });
-        
-        // Procesar HTML usando cheerio
-        const $ = cheerio.load(response.data);
-        
-        // Extraer tags populares
-        const tags = [];
-        $("table.highlightable tr").each(function(index) {
-            if (index > 0) { // Saltar la fila de encabezado
-                const tagName = $(this).find("td:nth-child(2)").text().trim();
-                const tagCount = parseInt($(this).find("td:nth-child(3)").text().trim().replace(",", ""));
-                
-                if (tagName && tagCount) {
-                    tags.push({
-                        name: tagName,
-                        count: tagCount
-                    });
-                }
-            }
-        });
-        
-        return tags.slice(0, 50); // Devolver los 50 más populares
-    } catch (error) {
-        console.error("Error obteniendo tags populares de Gelbooru:", error);
-        return [];
     }
 }
 
@@ -517,13 +531,18 @@ async function buscarEnXVideos(tags, cantidad, pagina) {
         // Construir URL de búsqueda
         const searchUrl = `https://www.xvideos.com/?k=${tagsStr}&p=${page}`;
         
+        // Configurar cookies para verificación de edad
+        const cookieHeader = {
+            Cookie: "age_verified=1; gdpr_registered=1"
+        };
+        
         // Realizar petición
-        const response = await axios.get(searchUrl, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Cookie": "age_verified=1" // Cookie para verificación de edad
-            }
-        });
+        const response = await axiosClient.get(searchUrl, { headers: { ...axiosClient.defaults.headers, ...cookieHeader } });
+        
+        // Verificar si la respuesta es válida
+        if (!response.data) {
+            throw new Error("Respuesta vacía de XVideos");
+        }
         
         // Procesar HTML con cheerio
         const $ = cheerio.load(response.data);
@@ -538,7 +557,13 @@ async function buscarEnXVideos(tags, cantidad, pagina) {
             const thumbElement = $(this);
             
             // Datos básicos del video
-            const id = thumbElement.attr("data-id") || thumbElement.find("a").attr("href").split("/")[1];
+            let id = "";
+            const linkElem = thumbElement.find("a");
+            if (linkElem.attr("href")) {
+                const matches = linkElem.attr("href").match(/\/video(\d+)\//);
+                id = matches ? matches[1] : "";
+            }
+            
             const title = thumbElement.find(".title a").text().trim();
             const duration = thumbElement.find(".duration").text().trim();
             const thumbnail = thumbElement.find("img").attr("data-src") || thumbElement.find("img").attr("src");
@@ -557,9 +582,15 @@ async function buscarEnXVideos(tags, cantidad, pagina) {
                 views,
                 rating,
                 source: "xvideos",
-                type: "video"
+                type: "mp4",
+                content_type: "video"
             });
         });
+        
+        // Si no hay resultados, lanzar error
+        if (videos.length === 0) {
+            throw new Error("No se encontraron resultados en XVideos");
+        }
         
         return videos;
     } catch (error) {
@@ -585,13 +616,18 @@ async function buscarEnPornhub(tags, cantidad, pagina) {
         // Construir URL de búsqueda
         const searchUrl = `https://www.pornhub.com/video/search?search=${tagsStr}&page=${page}`;
         
+        // Configurar cookies para verificación de edad
+        const cookieHeader = {
+            Cookie: "age_verified=1; gdpr_registered=1"
+        };
+        
         // Realizar petición
-        const response = await axios.get(searchUrl, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Cookie": "age_verified=1" // Cookie para verificación de edad
-            }
-        });
+        const response = await axiosClient.get(searchUrl, { headers: { ...axiosClient.defaults.headers, ...cookieHeader } });
+        
+        // Verificar si la respuesta es válida
+        if (!response.data) {
+            throw new Error("Respuesta vacía de Pornhub");
+        }
         
         // Procesar HTML con cheerio
         const $ = cheerio.load(response.data);
@@ -625,9 +661,15 @@ async function buscarEnPornhub(tags, cantidad, pagina) {
                 views,
                 rating: rating || "N/A",
                 source: "pornhub",
-                type: "video"
+                type: "mp4",
+                content_type: "video"
             });
         });
+        
+        // Si no hay resultados, lanzar error
+        if (videos.length === 0) {
+            throw new Error("No se encontraron resultados en Pornhub");
+        }
         
         return videos;
     } catch (error) {
@@ -653,13 +695,18 @@ async function buscarEnXnxx(tags, cantidad, pagina) {
         // Construir URL de búsqueda
         const searchUrl = `https://www.xnxx.com/search/${tagsStr}/${page}`;
         
+        // Configurar cookies para verificación de edad
+        const cookieHeader = {
+            Cookie: "age_verified=1; gdpr_registered=1"
+        };
+        
         // Realizar petición
-        const response = await axios.get(searchUrl, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Cookie": "age_verified=1" // Cookie para verificación de edad
-            }
-        });
+        const response = await axiosClient.get(searchUrl, { headers: { ...axiosClient.defaults.headers, ...cookieHeader } });
+        
+        // Verificar si la respuesta es válida
+        if (!response.data) {
+            throw new Error("Respuesta vacía de XNXX");
+        }
         
         // Procesar HTML con cheerio
         const $ = cheerio.load(response.data);
@@ -674,7 +721,13 @@ async function buscarEnXnxx(tags, cantidad, pagina) {
             const thumbElement = $(this);
             
             // Datos básicos del video
-            const id = thumbElement.attr("data-id") || "";
+            let id = "";
+            const linkElem = thumbElement.find("a");
+            if (linkElem.attr("href")) {
+                const matches = linkElem.attr("href").match(/\/video(\w+)\//);
+                id = matches ? matches[1] : "";
+            }
+            
             const title = thumbElement.find(".title a").text().trim();
             const duration = thumbElement.find(".duration").text().trim();
             const thumbnail = thumbElement.find("img").data("src") || thumbElement.find("img").attr("src") || "";
@@ -691,9 +744,15 @@ async function buscarEnXnxx(tags, cantidad, pagina) {
                 video_url: videoUrl,
                 views,
                 source: "xnxx",
-                type: "video"
+                type: "mp4",
+                content_type: "video"
             });
         });
+        
+        // Si no hay resultados, lanzar error
+        if (videos.length === 0) {
+            throw new Error("No se encontraron resultados en XNXX");
+        }
         
         return videos;
     } catch (error) {
@@ -719,12 +778,21 @@ async function buscarEnChochox(tags, cantidad, pagina) {
         // Construir URL de búsqueda
         const searchUrl = `https://chochox.com/search/${tagsStr}/page/${page}/`;
         
+        // Configurar un User-Agent más específico para este sitio
+        const customHeaders = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,es;q=0.8",
+            "Referer": "https://www.google.com/"
+        };
+        
         // Realizar petición
-        const response = await axios.get(searchUrl, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-        });
+        const response = await axiosClient.get(searchUrl, { headers: { ...axiosClient.defaults.headers, ...customHeaders } });
+        
+        // Verificar si la respuesta es válida
+        if (!response.data) {
+            throw new Error("Respuesta vacía de ChoChoX");
+        }
         
         // Procesar HTML con cheerio
         const $ = cheerio.load(response.data);
@@ -745,7 +813,7 @@ async function buscarEnChochox(tags, cantidad, pagina) {
             const videoUrl = videoElement.find(".title a").attr("href");
             
             // Extraer ID del vídeo de la URL
-            const id = videoUrl.split('/').filter(Boolean).pop() || "";
+            const id = videoUrl ? videoUrl.split('/').filter(Boolean).pop() || "" : "";
             
             // Información adicional
             const views = videoElement.find(".views").text().trim();
@@ -758,9 +826,15 @@ async function buscarEnChochox(tags, cantidad, pagina) {
                 video_url: videoUrl,
                 views,
                 source: "chochox",
-                type: "video"
+                type: "mp4",
+                content_type: "video"
             });
         });
+        
+        // Si no hay resultados, lanzar error
+        if (videos.length === 0) {
+            throw new Error("No se encontraron resultados en ChoChoX");
+        }
         
         return videos;
     } catch (error) {
@@ -770,164 +844,36 @@ async function buscarEnChochox(tags, cantidad, pagina) {
 }
 
 /**
- * Obtener tags populares de XVideos
+ * Endpoint para obtener información sobre las fuentes disponibles
  */
-async function obtenerTagsPopularesXVideos() {
-    try {
-        // Realizar petición a la página principal
-        const response = await axios.get("https://www.xvideos.com/tags", {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Cookie": "age_verified=1" // Cookie para verificación de edad
-            }
-        });
-        
-        // Procesar HTML usando cheerio
-        const $ = cheerio.load(response.data);
-        
-        // Extraer tags populares
-        const tags = [];
-        $(".tags-list-col a").each(function() {
-            const tag = $(this);
-            const name = tag.text().trim();
-            // La cantidad de videos viene generalmente entre paréntesis
-            const countMatch = name.match(/\(([0-9,]+)\)/);
-            
-            if (name && name !== "") {
-                tags.push({
-                    name: name.replace(/\([0-9,]+\)/g, "").trim(),
-                    count: countMatch ? parseInt(countMatch[1].replace(/,/g, "")) : 0,
-                    url: "https://www.xvideos.com" + tag.attr("href")
-                });
-            }
-        });
-        
-        return tags.slice(0, 50); // Devolver los 50 más populares
-    } catch (error) {
-        console.error("Error obteniendo tags populares de XVideos:", error);
-        return [];
-    }
-}
-
-/**
- * Obtener tags populares de Pornhub
- */
-async function obtenerTagsPopularesPornhub() {
-    try {
-        // Realizar petición a la página de categorías
-        const response = await axios.get("https://www.pornhub.com/categories", {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Cookie": "age_verified=1" // Cookie para verificación de edad
-            }
-        });
-        
-        // Procesar HTML usando cheerio
-        const $ = cheerio.load(response.data);
-        
-        // Extraer tags populares (categorías)
-        const tags = [];
-        $(".categoriesWrapper .category-wrapper").each(function() {
-            const categoryBox = $(this);
-            const name = categoryBox.find(".category-title").text().trim();
-            const count = categoryBox.find(".videosNumber").text().trim();
-            const url = "https://www.pornhub.com" + categoryBox.find("a").attr("href");
-            
-            if (name && name !== "") {
-                tags.push({
-                    name: name,
-                    count: parseInt(count.replace(/[^0-9]/g, "")) || 0,
-                    url: url
-                });
-            }
-        });
-        
-        return tags; // Devolver las categorías encontradas
-    } catch (error) {
-        console.error("Error obteniendo tags populares de Pornhub:", error);
-        return [];
-    }
-}
-
-/**
- * Obtener tags populares de XNXX
- */
-async function obtenerTagsPopularesXnxx() {
-    try {
-        // Realizar petición a la página de tags
-        const response = await axios.get("https://www.xnxx.com/tags", {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Cookie": "age_verified=1" // Cookie para verificación de edad
-            }
-        });
-        
-        // Procesar HTML usando cheerio
-        const $ = cheerio.load(response.data);
-        
-        // Extraer tags populares
-        const tags = [];
-        $(".tags-list li a").each(function() {
-            const tag = $(this);
-            const name = tag.text().trim();
-            // La cantidad de videos viene generalmente entre paréntesis
-            const countMatch = name.match(/\(([0-9,]+)\)/);
-            
-            if (name && name !== "") {
-                tags.push({
-                    name: name.replace(/\([0-9,]+\)/g, "").trim(),
-                    count: countMatch ? parseInt(countMatch[1].replace(/,/g, "")) : 0,
-                    url: "https://www.xnxx.com" + tag.attr("href")
-                });
-            }
-        });
-        
-        return tags.slice(0, 50); // Devolver los 50 más populares
-    } catch (error) {
-        console.error("Error obteniendo tags populares de XNXX:", error);
-        return [];
-    }
-}
-
-/**
- * Obtener tags populares de ChoChoX
- */
-async function obtenerTagsPopularesChochox() {
-    try {
-        // Realizar petición a la página principal donde suelen estar las categorías
-        const response = await axios.get("https://chochox.com/categorias/", {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-        });
-        
-        // Procesar HTML usando cheerio
-        const $ = cheerio.load(response.data);
-        
-        // Extraer tags populares (categorías)
-        const tags = [];
-        $(".cat-item").each(function() {
-            const category = $(this);
-            const link = category.find("a");
-            const name = link.text().trim();
-            // Si hay un contador de videos, lo extraemos
-            const countText = category.text().match(/\(([0-9,]+)\)/);
-            
-            if (name && name !== "") {
-                tags.push({
-                    name: name.replace(/\([0-9,]+\)/g, "").trim(),
-                    count: countText ? parseInt(countText[1].replace(/,/g, "")) : 0,
-                    url: link.attr("href")
-                });
-            }
-        });
-        
-        return tags; // Devolver las categorías encontradas
-    } catch (error) {
-        console.error("Error obteniendo tags populares de ChoChoX:", error);
-        return [];
-    }
-}
+router.get("/fuentes", (req, res) => {
+    // Filtrar solo las fuentes habilitadas para la respuesta
+    const fuentesActivas = Object.keys(sourceConfig)
+        .filter(key => sourceConfig[key].enabled)
+        .reduce((obj, key) => {
+            obj[key] = {
+                name: sourceConfig[key].name,
+                type: sourceConfig[key].type,
+                baseUrl: sourceConfig[key].baseUrl,
+                priority: sourceConfig[key].priority
+            };
+            return obj;
+        }, {});
+    
+    // Incluir también las opciones de selección aleatoria
+    const opcionesAleatorias = {
+        [SOURCES.RANDOM]: "Selecciona aleatoriamente entre todas las fuentes",
+        [SOURCES.RANDOM_IMG]: "Selecciona aleatoriamente entre fuentes de imágenes",
+        [SOURCES.RANDOM_VID]: "Selecciona aleatoriamente entre fuentes de videos"
+    };
+    
+    return res.json({
+        success: true,
+        fuentes_disponibles: fuentesActivas,
+        opciones_aleatorias: opcionesAleatorias,
+        descripcion: "Lista de fuentes disponibles para búsqueda de contenido NSFW"
+    });
+});
 
 // ADVERTENCIA: Esta API es para uso exclusivo de adultos mayores de 18 años.
 
