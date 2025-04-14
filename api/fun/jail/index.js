@@ -10,15 +10,20 @@ const router = express.Router();
  */
 router.get("/", async (req, res) => {
   try {
-    const { avatar } = req.query;
+    const { avatar, nombre } = req.query;
 
     // Validar que se proporcionó un avatar
     if (!avatar) {
       return res.status(400).json({ 
         error: "Se requiere una URL de avatar", 
-        ejemplo: "/api/fun/jail?avatar=https://ejemplo.com/avatar.jpg" 
+        ejemplo: "/api/fun/jail?avatar=https://ejemplo.com/avatar.jpg&nombre=FUGITIVO" 
       });
     }
+    
+    // Normalizar el nombre (texto en mayúsculas o "PRISONER" predeterminado)
+    const nombreTexto = nombre 
+      ? nombre.toUpperCase().trim() 
+      : "PRISONER";
 
     console.log(`Procesando imagen jail para avatar: ${avatar}`);
 
@@ -105,8 +110,8 @@ router.get("/", async (req, res) => {
     
     // ===== TEXTO Y DETALLES FINALES =====
 
-    // Añadir texto "PRISIONER" en la parte inferior con estilo de estampa policial
-    dibujarTextoEstampaPrisioner(ctx, centerX, canvas.height - 30);
+    // Añadir nombre personalizado o "PRISONER" en la parte inferior con estilo de estampa policial
+    dibujarTextoEstampa(ctx, centerX, canvas.height - 30, nombreTexto);
 
     // Añadir efecto de viñeta para un aspecto más dramático
     aplicarViñeta(ctx, canvas.width, canvas.height);
@@ -413,9 +418,26 @@ function dibujarRemache(ctx, x, y) {
 }
 
 /**
- * Dibuja el texto "PRISIONER" con estilo de estampa policial
+ * Dibuja texto personalizado con estilo de estampa policial
+ * @param {CanvasRenderingContext2D} ctx - Contexto del canvas
+ * @param {number} centerX - Posición X central del texto
+ * @param {number} y - Posición Y del texto
+ * @param {string} texto - Texto a mostrar (normalmente un nombre o "PRISONER")
  */
-function dibujarTextoEstampaPrisioner(ctx, centerX, y) {
+function dibujarTextoEstampa(ctx, centerX, y, texto) {
+  // Calcular tamaño de fuente adecuado según longitud del texto
+  // Para textos largos, reducimos el tamaño para que quepa bien
+  let fontSize = 38;
+  if (texto.length > 10) {
+    fontSize = 34;
+  }
+  if (texto.length > 15) {
+    fontSize = 28;
+  }
+  if (texto.length > 20) {
+    fontSize = 24;
+  }
+  
   // Configurar estilo para el texto estampado
   ctx.shadowColor = "rgba(0,0,0,0.7)";
   ctx.shadowBlur = 5;
@@ -423,26 +445,29 @@ function dibujarTextoEstampaPrisioner(ctx, centerX, y) {
   ctx.shadowOffsetY = 2;
   
   // Texto principal
-  ctx.font = "bold 38px 'Arial', sans-serif";
+  ctx.font = `bold ${fontSize}px 'Arial', sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
+  
+  // Medir el ancho del texto para los gradientes
+  const textWidth = ctx.measureText(texto).width;
   
   // Contorno
   ctx.strokeStyle = "#111111";
   ctx.lineWidth = 5;
-  ctx.strokeText("PRISONER", centerX, y);
+  ctx.strokeText(texto, centerX, y);
   
   // Relleno con degradado para efecto gastado
   const textGradient = ctx.createLinearGradient(
-    centerX - 100, y - 30,
-    centerX + 100, y
+    centerX - textWidth/2, y - 30,
+    centerX + textWidth/2, y
   );
   textGradient.addColorStop(0, "#bb0000");
   textGradient.addColorStop(0.5, "#ff0000");
   textGradient.addColorStop(1, "#bb0000");
   
   ctx.fillStyle = textGradient;
-  ctx.fillText("PRISONER", centerX, y);
+  ctx.fillText(texto, centerX, y);
   
   // Reiniciar sombra
   ctx.shadowColor = "transparent";
@@ -452,15 +477,17 @@ function dibujarTextoEstampaPrisioner(ctx, centerX, y) {
   
   // Añadir textura de estampado por encima (trazos desiguales)
   ctx.globalCompositeOperation = "source-atop";
-  for (let i = -100; i <= 100; i += 3) {
+  const textHeight = fontSize;
+  
+  for (let i = -textWidth/2; i <= textWidth/2; i += 3) {
     const opacity = Math.random() * 0.1;
     ctx.fillStyle = `rgba(0,0,0,${opacity})`;
     
     ctx.fillRect(
       centerX + i, 
-      y - 35, 
+      y - textHeight, 
       2, 
-      35
+      textHeight
     );
   }
   
