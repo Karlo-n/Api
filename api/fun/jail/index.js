@@ -1,131 +1,440 @@
 const express = require("express");
-const { createCanvas, loadImage } = require("canvas");
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
 const router = express.Router();
+const axios = require("axios");
+const path = require("path");
+const fs = require("fs");
 
-// Configuración
-const TEMP_DIR = path.join(__dirname, "temp");
-if (!fs.existsSync(TEMP_DIR)) {
-    fs.mkdirSync(TEMP_DIR, { recursive: true });
+// Cargar biblioteca Canvas con manejo de errores
+let Canvas;
+try {
+    Canvas = require("canvas");
+} catch (error) {
+    console.warn("⚠️ Canvas no disponible para Jail API, usando modo alternativo:", error.message);
+    Canvas = null;
 }
 
 /**
- * API JAIL PREMIUM - Genera imágenes avanzadas de avatares tras las rejas
+ * API JAIL - Genera imágenes de avatares tras las rejas
  * 
  * Parámetros:
  * @param {string} avatar1 - URL del avatar principal (obligatorio)
- * @param {string} nombre - Nombre del prisionero
+ * @param {string} nombre - Nombre del "criminal"
  * @param {string} razon - Razón del arresto
- * @param {string} precio - Precio de la fianza
- * @param {string} fecha - Fecha del arresto
- * @param {string} id - ID del prisionero
- * @param {string} estilo - Estilo visual: "clasico", "oscuro", "vintage" (por defecto: "clasico")
- * @param {string} efecto - Efecto para el avatar: "sepia", "grises", "ninguno" (por defecto: "sepia")
- * @param {string} intensidad - Intensidad del efecto: "baja", "media", "alta" (por defecto: "media")
- * @param {string} formato - Formato de salida: "png", "json" (por defecto: "png")
+ * @param {string} precio - Monto de la fianza
+ * @param {string} estilo - Estilo de celda: 'modern', 'vintage', 'dark' (predeterminado: 'modern')
+ * @param {string} filtro - Filtro de imagen: 'sepia', 'bw', 'none' (predeterminado: 'sepia')
  */
 router.get("/", async (req, res) => {
     try {
-        // Extraer y validar parámetros
         const { 
             avatar1, 
             nombre, 
             razon, 
             precio, 
-            fecha, 
+            estilo = 'modern',
+            filtro = 'sepia',
             id,
-            estilo = "clasico",
-            efecto = "sepia",
-            intensidad = "media",
-            formato = "png"
+            fecha
         } = req.query;
 
         // Validar parámetro obligatorio
         if (!avatar1) {
             return res.status(400).json({ 
                 error: "Se requiere una URL de avatar", 
-                ejemplo: "/api/fun/jail?avatar1=https://ejemplo.com/avatar.jpg&nombre=Usuario&estilo=oscuro" 
-            });
-        }
-        
-        // Verificar formato solicitado
-        if (formato === "json") {
-            return res.json({
-                success: true,
-                mensaje: "Datos de prisión generados",
-                datos: {
-                    avatar: avatar1,
-                    nombre: nombre || "Prisionero",
-                    razon: razon || "Delito sin especificar",
-                    precio: precio || "$1000",
-                    fecha: fecha || obtenerFechaActual(),
-                    id: id || generarIdPrisionero(),
-                    estilo: estilo,
-                    efecto: efecto,
-                    intensidad: intensidad
-                },
-                recursos: {
-                    imagen_url: `${req.protocol}://${req.get('host')}/api/fun/jail?${new URLSearchParams({
-                        avatar1, nombre, razon, precio, fecha, id, estilo, efecto, intensidad, formato: "png"
-                    }).toString()}`
-                }
+                ejemplo: "/api/fun/jail?avatar1=https://ejemplo.com/avatar.jpg&nombre=Usuario&estilo=vintage" 
             });
         }
 
-        // Cargar avatar
-        let avatarImg;
-        try {
-            const avatarResponse = await axios.get(avatar1, { 
-                responseType: "arraybuffer",
-                timeout: 8000
-            });
-            
-            avatarImg = await loadImage(Buffer.from(avatarResponse.data));
-        } catch (loadError) {
-            return res.status(400).json({ 
-                error: "No se pudo cargar la imagen del avatar", 
-                detalle: loadError.message 
+        // Si Canvas no está disponible, usar modo alternativo
+        if (!Canvas) {
+            return modoHTML(req, res, {
+                avatar1, nombre, razon, precio, estilo, filtro, 
+                id: id || generarIdPrisionero(),
+                fecha: fecha || obtenerFechaActual()
             });
         }
-        
-        // Generar la imagen según el estilo elegido
-        const nombrePrisionero = nombre || "Prisionero";
-        const razonArresto = razon || "Delito sin especificar";
-        const fianza = precio || "$1000";
-        const fechaArresto = fecha || obtenerFechaActual();
-        const idPrisionero = id || generarIdPrisionero();
-        
-        // Obtener la configuración de estilo
-        const configuracion = obtenerConfiguracionEstilo(estilo, efecto, intensidad);
-        
-        // Generar la imagen
-        const canvas = await generarImagenJailPremium(
-            avatarImg,
-            nombrePrisionero,
-            razonArresto,
-            fianza,
-            fechaArresto,
-            idPrisionero,
-            configuracion
-        );
-        
-        // Devolver la imagen
-        res.setHeader('Content-Type', 'image/png');
-        canvas.createPNGStream().pipe(res);
-        
+
+        try {
+            // Intentar cargar la imagen con timeout reducido
+            const avatarResponse = await axios.get(avatar1, { 
+                responseType: "arraybuffer",
+                timeout: 5000
+            });
+            
+            const avatarImg = await Canvas.loadImage(Buffer.from(avatarResponse.data));
+            
+            // Generar la imagen en canvas con configuración optimizada
+            const canvas = await generarImagenJail(
+                avatarImg, 
+                nombre || "Anónimo", 
+                razon || "Crimen sin especificar", 
+                precio || "$1000",
+                estilo,
+                filtro,
+                id || generarIdPrisionero(),
+                fecha || obtenerFechaActual()
+            );
+            
+            // Devolver la imagen directamente
+            res.setHeader('Content-Type', 'image/png');
+            canvas.createPNGStream().pipe(res);
+        } catch (imgError) {
+            console.error("Error procesando imagen:", imgError.message);
+            // Fallback a modo HTML
+            return modoHTML(req, res, {
+                avatar1, nombre, razon, precio, estilo, filtro,
+                id: id || generarIdPrisionero(),
+                fecha: fecha || obtenerFechaActual(),
+                error: imgError.message
+            });
+        }
     } catch (error) {
-        console.error("Error en API JAIL:", error);
+        console.error("Error en API JAIL:", error.message);
         res.status(500).json({ 
-            error: "Error al generar la imagen", 
+            error: "Error en el servicio", 
             detalle: error.message 
         });
     }
 });
 
 /**
- * Genera un ID de prisionero aleatorio
+ * Fallback: Genera una respuesta HTML cuando Canvas no está disponible
+ */
+function modoHTML(req, res, params) {
+    const { 
+        avatar1, nombre, razon, precio, estilo, filtro, id, fecha, error 
+    } = params;
+    
+    // Determinar URL base para recursos
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const barsUrl = `${baseUrl}/api/fun/jail/bars.svg`;
+    
+    // Generar HTML con la imagen
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jail - ${nombre || "Prisionero"}</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            background: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        .jail-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            background-color: #2c2c2c;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+        .prisoner-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        .prisoner-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .prisoner-reason {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .prisoner-bail {
+            font-size: 18px;
+            color: #ff6666;
+            font-weight: bold;
+        }
+        .avatar {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            object-fit: cover;
+            z-index: 1;
+        }
+        .avatar.sepia {
+            filter: sepia(0.8);
+        }
+        .avatar.bw {
+            filter: grayscale(1);
+        }
+        .bars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+        .prison-id {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .prison-date {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .vintage .jail-container {
+            background-color: #3c3835;
+        }
+        .dark .jail-container {
+            background-color: #111111;
+        }
+        .vintage .avatar {
+            filter: sepia(0.9) brightness(0.8) contrast(1.2);
+        }
+        .dark .prisoner-info {
+            background: rgba(0,0,0,0.9);
+        }
+        .watermark {
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+            color: rgba(255,255,255,0.3);
+            font-size: 12px;
+            z-index: 3;
+        }
+    </style>
+</head>
+<body class="${estilo}">
+    <div class="jail-container">
+        <div class="prison-id">ID: ${id}</div>
+        <div class="prison-date">FECHA: ${fecha}</div>
+        <img src="${avatar1}" class="avatar ${filtro}" alt="Prisionero">
+        <img src="${barsUrl}" class="bars" alt="Rejas">
+        <div class="prisoner-info">
+            <div class="prisoner-name">${nombre || "Prisionero"}</div>
+            <div class="prisoner-reason">${razon || "Crimen sin especificar"}</div>
+            ${precio ? `<div class="prisoner-bail">Fianza: ${precio}</div>` : ''}
+        </div>
+        <div class="watermark">JailAPI</div>
+    </div>
+</body>
+</html>`;
+
+    // Devolver HTML
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+}
+
+/**
+ * Genera la imagen de prisión en Canvas
+ */
+async function generarImagenJail(avatarImg, nombre, razon, precio, estilo, filtro, id, fecha) {
+    // Canvas y contexto optimizados para rendimiento
+    const canvas = Canvas.createCanvas(500, 500);
+    const ctx = canvas.getContext('2d', { alpha: false });
+    
+    // Estilos de celda
+    const estilos = {
+        modern: {
+            fondoColor: '#2c2c2c',
+            textoBgColor: 'rgba(0,0,0,0.8)',
+            textoColor: '#ffffff',
+            precioColor: '#ff6666'
+        },
+        vintage: {
+            fondoColor: '#3c3835',
+            textoBgColor: 'rgba(30,25,20,0.8)',
+            textoColor: '#e8e0d0',
+            precioColor: '#ffcc99'
+        },
+        dark: {
+            fondoColor: '#111111',
+            textoBgColor: 'rgba(0,0,0,0.9)',
+            textoColor: '#aaaaaa',
+            precioColor: '#cc3333'
+        }
+    };
+    
+    // Seleccionar estilo (con fallback a modern)
+    const estiloActual = estilos[estilo] || estilos.modern;
+    
+    // 1. Dibujar fondo
+    ctx.fillStyle = estiloActual.fondoColor;
+    ctx.fillRect(0, 0, 500, 500);
+    
+    // 2. Dibujar ID y fecha en la esquina superior
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, 500, 40);
+    ctx.fillStyle = estiloActual.textoColor;
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(`ID: ${id}`, 15, 25);
+    ctx.textAlign = 'right';
+    ctx.fillText(`FECHA: ${fecha}`, 485, 25);
+    
+    // 3. Dibujar avatar circular con filtro seleccionado
+    const avatarSize = 200;
+    const avatarX = 250;
+    const avatarY = 220;
+    
+    // Crear máscara circular
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avatarX, avatarY, avatarSize/2, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    
+    // Dibujar avatar
+    ctx.drawImage(
+        avatarImg, 
+        avatarX - avatarSize/2, 
+        avatarY - avatarSize/2, 
+        avatarSize, 
+        avatarSize
+    );
+    
+    // Aplicar filtro según solicitud
+    if (filtro === 'sepia' || estilo === 'vintage') {
+        aplicarFiltroSepia(ctx, avatarX - avatarSize/2, avatarY - avatarSize/2, avatarSize, avatarSize);
+    } else if (filtro === 'bw') {
+        aplicarFiltroBlancoNegro(ctx, avatarX - avatarSize/2, avatarY - avatarSize/2, avatarSize, avatarSize);
+    }
+    
+    ctx.restore();
+    
+    // 4. Dibujar borde del avatar
+    ctx.beginPath();
+    ctx.arc(avatarX, avatarY, avatarSize/2 + 3, 0, Math.PI * 2);
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    
+    // 5. Dibujar área de texto
+    const textAreaHeight = 120;
+    ctx.fillStyle = estiloActual.textoBgColor;
+    ctx.fillRect(0, 500 - textAreaHeight, 500, textAreaHeight);
+    
+    // 6. Dibujar nombre
+    ctx.font = 'bold 24px Arial';
+    ctx.fillStyle = estiloActual.textoColor;
+    ctx.textAlign = 'center';
+    ctx.fillText(nombre, 250, 500 - textAreaHeight + 30);
+    
+    // 7. Dibujar razón del arresto (con ajuste para texto largo)
+    ctx.font = '18px Arial';
+    
+    // Dividir texto largo en líneas si es necesario
+    const maxWidth = 450;
+    const lineHeight = 22;
+    const palabras = razon.split(' ');
+    let linea = '';
+    let y = 500 - textAreaHeight + 65;
+    
+    for (const palabra of palabras) {
+        const testLinea = linea + (linea ? ' ' : '') + palabra;
+        const { width } = ctx.measureText(testLinea);
+        
+        if (width > maxWidth) {
+            ctx.fillText(linea, 250, y);
+            linea = palabra;
+            y += lineHeight;
+            
+            // Si ya no hay espacio, cortar
+            if (y > 500 - 40) {
+                ctx.fillText(linea + '...', 250, y);
+                break;
+            }
+        } else {
+            linea = testLinea;
+        }
+    }
+    
+    // Dibujar última línea si queda texto
+    if (linea && y <= 500 - 40) {
+        ctx.fillText(linea, 250, y);
+    }
+    
+    // 8. Dibujar precio de fianza con estilo resaltado
+    if (precio) {
+        ctx.font = 'bold 20px Arial';
+        ctx.fillStyle = estiloActual.precioColor;
+        ctx.fillText(`Fianza: ${precio}`, 250, 500 - 25);
+    }
+    
+    // 9. Añadir marca de agua
+    ctx.font = '12px Arial';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.textAlign = 'right';
+    ctx.fillText('JailAPI', 490, 490);
+    
+    // 10. Dibujar las barras
+    // Esta parte depende del SVG, que ahora se carga y superpone directamente
+    
+    return canvas;
+}
+
+/**
+ * Aplicar filtro sepia a la imagen
+ */
+function aplicarFiltroSepia(ctx, x, y, width, height) {
+    const imageData = ctx.getImageData(x, y, width, height);
+    const data = imageData.data;
+    
+    for (let i = 0; i < data.length; i += 4) {
+        // Calcular valores sepia
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        
+        // Convertir a sepia con una fórmula optimizada
+        data[i] = Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189));
+        data[i + 1] = Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168));
+        data[i + 2] = Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131));
+    }
+    
+    ctx.putImageData(imageData, x, y);
+}
+
+/**
+ * Aplicar filtro blanco y negro a la imagen
+ */
+function aplicarFiltroBlancoNegro(ctx, x, y, width, height) {
+    const imageData = ctx.getImageData(x, y, width, height);
+    const data = imageData.data;
+    
+    for (let i = 0; i < data.length; i += 4) {
+        // Convertir a escala de grises
+        const avg = (data[i] * 0.3) + (data[i + 1] * 0.59) + (data[i + 2] * 0.11);
+        data[i] = avg; // R
+        data[i + 1] = avg; // G
+        data[i + 2] = avg; // B
+    }
+    
+    ctx.putImageData(imageData, x, y);
+}
+
+/**
+ * Genera un ID de prisionero aleatorio en formato '000-000'
  */
 function generarIdPrisionero() {
     const part1 = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
@@ -141,680 +450,32 @@ function obtenerFechaActual() {
     return `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth() + 1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
 }
 
-/**
- * Obtiene la configuración según el estilo seleccionado
- */
-function obtenerConfiguracionEstilo(estilo, efecto, intensidad) {
-    // Configuraciones base para cada estilo
-    const estilos = {
-        // Estilo clásico
-        clasico: {
-            colorFondo: '#2c2c2c',
-            colorPared: '#333333',
-            colorTexto: '#FFFFFF',
-            colorDestacado: '#FFCC00',
-            fuenteTitulo: 'bold 28px Arial',
-            fuenteTexto: '22px Arial',
-            tieneRegla: true,
-            tieneID: true,
-            tienePared: true
-        },
-        
-        // Estilo oscuro/nocturno
-        oscuro: {
-            colorFondo: '#121212',
-            colorPared: '#1a1a1a',
-            colorTexto: '#E0E0E0',
-            colorDestacado: '#BB86FC',
-            fuenteTitulo: 'bold 28px Arial',
-            fuenteTexto: '22px Arial',
-            tieneRegla: true,
-            tieneID: true,
-            tienePared: true,
-            iluminacionNocturna: true
-        },
-        
-        // Estilo vintage/antiguo
-        vintage: {
-            colorFondo: '#342E1E',
-            colorPared: '#403A2E',
-            colorTexto: '#EFEFEF',
-            colorDestacado: '#BFA77B',
-            fuenteTitulo: 'bold 28px "Times New Roman"',
-            fuenteTexto: '22px "Times New Roman"',
-            tieneRegla: true,
-            tieneID: true,
-            tienePared: true,
-            efectoVintage: true,
-            texturaPapel: true
-        },
-        
-        // Estilo moderno simplificado
-        moderno: {
-            colorFondo: '#222222',
-            colorPared: '#2a2a2a',
-            colorTexto: '#FFFFFF',
-            colorDestacado: '#4ECCA3',
-            fuenteTitulo: 'bold 28px Arial',
-            fuenteTexto: '22px Arial',
-            tieneRegla: false,
-            tieneID: true,
-            tienePared: false,
-            tieneGradiente: true
-        },
-        
-        // Estilo institucional/policial
-        policial: {
-            colorFondo: '#1E293B',
-            colorPared: '#334155',
-            colorTexto: '#F1F5F9',
-            colorDestacado: '#EF4444',
-            fuenteTitulo: 'bold 28px "Courier New"',
-            fuenteTexto: '22px "Courier New"',
-            tieneRegla: true,
-            tieneID: true,
-            tienePared: true,
-            tieneSellos: true
-        }
-    };
+// Servir el SVG mejorado desde la ruta /bars.svg
+router.get("/bars.svg", (req, res) => {
+    const svgPath = path.join(__dirname, "jail_bars.svg");
     
-    // Si el estilo no existe, usar el clásico
-    const configuracion = estilos[estilo] || estilos.clasico;
-    
-    // Configurar efecto
-    configuracion.efecto = efecto || "sepia";
-    
-    // Configurar intensidad del efecto
-    const intensidades = {
-        baja: 0.3,
-        media: 0.6,
-        alta: 1.0
-    };
-    configuracion.intensidadEfecto = intensidades[intensidad] || intensidades.media;
-    
-    return configuracion;
-}
-
-/**
- * Genera la imagen mejorada con los efectos visuales según la configuración
- */
-async function generarImagenJailPremium(avatarImg, nombre, razon, precio, fecha, id, config) {
-    // Dimensiones
-    const width = 600;
-    const height = 600;
-    
-    // Crear canvas
-    const canvas = createCanvas(width, height);
-    const ctx = canvas.getContext('2d');
-    
-    // Dibujar fondo según configuración
-    ctx.fillStyle = config.colorFondo;
-    ctx.fillRect(0, 0, width, height);
-    
-    // Aplicar efectos de fondo según estilo
-    if (config.tieneGradiente) {
-        // Gradiente para fondo moderno
-        const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, config.colorFondo);
-        gradient.addColorStop(1, adjustColor(config.colorFondo, 30));
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, height);
+    if (fs.existsSync(svgPath)) {
+        res.setHeader("Content-Type", "image/svg+xml");
+        res.sendFile(svgPath);
+    } else {
+        // SVG fallback en línea si el archivo no existe
+        res.setHeader("Content-Type", "image/svg+xml");
+        res.send(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <g>
+    <rect x="45" y="0" width="14" height="500" fill="#111111" />
+    <rect x="105" y="0" width="14" height="500" fill="#1a1a1a" />
+    <rect x="165" y="0" width="14" height="500" fill="#111111" />
+    <rect x="225" y="0" width="14" height="500" fill="#1a1a1a" />
+    <rect x="285" y="0" width="16" height="500" fill="#111111" />
+    <rect x="345" y="0" width="14" height="500" fill="#1a1a1a" />
+    <rect x="405" y="0" width="14" height="500" fill="#111111" />
+    <rect x="465" y="0" width="14" height="500" fill="#1a1a1a" />
+    <rect x="0" y="90" width="500" height="12" fill="#111111" />
+    <rect x="0" y="240" width="500" height="14" fill="#1a1a1a" />
+    <rect x="0" y="390" width="500" height="12" fill="#111111" />
+  </g>
+</svg>`);
     }
-    
-    if (config.iluminacionNocturna) {
-        // Efecto de luz tenue para estilo oscuro
-        const radialGradient = ctx.createRadialGradient(
-            width/2, height/2, 50,
-            width/2, height/2, width
-        );
-        radialGradient.addColorStop(0, 'rgba(30, 30, 30, 0)');
-        radialGradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
-        ctx.fillStyle = radialGradient;
-        ctx.fillRect(0, 0, width, height);
-    }
-    
-    if (config.texturaPapel) {
-        // Efecto de textura de papel viejo para estilo vintage
-        dibujarTexturaVintage(ctx, width, height, 0.2);
-    }
-    
-    // Dibujar pared de celda si corresponde
-    if (config.tienePared) {
-        dibujarTexturaParedes(ctx, width, height, config.colorPared);
-    }
-    
-    // Dibujar ID y fecha
-    if (config.tieneID) {
-        dibujarEncabezado(ctx, width, id, fecha, config);
-    }
-    
-    // Dibujar avatar
-    const avatarSize = 300;
-    const avatarX = (width - avatarSize) / 2;
-    const avatarY = (height - avatarSize) / 2 - 10;
-    
-    // Crear máscara circular para el avatar
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(width / 2, height / 2 - 10, avatarSize / 2, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-    
-    // Dibujar avatar dentro del círculo
-    ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
-    
-    // Aplicar efecto al avatar según configuración
-    aplicarEfectoAvatar(ctx, avatarX, avatarY, avatarSize, avatarSize, config.efecto, config.intensidadEfecto);
-    ctx.restore();
-    
-    // Dibujar borde del avatar
-    ctx.strokeStyle = '#111111';
-    ctx.lineWidth = 8;
-    ctx.beginPath();
-    ctx.arc(width / 2, height / 2 - 10, avatarSize / 2 + 4, 0, Math.PI * 2);
-    ctx.stroke();
-    
-    // Dibujar regla de medición si corresponde
-    if (config.tieneRegla) {
-        dibujarReglaMedicion(ctx, width, height, config);
-    }
-    
-    // Cargar y dibujar barras de la celda
-    try {
-        const barsSvgPath = path.join(__dirname, "jail_bars.svg");
-        const rejasImg = await loadImage(barsSvgPath);
-        ctx.drawImage(rejasImg, 0, 0, width, height);
-    } catch (svgError) {
-        console.error("Error cargando SVG de rejas:", svgError);
-        // En caso de error, dibujar barras simples
-        dibujarBarrasSimples(ctx, width, height);
-    }
-    
-    // Sellos policiales para estilo institucional
-    if (config.tieneSellos) {
-        dibujarSellosInstitucionales(ctx, width, height);
-    }
-    
-    // Dibujar área de texto
-    const textBgHeight = 140;
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-    ctx.fillRect(0, height - textBgHeight, width, textBgHeight);
-    
-    // Línea divisoria
-    ctx.strokeStyle = '#444444';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, height - textBgHeight);
-    ctx.lineTo(width, height - textBgHeight);
-    ctx.stroke();
-    
-    // Dibujar textos
-    dibujarTextos(ctx, width, height, nombre, razon, precio, textBgHeight, config);
-    
-    // Añadir efectos finales específicos por estilo
-    if (config.efectoVintage) {
-        aplicarEfectoVintage(ctx, width, height);
-    }
-    
-    // Marca de agua sutil
-    ctx.font = '14px Arial';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.textAlign = 'right';
-    ctx.fillText('JailAPI Premium', width - 10, height - 10);
-    
-    return canvas;
-}
-
-/**
- * Dibuja un encabezado con ID y fecha
- */
-function dibujarEncabezado(ctx, width, id, fecha, config) {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, width, 50);
-    
-    // Añadir textura/patrón si es estilo vintage
-    if (config.efectoVintage) {
-        ctx.globalAlpha = 0.1;
-        for (let i = 0; i < 100; i++) {
-            ctx.fillStyle = '#000000';
-            const x = Math.random() * width;
-            const y = Math.random() * 50;
-            const size = Math.random() * 2 + 0.5;
-            ctx.fillRect(x, y, size, size);
-        }
-        ctx.globalAlpha = 1.0;
-    }
-    
-    ctx.font = '18px Arial';
-    ctx.fillStyle = config.colorTexto;
-    ctx.textAlign = 'left';
-    ctx.fillText(`ID: ${id}`, 20, 30);
-    ctx.textAlign = 'right';
-    ctx.fillText(`FECHA: ${fecha}`, width - 20, 30);
-    
-    // Línea decorativa bajo el encabezado
-    ctx.strokeStyle = config.colorDestacado;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, 50);
-    ctx.lineTo(width, 50);
-    ctx.stroke();
-}
-
-/**
- * Aplica efectos al avatar
- */
-function aplicarEfectoAvatar(ctx, x, y, width, height, efecto, intensidad) {
-    const imageData = ctx.getImageData(x, y, width, height);
-    const data = imageData.data;
-    
-    // Factor de intensidad (0-1)
-    const factor = intensidad;
-    
-    for (let i = 0; i < data.length; i += 4) {
-        switch (efecto) {
-            case "sepia":
-                // Convertir a escala de grises
-                const avg = (data[i] * 0.3 + data[i + 1] * 0.59 + data[i + 2] * 0.11);
-                
-                // Aplicar tono sepia con factor de intensidad
-                const r = avg * (1 + 0.2 * factor);
-                const g = avg * (1 + 0.0 * factor);
-                const b = avg * (1 - 0.2 * factor);
-                
-                // Mezclar con el color original basado en intensidad
-                data[i] = Math.min(255, r * factor + data[i] * (1 - factor));
-                data[i + 1] = Math.min(255, g * factor + data[i + 1] * (1 - factor));
-                data[i + 2] = Math.min(255, b * factor + data[i + 2] * (1 - factor));
-                break;
-                
-            case "grises":
-                // Convertir a escala de grises con factor de intensidad
-                const gray = (data[i] * 0.3 + data[i + 1] * 0.59 + data[i + 2] * 0.11);
-                data[i] = gray * factor + data[i] * (1 - factor);
-                data[i + 1] = gray * factor + data[i + 1] * (1 - factor);
-                data[i + 2] = gray * factor + data[i + 2] * (1 - factor);
-                break;
-                
-            case "ninguno":
-                // Sin efecto
-                break;
-        }
-    }
-    
-    // Añadir ruido y efectos de foto antigua si es un estilo que lo requiere
-    if (efecto === "sepia") {
-        // Añadir ruido de foto antigua
-        agregarRuidoFotoAntigua(data, intensidad);
-    }
-    
-    ctx.putImageData(imageData, x, y);
-}
-
-/**
- * Añade ruido a los datos de la imagen para efecto de foto antigua
- */
-function agregarRuidoFotoAntigua(data, intensidad) {
-    for (let i = 0; i < data.length; i += 4) {
-        // Solo aplicar a píxeles no transparentes
-        if (data[i + 3] > 0) {
-            // Añadir efecto de película antigua - rayas y puntos aleatorios
-            if (Math.random() < 0.03 * intensidad) {
-                const noise = Math.random() * 50 * intensidad - 25 * intensidad;
-                data[i] = Math.max(0, Math.min(255, data[i] + noise));
-                data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise));
-                data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise));
-            }
-            
-            // Ocasionalmente añadir rasguños
-            if (Math.random() < 0.001 * intensidad) {
-                data[i] = 255;
-                data[i + 1] = 255;
-                data[i + 2] = 255;
-                data[i + 3] = 180;
-            }
-        }
-    }
-}
-
-/**
- * Dibuja textura de paredes de celda
- */
-function dibujarTexturaParedes(ctx, width, height, colorBase) {
-    // Color base de la pared
-    ctx.fillStyle = colorBase;
-    ctx.fillRect(0, 0, width, height);
-    
-    // Patrón de ladrillos
-    const colorLadrillo = adjustColor(colorBase, -10);
-    ctx.fillStyle = colorLadrillo;
-    
-    const ladrilloAncho = 60;
-    const ladrilloAlto = 30;
-    
-    for (let y = 0; y < height; y += ladrilloAlto) {
-        const offsetX = (Math.floor(y / ladrilloAlto) % 2) * (ladrilloAncho / 2);
-        
-        for (let x = -ladrilloAncho/2; x < width; x += ladrilloAncho) {
-            // Variar ligeramente el color para dar textura
-            const brillo = Math.random() * 0.1 - 0.05;
-            const colorVariado = adjustColor(colorLadrillo, brillo * 255);
-            ctx.fillStyle = colorVariado;
-            
-            // Dibujar ladrillo con borde redondeado
-            ctx.beginPath();
-            roundRect(ctx, x + offsetX, y, ladrilloAncho - 2, ladrilloAlto - 2, 2);
-            ctx.fill();
-            
-            // Agregar línea de mortero
-            ctx.strokeStyle = adjustColor(colorBase, -20);
-            ctx.lineWidth = 1;
-            ctx.stroke();
-        }
-    }
-    
-    // Agregar sombras en las esquinas
-    const gradient = ctx.createRadialGradient(
-        width/2, height/2, height/3,
-        width/2, height/2, height
-    );
-    gradient.addColorStop(0, 'rgba(0,0,0,0)');
-    gradient.addColorStop(1, 'rgba(0,0,0,0.7)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-}
-
-/**
- * Dibuja una textura de papel vintage
- */
-function dibujarTexturaVintage(ctx, width, height, intensidad) {
-    // Crear textura de papel antiguo
-    ctx.fillStyle = '#F5F5DC'; // Beige claro
-    ctx.globalAlpha = intensidad;
-    ctx.fillRect(0, 0, width, height);
-    
-    // Agregar manchas y arrugas
-    for (let i = 0; i < 100; i++) {
-        const x = Math.random() * width;
-        const y = Math.random() * height;
-        const size = Math.random() * 20 + 5;
-        const color = `rgba(139, 69, 19, ${Math.random() * 0.1})`;
-        
-        ctx.beginPath();
-        ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-    }
-    
-    // Añadir patrón de ruido
-    for (let i = 0; i < width * height / 100; i++) {
-        const x = Math.random() * width;
-        const y = Math.random() * height;
-        const size = Math.random() * 2 + 0.5;
-        ctx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.05})`;
-        ctx.fillRect(x, y, size, size);
-    }
-    
-    ctx.globalAlpha = 1.0;
-}
-
-/**
- * Aplica un efecto de película antigua a toda la imagen
- */
-function aplicarEfectoVintage(ctx, width, height) {
-    // Aplicar un tono sepia a toda la imagen
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-    
-    for (let i = 0; i < data.length; i += 4) {
-        if (data[i + 3] > 0) { // Solo procesar píxeles no transparentes
-            // Convertir a escala de grises
-            const avg = (data[i] * 0.3 + data[i + 1] * 0.59 + data[i + 2] * 0.11);
-            
-            // Aplicar tono sepia
-            data[i] = Math.min(255, avg * 1.2);
-            data[i + 1] = Math.min(255, avg * 1.0);
-            data[i + 2] = Math.min(255, avg * 0.8);
-        }
-    }
-    
-    // Añadir viñeta
-    const viñeta = ctx.createRadialGradient(
-        width/2, height/2, height/3,
-        width/2, height/2, height
-    );
-    viñeta.addColorStop(0, 'rgba(0,0,0,0)');
-    viñeta.addColorStop(1, 'rgba(0,0,0,0.7)');
-    
-    ctx.putImageData(imageData, 0, 0);
-    ctx.fillStyle = viñeta;
-    ctx.fillRect(0, 0, width, height);
-    
-    // Añadir rasguños y manchas
-    for (let i = 0; i < 10; i++) {
-        const x = Math.random() * width;
-        const y = Math.random() * height;
-        const w = Math.random() * 2 + 1;
-        const h = Math.random() * 100 + 50;
-        
-        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
-        ctx.fillRect(x, y, w, h);
-    }
-}
-
-/**
- * Dibuja una regla de medición estilo mugshot
- */
-function dibujarReglaMedicion(ctx, width, height, config) {
-    // Posición de la regla
-    const reglaPosX = width - 60;
-    const reglaPosY = height/2 - 120;
-    const reglaAltura = 240;
-    
-    // Fondo de la regla
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.fillRect(reglaPosX, reglaPosY, 24, reglaAltura);
-    
-    // Marcas de la regla
-    ctx.fillStyle = '#000000';
-    for (let y = 0; y <= reglaAltura; y += 10) {
-        const markerWidth = (y % 50 === 0) ? 15 : (y % 20 === 0) ? 10 : 5;
-        ctx.fillRect(reglaPosX, reglaPosY + y, markerWidth, 2);
-        
-        if (y % 50 === 0) {
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'right';
-            ctx.fillText((y/10).toString(), reglaPosX - 5, reglaPosY + y + 5);
-        }
-    }
-}
-
-/**
- * Dibuja barras simples (fallback si falla el SVG)
- */
-function dibujarBarrasSimples(ctx, width, height) {
-    // Barras verticales
-    for (let i = 0; i < 9; i++) {
-        const x = 60 + i * 60;
-        ctx.fillStyle = '#333333';
-        ctx.fillRect(x, 0, 16, height);
-    }
-    
-    // Barras horizontales
-    const barrasY = [100, 300, 500];
-    for (const y of barrasY) {
-        ctx.fillStyle = '#333333';
-        ctx.fillRect(0, y, width, 14);
-    }
-}
-
-/**
- * Dibuja sellos institucionales (estilo policial)
- */
-function dibujarSellosInstitucionales(ctx, width, height) {
-    // Sello circular tipo policial
-    ctx.save();
-    ctx.globalAlpha = 0.2;
-    
-    // Primer sello
-    ctx.beginPath();
-    ctx.arc(width * 0.8, height * 0.2, 60, 0, Math.PI * 2);
-    ctx.strokeStyle = '#FF0000';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    ctx.font = 'bold 12px Arial';
-    ctx.fillStyle = '#FF0000';
-    ctx.textAlign = 'center';
-    ctx.fillText('DEPARTAMENTO', width * 0.8, height * 0.18);
-    ctx.fillText('DE POLICÍA', width * 0.8, height * 0.22);
-    
-    // Segundo sello
-    ctx.beginPath();
-    ctx.arc(width * 0.25, height * 0.75, 50, 0, Math.PI * 2);
-    ctx.strokeStyle = '#0000FF';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    
-    ctx.font = 'bold 10px Arial';
-    ctx.fillStyle = '#0000FF';
-    ctx.textAlign = 'center';
-    ctx.fillText('CONFIDENCIAL', width * 0.25, height * 0.75);
-    
-    ctx.restore();
-}
-
-/**
- * Dibuja los textos en la parte inferior
- */
-function dibujarTextos(ctx, width, height, nombre, razon, precio, textBgHeight, config) {
-    // Nombre del prisionero
-    ctx.font = config.fuenteTitulo;
-    ctx.fillStyle = config.colorTexto;
-    ctx.textAlign = 'center';
-    ctx.fillText(nombre, width / 2, height - textBgHeight + 30);
-    
-    // Razón del arresto
-    ctx.font = config.fuenteTexto;
-    const palabras = razon.split(' ');
-    let linea = '';
-    let yPos = height - textBgHeight + 65;
-    
-    for (let i = 0; i < palabras.length; i++) {
-        const testLinea = linea + palabras[i] + ' ';
-        const metrica = ctx.measureText(testLinea);
-        
-        if (metrica.width > width - 40 && i > 0) {
-            ctx.fillText(linea, width / 2, yPos);
-            linea = palabras[i] + ' ';
-            yPos += 30;
-            
-            // Si se sale del espacio, cortar el texto
-            if (yPos > height - 40) {
-                ctx.fillText(linea + '...', width / 2, yPos);
-                break;
-            }
-        } else {
-            linea = testLinea;
-        }
-        
-        // Última línea
-        if (i === palabras.length - 1) {
-            ctx.fillText(linea, width / 2, yPos);
-        }
-    }
-    
-    // Dibujar precio de fianza (si existe)
-    if (precio) {
-        // Usar el color destacado del tema
-        ctx.font = 'bold 24px Arial';
-        const precioTexto = `FIANZA: ${precio}`;
-        const precioMetrica = ctx.measureText(precioTexto);
-        const precioWidth = precioMetrica.width + 40;
-        
-        // Fondo para el precio
-        ctx.fillStyle = config.colorDestacado;
-        ctx.globalAlpha = 0.8;
-        roundRect(ctx, (width - precioWidth) / 2, height - 45, precioWidth, 32, 5);
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-        
-        // Borde para el precio
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        roundRect(ctx, (width - precioWidth) / 2, height - 45, precioWidth, 32, 5);
-        ctx.stroke();
-        
-        // Texto del precio
-        ctx.fillStyle = '#000000';
-        ctx.fillText(precioTexto, width / 2, height - 25);
-    }
-}
-
-/**
- * Función auxiliar para dibujar rectángulos redondeados
- */
-function roundRect(ctx, x, y, width, height, radius) {
-    if (typeof radius === 'undefined') radius = 5;
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + width - radius, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-    ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    ctx.lineTo(x + radius, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
-    ctx.closePath();
-    return ctx;
-}
-
-/**
- * Ajusta un color haciéndolo más claro o más oscuro
- */
-function adjustColor(color, amount) {
-    // Quitar el # si existe
-    color = color.replace(/^#/, '');
-    
-    // Asegurar que tenemos 6 dígitos
-    if (color.length === 3) {
-        color = color[0] + color[0] + color[1] + color[1] + color[2] + color[2];
-    }
-    
-    // Convertir a RGB
-    let r = parseInt(color.substring(0, 2), 16);
-    let g = parseInt(color.substring(2, 4), 16);
-    let b = parseInt(color.substring(4, 6), 16);
-    
-    // Ajustar valores
-    r = Math.max(0, Math.min(255, r + amount));
-    g = Math.max(0, Math.min(255, g + amount));
-    b = Math.max(0, Math.min(255, b + amount));
-    
-    // Convertir de vuelta a hex
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
-
-// Limpiar archivos temporales cada hora
-setInterval(() => {
-    try {
-        const files = fs.readdirSync(TEMP_DIR);
-        const now = Date.now();
-        
-        files.forEach(file => {
-            const filePath = path.join(TEMP_DIR, file);
-            const stats = fs.statSync(filePath);
-            const fileAge = now - stats.mtimeMs;
-            
-            // Eliminar archivos mayores a 1 hora
-            if (fileAge > 60 * 60 * 1000) {
-                fs.unlinkSync(filePath);
-            }
-        });
-    } catch (error) {
-        console.error("Error en limpieza de archivos temporales:", error);
-    }
-}, 60 * 60 * 1000);
+});
 
 module.exports = router;
