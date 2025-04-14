@@ -41,16 +41,54 @@ router.get("/", async (req, res) => {
     }
 
     // Cargar SVG de barrotes (ubicado en la raíz del proyecto)
-    const svgPath = path.join(__dirname, "../../jail_bars.svg");
+    // Primero intentamos varias posibles rutas al archivo SVG
     let barsImage;
-    try {
-      barsImage = await Canvas.loadImage(`file://${svgPath}`);
-    } catch (error) {
-      console.error("Error cargando SVG de barrotes:", error.message);
-      return res.status(500).json({ 
-        error: "Error interno al cargar los recursos del servidor", 
-        detalle: error.message 
-      });
+    const possiblePaths = [
+      path.join(__dirname, "jail_bars.svg"),                 // En el mismo directorio
+      path.join(__dirname, "../../../jail_bars.svg"),        // En la raíz del proyecto
+      path.join(process.cwd(), "jail_bars.svg"),             // Ruta absoluta a la raíz
+      path.join(__dirname, "../../..", "jail_bars.svg")      // Otra forma de la raíz
+    ];
+    
+    console.log("Buscando SVG en las siguientes rutas:");
+    possiblePaths.forEach(p => console.log(" - " + p));
+    
+    let svgLoaded = false;
+    for (const svgPath of possiblePaths) {
+      try {
+        if (fs.existsSync(svgPath)) {
+          console.log(`¡SVG encontrado en: ${svgPath}`);
+          barsImage = await Canvas.loadImage(`file://${svgPath}`);
+          svgLoaded = true;
+          break;
+        }
+      } catch (err) {
+        console.log(`Intento fallido en: ${svgPath}`);
+      }
+    }
+    
+    // Si no encontramos el SVG, creamos uno básico en línea
+    if (!svgLoaded) {
+      console.log("No se encontró el SVG, usando versión en línea");
+      const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+        <g>
+          <rect x="45" y="0" width="14" height="500" fill="#111111" />
+          <rect x="105" y="0" width="14" height="500" fill="#1a1a1a" />
+          <rect x="165" y="0" width="14" height="500" fill="#111111" />
+          <rect x="225" y="0" width="14" height="500" fill="#1a1a1a" />
+          <rect x="285" y="0" width="16" height="500" fill="#111111" />
+          <rect x="345" y="0" width="14" height="500" fill="#1a1a1a" />
+          <rect x="405" y="0" width="14" height="500" fill="#111111" />
+          <rect x="465" y="0" width="14" height="500" fill="#1a1a1a" />
+          <rect x="0" y="90" width="500" height="12" fill="#111111" />
+          <rect x="0" y="240" width="500" height="14" fill="#1a1a1a" />
+          <rect x="0" y="390" width="500" height="12" fill="#111111" />
+        </g>
+      </svg>`;
+      
+      // Creamos un Data URI con el SVG
+      const svgDataUri = `data:image/svg+xml;base64,${Buffer.from(svgContent).toString('base64')}`;
+      barsImage = await Canvas.loadImage(svgDataUri);
     }
 
     // Crear canvas para la imagen final
