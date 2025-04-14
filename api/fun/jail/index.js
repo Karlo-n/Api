@@ -451,8 +451,8 @@ function obtenerFechaActual() {
 }
 
 // Servir el SVG mejorado desde la ruta /bars.svg
-router.get("/bars.svg", (req, res) => {
-    const svgPath = path.join(__dirname, "/api/fun/jail/jail_bars.svg");
+router.get("", (req, res) => {
+    const svgPath = path.join(__dirname, "jail_bars.svg");
     
     if (fs.existsSync(svgPath)) {
         res.setHeader("Content-Type", "image/svg+xml");
