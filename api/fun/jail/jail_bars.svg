@@ -1,46 +1,131 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
-  <!-- Barras verticales de la celda -->
-  <g fill="none" stroke="#333" stroke-width="12">
-    <!-- Barras verticales principales -->
-    <line x1="60" y1="0" x2="60" y2="600" stroke="#000" stroke-width="16"/>
-    <line x1="120" y1="0" x2="120" y2="600" stroke="#111" stroke-width="14"/>
-    <line x1="180" y1="0" x2="180" y2="600" stroke="#222" stroke-width="14"/>
-    <line x1="240" y1="0" x2="240" y2="600" stroke="#111" stroke-width="14"/>
-    <line x1="300" y1="0" x2="300" y2="600" stroke="#000" stroke-width="16"/>
-    <line x1="360" y1="0" x2="360" y2="600" stroke="#111" stroke-width="14"/>
-    <line x1="420" y1="0" x2="420" y2="600" stroke="#222" stroke-width="14"/>
-    <line x1="480" y1="0" x2="480" y2="600" stroke="#111" stroke-width="14"/>
-    <line x1="540" y1="0" x2="540" y2="600" stroke="#000" stroke-width="16"/>
+  <!-- Fondo de celda texturizado -->
+  <defs>
+    <pattern id="wallPattern" patternUnits="userSpaceOnUse" width="100" height="50" patternTransform="scale(0.5)">
+      <rect width="100" height="50" fill="#232323"/>
+      <rect width="90" height="40" x="5" y="5" rx="2" ry="2" fill="#1c1c1c" stroke="#181818" stroke-width="1"/>
+    </pattern>
     
-    <!-- Barras horizontales de refuerzo -->
-    <line x1="0" y1="100" x2="600" y2="100" stroke="#333" stroke-width="10"/>
-    <line x1="0" y1="300" x2="600" y2="300" stroke="#222" stroke-width="12"/>
-    <line x1="0" y1="500" x2="600" y2="500" stroke="#333" stroke-width="10"/>
+    <!-- Gradiente para efecto metálico en barras -->
+    <linearGradient id="metalBar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#666666"/>
+      <stop offset="45%" stop-color="#333333"/>
+      <stop offset="55%" stop-color="#111111"/>
+      <stop offset="100%" stop-color="#444444"/>
+    </linearGradient>
+    
+    <!-- Brillo para barras -->
+    <linearGradient id="barHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
+      <stop offset="45%" stop-color="rgba(255,255,255,0.15)"/>
+      <stop offset="55%" stop-color="rgba(255,255,255,0.2)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+    
+    <!-- Filtro para sombra -->
+    <filter id="barShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="2" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.5"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Efecto de oxidación y metal dañado -->
+    <filter id="rustEffect">
+      <feTurbulence baseFrequency="0.05" numOctaves="2" seed="5"/>
+      <feDisplacementMap in="SourceGraphic" scale="5"/>
+    </filter>
+  </defs>
+  
+  <!-- Fondo de pared -->
+  <rect width="600" height="600" fill="url(#wallPattern)"/>
+  
+  <!-- Barras verticales principales con efectos -->
+  <g filter="url(#barShadow)">
+    <!-- Barras verticales -->
+    <rect x="50" y="0" width="16" height="600" fill="url(#metalBar)" rx="2"/>
+    <rect x="53" y="0" width="4" height="600" fill="url(#barHighlight)" opacity="0.5"/>
+    
+    <rect x="130" y="0" width="14" height="600" fill="url(#metalBar)" rx="2"/>
+    <rect x="133" y="0" width="3" height="600" fill="url(#barHighlight)" opacity="0.5"/>
+    
+    <rect x="210" y="0" width="14" height="600" fill="url(#metalBar)" rx="2"/>
+    <rect x="213" y="0" width="3" height="600" fill="url(#barHighlight)" opacity="0.5"/>
+    
+    <rect x="290" y="0" width="16" height="600" fill="url(#metalBar)" rx="2"/>
+    <rect x="293" y="0" width="4" height="600" fill="url(#barHighlight)" opacity="0.5"/>
+    
+    <rect x="370" y="0" width="14" height="600" fill="url(#metalBar)" rx="2"/>
+    <rect x="373" y="0" width="3" height="600" fill="url(#barHighlight)" opacity="0.5"/>
+    
+    <rect x="450" y="0" width="14" height="600" fill="url(#metalBar)" rx="2"/>
+    <rect x="453" y="0" width="3" height="600" fill="url(#barHighlight)" opacity="0.5"/>
+    
+    <rect x="530" y="0" width="16" height="600" fill="url(#metalBar)" rx="2"/>
+    <rect x="533" y="0" width="4" height="600" fill="url(#barHighlight)" opacity="0.5"/>
   </g>
   
-  <!-- Sombras para dar profundidad a las barras -->
-  <g opacity="0.3">
-    <rect x="55" y="0" width="10" height="600" fill="#000"/>
-    <rect x="115" y="0" width="10" height="600" fill="#000"/>
-    <rect x="175" y="0" width="10" height="600" fill="#000"/>
-    <rect x="235" y="0" width="10" height="600" fill="#000"/>
-    <rect x="295" y="0" width="10" height="600" fill="#000"/>
-    <rect x="355" y="0" width="10" height="600" fill="#000"/>
-    <rect x="415" y="0" width="10" height="600" fill="#000"/>
-    <rect x="475" y="0" width="10" height="600" fill="#000"/>
-    <rect x="535" y="0" width="10" height="600" fill="#000"/>
+  <!-- Remaches en las intersecciones -->
+  <g>
+    <!-- Primera barra horizontal -->
+    <circle cx="50" cy="120" r="6" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="130" cy="120" r="5" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="210" cy="120" r="5" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="290" cy="120" r="6" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="370" cy="120" r="5" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="450" cy="120" r="5" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="530" cy="120" r="6" fill="#444" stroke="#333" stroke-width="1"/>
+    
+    <!-- Segunda barra horizontal -->
+    <circle cx="50" cy="300" r="6" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="130" cy="300" r="5" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="210" cy="300" r="5" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="290" cy="300" r="6" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="370" cy="300" r="5" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="450" cy="300" r="5" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="530" cy="300" r="6" fill="#444" stroke="#333" stroke-width="1"/>
+    
+    <!-- Tercera barra horizontal -->
+    <circle cx="50" cy="480" r="6" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="130" cy="480" r="5" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="210" cy="480" r="5" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="290" cy="480" r="6" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="370" cy="480" r="5" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="450" cy="480" r="5" fill="#444" stroke="#333" stroke-width="1"/>
+    <circle cx="530" cy="480" r="6" fill="#444" stroke="#333" stroke-width="1"/>
   </g>
   
-  <!-- Brillo para efecto metálico -->
-  <g opacity="0.2" fill="#fff">
-    <rect x="58" y="0" width="4" height="600"/>
-    <rect x="118" y="0" width="4" height="600"/>
-    <rect x="178" y="0" width="4" height="600"/>
-    <rect x="238" y="0" width="4" height="600"/>
-    <rect x="298" y="0" width="4" height="600"/>
-    <rect x="358" y="0" width="4" height="600"/>
-    <rect x="418" y="0" width="4" height="600"/>
-    <rect x="478" y="0" width="4" height="600"/>
-    <rect x="538" y="0" width="4" height="600"/>
+  <!-- Barras horizontales principales -->
+  <g filter="url(#barShadow)">
+    <rect x="0" y="120" width="600" height="12" fill="url(#metalBar)" rx="2"/>
+    <rect x="0" y="122" width="600" height="3" fill="url(#barHighlight)" opacity="0.5"/>
+    
+    <rect x="0" y="300" width="600" height="14" fill="url(#metalBar)" rx="2"/>
+    <rect x="0" y="302" width="600" height="4" fill="url(#barHighlight)" opacity="0.5"/>
+    
+    <rect x="0" y="480" width="600" height="12" fill="url(#metalBar)" rx="2"/>
+    <rect x="0" y="482" width="600" height="3" fill="url(#barHighlight)" opacity="0.5"/>
   </g>
+  
+  <!-- Puntos de óxido en algunas secciones -->
+  <g opacity="0.5" filter="url(#rustEffect)">
+    <circle cx="50" cy="200" r="8" fill="#8B4513"/>
+    <circle cx="370" cy="350" r="7" fill="#8B4513"/>
+    <circle cx="530" cy="150" r="9" fill="#8B4513"/>
+    <circle cx="210" cy="400" r="6" fill="#8B4513"/>
+    <circle cx="290" cy="500" r="10" fill="#8B4513"/>
+  </g>
+  
+  <!-- Efecto de luz ambiental -->
+  <rect width="600" height="600" fill="url(#radialGradient)" style="mix-blend-mode: overlay;" opacity="0.2">
+    <animate attributeName="opacity" values="0.2;0.25;0.2" dur="5s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- Sombreado sutil para profundidad -->
+  <rect x="0" y="0" width="600" height="600" fill="none" style="filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.8));"/>
 </svg>
