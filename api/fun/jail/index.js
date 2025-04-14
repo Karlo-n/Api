@@ -1,8 +1,6 @@
 // api/fun/jail/index.js
 const express = require("express");
 const Canvas = require("canvas");
-const fs = require("fs");
-const path = require("path");
 const axios = require("axios");
 const router = express.Router();
 
@@ -38,57 +36,6 @@ router.get("/", async (req, res) => {
         error: "No se pudo cargar la imagen del avatar", 
         detalle: error.message 
       });
-    }
-
-    // Cargar SVG de barrotes (ubicado en la raíz del proyecto)
-    // Primero intentamos varias posibles rutas al archivo SVG
-    let barsImage;
-    const possiblePaths = [
-      path.join(__dirname, "jail_bars.svg"),                 // En el mismo directorio
-      path.join(__dirname, "../../../jail_bars.svg"),        // En la raíz del proyecto
-      path.join(process.cwd(), "jail_bars.svg"),             // Ruta absoluta a la raíz
-      path.join(__dirname, "../../..", "jail_bars.svg")      // Otra forma de la raíz
-    ];
-    
-    console.log("Buscando SVG en las siguientes rutas:");
-    possiblePaths.forEach(p => console.log(" - " + p));
-    
-    let svgLoaded = false;
-    for (const svgPath of possiblePaths) {
-      try {
-        if (fs.existsSync(svgPath)) {
-          console.log(`¡SVG encontrado en: ${svgPath}`);
-          barsImage = await Canvas.loadImage(`file://${svgPath}`);
-          svgLoaded = true;
-          break;
-        }
-      } catch (err) {
-        console.log(`Intento fallido en: ${svgPath}`);
-      }
-    }
-    
-    // Si no encontramos el SVG, creamos uno básico en línea
-    if (!svgLoaded) {
-      console.log("No se encontró el SVG, usando versión en línea");
-      const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
-        <g>
-          <rect x="45" y="0" width="14" height="500" fill="#111111" />
-          <rect x="105" y="0" width="14" height="500" fill="#1a1a1a" />
-          <rect x="165" y="0" width="14" height="500" fill="#111111" />
-          <rect x="225" y="0" width="14" height="500" fill="#1a1a1a" />
-          <rect x="285" y="0" width="16" height="500" fill="#111111" />
-          <rect x="345" y="0" width="14" height="500" fill="#1a1a1a" />
-          <rect x="405" y="0" width="14" height="500" fill="#111111" />
-          <rect x="465" y="0" width="14" height="500" fill="#1a1a1a" />
-          <rect x="0" y="90" width="500" height="12" fill="#111111" />
-          <rect x="0" y="240" width="500" height="14" fill="#1a1a1a" />
-          <rect x="0" y="390" width="500" height="12" fill="#111111" />
-        </g>
-      </svg>`;
-      
-      // Creamos un Data URI con el SVG
-      const svgDataUri = `data:image/svg+xml;base64,${Buffer.from(svgContent).toString('base64')}`;
-      barsImage = await Canvas.loadImage(svgDataUri);
     }
 
     // Crear canvas para la imagen final
@@ -134,8 +81,33 @@ router.get("/", async (req, res) => {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.globalCompositeOperation = "source-over";
 
-    // Dibujar las barras encima de todo
-    ctx.drawImage(barsImage, 0, 0, canvas.width, canvas.height);
+    // DIBUJAR BARRAS DIRECTAMENTE EN EL CANVAS
+    // Barras verticales
+    const barrasVerticales = [45, 105, 165, 225, 285, 345, 405, 465];
+    barrasVerticales.forEach((x, index) => {
+      // Alternar colores
+      ctx.fillStyle = index % 2 === 0 ? "#111111" : "#1a1a1a";
+      ctx.fillRect(x, 0, 14, canvas.height);
+      
+      // Añadir brillo/reflejo
+      ctx.fillStyle = "#444444";
+      ctx.globalAlpha = 0.6;
+      ctx.fillRect(x + 2, 0, 3, canvas.height);
+      ctx.globalAlpha = 1.0;
+    });
+    
+    // Barras horizontales
+    const barrasHorizontales = [90, 240, 390];
+    barrasHorizontales.forEach((y, index) => {
+      ctx.fillStyle = index % 2 === 0 ? "#111111" : "#1a1a1a";
+      ctx.fillRect(0, y, canvas.width, 12);
+      
+      // Añadir brillo/reflejo
+      ctx.fillStyle = "#444444";
+      ctx.globalAlpha = 0.6;
+      ctx.fillRect(0, y + 2, canvas.width, 3);
+      ctx.globalAlpha = 1.0;
+    });
 
     // Añadir texto "JAILED" en la parte inferior
     ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
