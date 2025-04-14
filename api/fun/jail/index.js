@@ -41,7 +41,7 @@ router.get("/", async (req, res) => {
     }
 
     // Cargar SVG de barrotes (ubicado en la raíz del proyecto)
-    const svgPath = path.join(__dirname, "jail_bars.svg");
+    const svgPath = path.join(__dirname, "../../jail_bars.svg");
     let barsImage;
     try {
       barsImage = await Canvas.loadImage(`file://${svgPath}`);
